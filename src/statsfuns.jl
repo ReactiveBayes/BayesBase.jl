@@ -1,3 +1,5 @@
+import SpecialFunctions: digamma, logbeta, loggamma, trigamma
+
 export mirrorlog,
     xtlog,
     logmvbeta,
@@ -9,6 +11,7 @@ export mirrorlog,
     mean_cov,
     mean_var,
     mean_std,
+    mean_precision,
     mean_invcov,
     weightedmean_cov,
     weightedmean_var,
