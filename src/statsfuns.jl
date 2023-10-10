@@ -4,7 +4,6 @@ export mirrorlog,
     clamplog,
     mvtrigamma,
     vague,
-    isproper,
     probvec,
     weightedmean,
     mean_cov,
@@ -64,13 +63,6 @@ mvtrigamma(p, x) = sum(trigamma(x + (one(x) - i) / 2) for i in 1:p)
 Returns uninformative probability distribution of the given type.
 """
 function vague end
-
-"""
-    isproper(T, args...)
- 
-Checks if `args...` are compatible with distribution of type `T`.
-"""
-function isproper end
 
 function compute_logscale end
 

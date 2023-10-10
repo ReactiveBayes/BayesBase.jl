@@ -20,11 +20,14 @@ using Distributions:
     failprob,
     succprob,
     insupport,
+    support,
     shape,
     scale,
     rate,
     invcov,
     pdf,
+    pdf!,
+    cdf,
     logpdf,
     logdetcov,
     VariateForm,
@@ -39,11 +42,14 @@ using Distributions:
 export failprob,
     succprob,
     insupport,
+    support,
     shape,
     scale,
     rate,
     invcov,
     pdf,
+    pdf!,
+    cdf,
     logpdf,
     logdetcov,
     VariateForm,
@@ -55,9 +61,9 @@ export failprob,
     variate_form,
     value_support
 
-using Base: precision, eltype, convert, length, isapprox
+using Base: precision, prod, prod!
 
-export precision, eltype, convert, length, isapprox
+export precision, prod, prod!
 
 using Random: rand, rand!
 
