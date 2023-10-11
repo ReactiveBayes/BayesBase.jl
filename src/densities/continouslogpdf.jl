@@ -136,7 +136,7 @@ function BayesBase.convert_paramfloattype(
 end
 
 function BayesBase.vague(::Type{<:ContinuousUnivariateLogPdf})
-    return ContinuousUnivariateLogPdf(DomainSets.FullSpace(), (x) -> 1)
+    return ContinuousUnivariateLogPdf(DomainSets.FullSpace(), (x) -> 0)
 end
 
 # We do not check typeof of a different functions because in most of the cases lambdas have different types, but they can still be the same
@@ -211,7 +211,7 @@ function BayesBase.convert_paramfloattype(
 end
 
 function BayesBase.vague(::Type{<:ContinuousMultivariateLogPdf}, dims::Int)
-    return ContinuousMultivariateLogPdf(DomainSets.FullSpace()^dims, (x) -> 1)
+    return ContinuousMultivariateLogPdf(DomainSets.FullSpace()^dims, (x) -> 0)
 end
 
 # We do not check typeof of a different functions because in most of the cases lambdas have different types, but they can still be the same
