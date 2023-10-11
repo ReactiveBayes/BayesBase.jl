@@ -237,8 +237,6 @@ function BayesBase.logpdf(product::ProductOf, x)
     return logpdf(getleft(product), x) + logpdf(getright(product), x)
 end
 
-BayesBase.variate_form(::P) where {P<:ProductOf} = variate_form(P)
-
 function BayesBase.variate_form(::Type{ProductOf{L,R}}) where {L,R}
     return _check_product_variate_form(variate_form(L), variate_form(R))
 end
@@ -252,8 +250,6 @@ function _check_product_variate_form(
         "`ProductOf` has different variate forms for left ($F1) and right ($F2) entries."
     )
 end
-
-BayesBase.value_support(::P) where {P<:ProductOf} = value_support(P)
 
 function BayesBase.value_support(::Type{ProductOf{L,R}}) where {L,R}
     return _check_product_value_support(value_support(L), value_support(R))
@@ -397,10 +393,7 @@ function BayesBase.samplefloattype(product::LinearizedProductOf)
 end
 
 BayesBase.variate_form(::Type{<:LinearizedProductOf{F}}) where {F} = variate_form(F)
-BayesBase.variate_form(::LinearizedProductOf{F}) where {F} = variate_form(F)
-
 BayesBase.value_support(::Type{<:LinearizedProductOf{F}}) where {F} = value_support(F)
-BayesBase.value_support(::LinearizedProductOf{F}) where {F} = value_support(F)
 
 function Base.show(io::IO, product::LinearizedProductOf{F}) where {F}
     return print(io, "LinearizedProductOf(", F, ", length = ", product.length, ")")

@@ -6,7 +6,7 @@
         scalar = rand(T)
         dist = PointMass(scalar)
 
-        @test variate_form(dist) === Univariate
+        @test variate_form(typeof(dist)) === Univariate
         @test_throws BoundsError dist[2]
         @test_throws BoundsError dist[2, 2]
 
@@ -56,7 +56,7 @@ end
         vector = rand(T, N)
         dist = PointMass(vector)
 
-        @test variate_form(dist) === Multivariate
+        @test variate_form(typeof(dist)) === Multivariate
         @test dist[2] === vector[2]
         @test dist[3] === vector[3]
         @test_throws BoundsError dist[N + 1]
@@ -114,7 +114,7 @@ end
         matrix = rand(T, N, N)
         dist = PointMass(matrix)
 
-        @test variate_form(dist) === Matrixvariate
+        @test variate_form(typeof(dist)) === Matrixvariate
         @test dist[2] === matrix[2]
         @test dist[3] === matrix[3]
         @test dist[3, 3] === matrix[3, 3]
@@ -179,7 +179,7 @@ end
         matrix = convert(T, 5) * I
         dist = PointMass(matrix)
 
-        @test variate_form(dist) === Matrixvariate
+        @test variate_form(typeof(dist)) === Matrixvariate
         @test dist[2, 1] == zero(T)
         @test dist[3, 1] == zero(T)
         @test dist[3, 3] === matrix[3, 3]

@@ -10,10 +10,10 @@ end
 getpointmass(distribution::PointMass) = distribution.point
 getpointmass(point::Union{Real,AbstractArray}) = point
 
-BayesBase.variate_form(::PointMass{T}) where {T<:Real} = Univariate
-BayesBase.variate_form(::PointMass{V}) where {T,V<:AbstractVector{T}} = Multivariate
-BayesBase.variate_form(::PointMass{M}) where {T,M<:AbstractMatrix{T}} = Matrixvariate
-BayesBase.variate_form(::PointMass{U}) where {T,U<:UniformScaling{T}} = Matrixvariate
+BayesBase.variate_form(::Type{PointMass{T}}) where {T<:Real} = Univariate
+BayesBase.variate_form(::Type{PointMass{V}}) where {T,V<:AbstractVector{T}} = Multivariate
+BayesBase.variate_form(::Type{PointMass{M}}) where {T,M<:AbstractMatrix{T}} = Matrixvariate
+BayesBase.variate_form(::Type{PointMass{U}}) where {T,U<:UniformScaling{T}} = Matrixvariate
 
 function BayesBase.mean(fn::F, distribution::PointMass) where {F<:Function}
     return fn(mean(distribution))

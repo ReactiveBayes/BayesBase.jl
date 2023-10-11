@@ -87,6 +87,7 @@ include("prod.jl")
 
 include("densities/pointmass.jl")
 include("densities/function.jl")
+include("densities/samplelist.jl")
 include("densities/mixture.jl")
 include("densities/factorizedjoint.jl")
 
