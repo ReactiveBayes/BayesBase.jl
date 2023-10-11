@@ -12,9 +12,9 @@ using Statistics: mean, median, std, var, cov
 
 export mean, median, std, var, cov
 
-using StatsBase: mode, entropy
+using StatsBase: mode, entropy, weights
 
-export mode, entropy
+export mode, entropy, weights
 
 using Distributions:
     failprob,
@@ -39,7 +39,9 @@ using Distributions:
     Multivariate,
     Matrixvariate,
     variate_form,
-    value_support
+    value_support,
+    component,
+    components
 
 export failprob,
     succprob,
@@ -63,7 +65,9 @@ export failprob,
     Multivariate,
     Matrixvariate,
     variate_form,
-    value_support
+    value_support,
+    component,
+    components
 
 using DomainSets: dimension, Domain
 
@@ -82,6 +86,7 @@ include("promotion.jl")
 include("prod.jl")
 
 include("densities/factorizedjoint.jl")
-include("densities/continouslogpdf.jl")
+include("densities/mixture.jl")
+include("densities/function.jl")
 
 end

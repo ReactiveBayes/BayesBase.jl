@@ -22,8 +22,6 @@ export mirrorlog,
     logpdf_sampling_optimized,
     logpdf_optimized,
     sampling_optimized,
-    components,
-    component,
     UnspecifiedDomain,
     UnspecifiedDimension,
     fuse_supports,
@@ -162,20 +160,6 @@ logpdf_optimized(something) = something
 Returns a version of `d` specifically optimized to call `rand` and `rand!`. By default returns the same `d`, but can be specialized.
 """
 sampling_optimized(something) = something
-
-"""
-    components(d)
-
-Returns components of a distribution `d` (joint or a mixture).
-"""
-function components end
-
-"""
-    component(d, k)
-
-Returns `k`-th component of a distribution `d` (joint or a mixture).
-"""
-function component end
 
 """Unknown domain that is used as a placeholder when exact domain knowledge is unavailable"""
 struct UnspecifiedDomain <: Domain{Any} end

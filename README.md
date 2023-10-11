@@ -8,7 +8,6 @@
 [![PkgEval](https://JuliaCI.github.io/NanosoldierReports/pkgeval_badges/B/BayesBase.svg)](https://JuliaCI.github.io/NanosoldierReports/pkgeval_badges/B/BayesBase.html)
 
 `BayesBase` is a package that serves as an umbrella, defining, exporting, and re-exporting methods essential for Bayesian statistics. 
-The `BayesBase` depends on [`Distributions`](https://github.com/JuliaStats/Distributions.jl), [`StatsBase`](https://github.com/JuliaStats/StatsBase.jl) and [`StatsAPI`](https://github.com/JuliaStats/StatsAPI.jl).
 
 Related projects:
 
