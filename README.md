@@ -13,3 +13,8 @@ The `BayesBase` depends on [`Distributions`](https://github.com/JuliaStats/Distr
 Related projects:
 
 - [`ExponentialFamily`](https://github.com/biaslab/ExponentialFamily.jl)
+
+
+# License
+
+[MIT License](LICENSE) Copyright (c) 2021-2023 BIASlab
