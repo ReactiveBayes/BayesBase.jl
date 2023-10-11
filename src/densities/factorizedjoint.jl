@@ -20,9 +20,9 @@ Base.@propagate_inbounds function Base.getindex(joint::FactorizedJoint, i::Int)
     return getindex(components(joint), i)
 end
 
-BayesBase.length(joint::FactorizedJoint) = length(joint.multipliers)
+Base.length(joint::FactorizedJoint) = length(joint.multipliers)
 
-function BayesBase.isapprox(x::FactorizedJoint, y::FactorizedJoint; kwargs...)
+function Base.isapprox(x::FactorizedJoint, y::FactorizedJoint; kwargs...)
     return length(x) === length(y) && all(
         tuple -> isapprox(tuple[1], tuple[2]; kwargs...),
         zip(components(x), components(y)),

@@ -24,6 +24,10 @@ export mirrorlog,
     sampling_optimized,
     components,
     component,
+    UnspecifiedDomain,
+    UnspecifiedDimension,
+    fuse_supports,
+    isequal_typeof,
     distribution_typewrapper
 
 """
@@ -173,10 +177,47 @@ Returns `k`-th component of a distribution `d` (joint or a mixture).
 """
 function component end
 
+"""Unknown domain that is used as a placeholder when exact domain knowledge is unavailable"""
+struct UnspecifiedDomain <: Domain{Any} end
+
+"""Unknown dimension is equal and not equal to any number"""
+struct UnspecifiedDimension end
+
+DomainSets.dimension(::UnspecifiedDomain) = UnspecifiedDimension()
+
+Base.in(::Any, ::UnspecifiedDomain) = true
+
+Base.:(!=)(::UnspecifiedDimension, ::Int) = true
+Base.:(!==)(::UnspecifiedDimension, ::Int) = true
+Base.:(==)(::UnspecifiedDimension, ::Int) = true
+
+"""
+    fuse_supports(left, right)
+
+Fuses supports `left` and `right`.
+By default, checks that the inputs are identical and throws an error otherwise.
+Can implement specific fusions for specific supports.
+"""
+function fuse_supports(left, right)
+    @assert isequal(left, right) "Cannot automatically fuse supports of $(left) & `$(right)`."
+    return left
+end
+
+fuse_supports(left::UnspecifiedDomain, right) = right
+fuse_supports(left, right::UnspecifiedDomain) = left
+fuse_supports(::UnspecifiedDomain, ::UnspecifiedDomain) = UnspecifiedDomain()
+
 """
 Strips type parameters from the type of the `distribution`.
 """
 distribution_typewrapper(distribution) = generated_distribution_typewrapper(distribution)
+
+"""
+    isequal_typeof(left, right)
+
+Alias for `typeof(left) === typeof(right)`, but can be specialized.
+"""
+isequal_typeof(left, right) = typeof(left) === typeof(right)
 
 # Returns a wrapper distribution for a `<:Distribution` type, this function uses internals of Julia 
 # It is not ideal, but is fine for now, if Julia changes it internals such that does not work 

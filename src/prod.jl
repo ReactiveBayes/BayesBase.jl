@@ -1,10 +1,8 @@
 
-import Distributions: VariateForm, ValueSupport, variate_form, value_support, support
 import Base: prod, prod!, show, showerror
 
 export prod,
     default_prod_rule,
-    fuse_supports,
     ClosedProd,
     PreserveTypeProd,
     PreserveTypeLeftProd,
@@ -171,7 +169,9 @@ Base.prod(::ClosedProd, left, ::Missing) = left
 Base.prod(::ClosedProd, ::Missing, ::Missing) = missing
 
 # We assume that we want to preserve the `Distribution` when working with two `Distribution`s
-Base.prod(::ClosedProd, left::Distribution, right::Distribution) = prod(PreserveTypeProd(Distribution), left, right)
+function Base.prod(::ClosedProd, left::Distribution, right::Distribution)
+    return prod(PreserveTypeProd(Distribution), left, right)
+end
 
 # This is a hidden prod strategy to ensure symmetricity in the `default_prod_rule`.
 # Most of the automatic prod rule resolution relies on the `symmetric_default_prod_rule` instead of just `default_prod_rule`
@@ -195,22 +195,6 @@ function symmetric_default_prod_rule(::UnspecifiedProd, strategy2, left, right)
 end
 function symmetric_default_prod_rule(::UnspecifiedProd, ::UnspecifiedProd, left, right)
     return UnspecifiedProd()
-end
-
-"""
-    fuse_supports(left, right)
-
-Fuse supports of two distributions of `left` and `right`.
-By default, checks that the supports are identical and throws an error otherwise.
-Can implement specific fusions for specific distributions.
-
-See also: [`prod`](@ref), [`ProductOf`](@ref)
-"""
-function fuse_supports(left, right)
-    if !isequal(support(left), support(right))
-        error("Cannot form a `ProductOf` $(left) & `$(right)`. Support is incompatible.")
-    end
-    return support(left)
 end
 
 """
@@ -242,20 +226,20 @@ function Base.show(io::IO, product::ProductOf)
     return print(io, "ProductOf(", getleft(product), ",", getright(product), ")")
 end
 
-function Distributions.support(product::ProductOf)
-    return fuse_supports(getleft(product), getright(product))
+function BayesBase.support(product::ProductOf)
+    return fuse_supports(support(getleft(product)), support(getright(product)))
 end
 
-Distributions.pdf(product::ProductOf, x) = exp(logpdf(product, x))
+BayesBase.pdf(product::ProductOf, x) = exp(logpdf(product, x))
 
-function Distributions.logpdf(product::ProductOf, x)
-    return Distributions.logpdf(getleft(product), x) +
-           Distributions.logpdf(getright(product), x)
+function BayesBase.logpdf(product::ProductOf, x)
+    @assert x ∈ support(product) "The `$(x)` does not belong to the support of the product `$(product)`"
+    return logpdf(getleft(product), x) + logpdf(getright(product), x)
 end
 
-Distributions.variate_form(::P) where {P<:ProductOf} = variate_form(P)
+BayesBase.variate_form(::P) where {P<:ProductOf} = variate_form(P)
 
-function Distributions.variate_form(::Type{ProductOf{L,R}}) where {L,R}
+function BayesBase.variate_form(::Type{ProductOf{L,R}}) where {L,R}
     return _check_product_variate_form(variate_form(L), variate_form(R))
 end
 
@@ -269,9 +253,9 @@ function _check_product_variate_form(
     )
 end
 
-Distributions.value_support(::P) where {P<:ProductOf} = value_support(P)
+BayesBase.value_support(::P) where {P<:ProductOf} = value_support(P)
 
-function Distributions.value_support(::Type{ProductOf{L,R}}) where {L,R}
+function BayesBase.value_support(::Type{ProductOf{L,R}}) where {L,R}
     return _check_product_value_support(value_support(L), value_support(R))
 end
 
@@ -399,7 +383,7 @@ function Base.push!(product::LinearizedProductOf{F}, item::F) where {F}
     return LinearizedProductOf(push!(vector, item), vlength + 1)
 end
 
-Distributions.support(dist::LinearizedProductOf) = support(first(dist.vector))
+BayesBase.support(dist::LinearizedProductOf) = support(first(dist.vector))
 
 Base.length(product::LinearizedProductOf) = product.length
 Base.eltype(product::LinearizedProductOf) = eltype(first(product.vector))
@@ -412,23 +396,26 @@ function BayesBase.samplefloattype(product::LinearizedProductOf)
     return samplefloattype(first(product.vector))
 end
 
-Distributions.variate_form(::Type{<:LinearizedProductOf{F}}) where {F} = variate_form(F)
-Distributions.variate_form(::LinearizedProductOf{F}) where {F} = variate_form(F)
+BayesBase.variate_form(::Type{<:LinearizedProductOf{F}}) where {F} = variate_form(F)
+BayesBase.variate_form(::LinearizedProductOf{F}) where {F} = variate_form(F)
 
-Distributions.value_support(::Type{<:LinearizedProductOf{F}}) where {F} = value_support(F)
-Distributions.value_support(::LinearizedProductOf{F}) where {F} = value_support(F)
+BayesBase.value_support(::Type{<:LinearizedProductOf{F}}) where {F} = value_support(F)
+BayesBase.value_support(::LinearizedProductOf{F}) where {F} = value_support(F)
 
 function Base.show(io::IO, product::LinearizedProductOf{F}) where {F}
     return print(io, "LinearizedProductOf(", F, ", length = ", product.length, ")")
 end
 
-function Distributions.logpdf(dist::LinearizedProductOf, x)
+function BayesBase.logpdf(product::LinearizedProductOf, x)
+    @assert x ∈ support(product) "The `$(x)` does not belong to the support of the product `$(product)`"
     return mapreduce(
-        (d) -> logpdf(d, x), +, view(dist.vector, 1:min(dist.length, length(dist.vector)))
+        (d) -> logpdf(d, x),
+        +,
+        view(product.vector, 1:min(product.length, length(product.vector))),
     )
 end
 
-Distributions.pdf(dist::LinearizedProductOf, x) = exp(logpdf(dist, x))
+BayesBase.pdf(dist::LinearizedProductOf, x) = exp(logpdf(dist, x))
 
 # We assume that it is better (really) to preserve the type of the `LinearizedProductOf`, it is just faster for the compiler
 function BayesBase.default_prod_rule(::Type{F}, ::Type{LinearizedProductOf{F}}) where {F}

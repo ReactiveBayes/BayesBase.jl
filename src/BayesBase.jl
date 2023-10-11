@@ -2,7 +2,7 @@ module BayesBase
 
 using TinyHugeNumbers
 
-using StatsAPI, StatsBase, Statistics, Distributions, Random
+using StatsAPI, StatsBase, DomainSets, Statistics, Distributions, Random
 
 using StatsAPI: params
 
@@ -65,6 +65,10 @@ export failprob,
     variate_form,
     value_support
 
+using DomainSets: dimension, Domain
+
+export dimension, Domain
+
 using Base: precision, prod, prod!
 
 export precision, prod, prod!
@@ -78,5 +82,6 @@ include("promotion.jl")
 include("prod.jl")
 
 include("densities/factorizedjoint.jl")
+include("densities/continouslogpdf.jl")
 
 end

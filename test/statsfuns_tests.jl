@@ -26,4 +26,31 @@ end
     end
 end
 
+@testitem "UnspecifiedDomain" begin 
+    using DomainSets
 
+    @test 1 ∈ UnspecifiedDomain()
+    @test (1, 1) ∈ UnspecifiedDomain()
+    @test [ 0, 1 ] ∈ UnspecifiedDomain()
+
+    @test fuse_supports(UnspecifiedDomain(), UnspecifiedDomain()) === UnspecifiedDomain()
+    @test fuse_supports(RealLine(), UnspecifiedDomain()) === RealLine()
+    @test fuse_supports(UnspecifiedDomain(), RealLine()) === RealLine()
+end
+
+@testitem "UnspecifiedDimension" begin 
+    using DomainSets
+
+    @test UnspecifiedDimension() == 1
+    @test UnspecifiedDimension() == 2
+    @test UnspecifiedDimension() != 1
+    @test UnspecifiedDimension() != 2
+end
+
+@testitem "isequal_typeof" begin
+    @test !isequal_typeof(1, 1.0) 
+    @test isequal_typeof(1.0, 1.0) 
+    @test !isequal_typeof([ 1.0 ], 1.0) 
+    @test !isequal_typeof([ 1.0 ], [ 1 ]) 
+    @test isequal_typeof([ 1.0 ], [ 1.0 ]) 
+end
