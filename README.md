@@ -7,10 +7,11 @@
 [![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
 [![PkgEval](https://JuliaCI.github.io/NanosoldierReports/pkgeval_badges/B/BayesBase.svg)](https://JuliaCI.github.io/NanosoldierReports/pkgeval_badges/B/BayesBase.html)
 
-`BayesBase` is a package that serves as an umbrella, defining, exporting, and re-exporting methods essential for Bayesian statistics. 
+`BayesBase` is a package that serves as an umbrella, defining, exporting, and re-exporting methods essential for Bayesian statistics specifically for the [`RxInfer` ecosystem](https://github.com/biaslab/RxInfer.jl). 
 
 Related projects:
 
+- [`RxInfer`](https://github.com/biaslab/RxInfer.jl)
 - [`ExponentialFamily`](https://github.com/biaslab/ExponentialFamily.jl)
 
 

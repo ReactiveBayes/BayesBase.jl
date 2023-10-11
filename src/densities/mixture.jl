@@ -4,7 +4,7 @@ using LinearAlgebra
 export MixtureDistribution
 
 """
-    `MixtureDistribution{C,CT<:Real}`
+    MixtureDistribution(components, weights)
 
 A custom mixture distribution implementation, parameterized by:
 * `C` type family of the mixture

@@ -66,7 +66,7 @@ end
 
 Returns the underlying float type of distribution's parameters.
 
-See also: [`ExponentialFamily.promote_paramfloattype`](@ref), [`ExponentialFamily.convert_paramfloattype`](@ref)
+See also: [`promote_paramfloattype`](@ref), [`convert_paramfloattype`](@ref)
 """
 function paramfloattype(distribution::Distribution)
     return promote_type(map(deep_eltype, params(distribution))...)
@@ -82,7 +82,7 @@ paramfloattype(::Nothing) = Bool
 
 Promotes `paramfloattype` of the `distributions` to a single type. See also `promote_type`.
 
-See also: [`ExponentialFamily.paramfloattype`](@ref), [`ExponentialFamily.convert_paramfloattype`](@ref)
+See also: [`paramfloattype`](@ref), [`convert_paramfloattype`](@ref)
 """
 function promote_paramfloattype(distributions...)
     return promote_type(map(paramfloattype, distributions)...)
@@ -93,7 +93,7 @@ end
 
 Converts (if possible) the params float type of the `distribution` to be of type `T`.
 
-See also: [`ExponentialFamily.paramfloattype`](@ref), [`ExponentialFamily.promote_paramfloattype`](@ref)
+See also: [`paramfloattype`](@ref), [`promote_paramfloattype`](@ref)
 """
 function convert_paramfloattype(::Type{T}, distribution::Distribution) where {T}
     return automatic_convert_paramfloattype(
@@ -137,7 +137,7 @@ convert_paramfloattype(::Type, ::Nothing) = nothing
 
 Returns a type of the distribution. By default fallbacks to the `eltype`.
 
-See also: [`ExponentialFamily.samplefloattype`](@ref), [`ExponentialFamily.promote_sampletype`](@ref), [`ExponentialFamily.promote_samplefloattype`](@ref)
+See also: [`samplefloattype`](@ref), [`promote_sampletype`](@ref), [`promote_samplefloattype`](@ref)
 """
 sampletype(distribution) = eltype(distribution)
 
@@ -154,7 +154,7 @@ sampletype(::Type{Matrixvariate}, distribution) = Matrix{eltype(distribution)}
 Returns a type of the distribution or the underlying float type in case if sample is `Multivariate` or `Matrixvariate`. 
 By default fallbacks to the `deep_eltype(sampletype(distribution))`.
 
-See also: [`ExponentialFamily.sampletype`](@ref), [`ExponentialFamily.promote_sampletype`](@ref), [`ExponentialFamily.promote_samplefloattype`](@ref)
+See also: [`sampletype`](@ref), [`promote_sampletype`](@ref), [`promote_samplefloattype`](@ref)
 """
 samplefloattype(distribution) = deep_eltype(sampletype(distribution))
 
@@ -163,7 +163,7 @@ samplefloattype(distribution) = deep_eltype(sampletype(distribution))
 
 Promotes `sampletype` of the `distributions` to a single type. See also `promote_type`.
 
-See also: [`ExponentialFamily.sampletype`](@ref), [`ExponentialFamily.samplefloattype`](@ref), [`ExponentialFamily.promote_samplefloattype`](@ref)
+See also: [`sampletype`](@ref), [`samplefloattype`](@ref), [`promote_samplefloattype`](@ref)
 """
 promote_sampletype(distributions...) = promote_type(map(sampletype, distributions)...)
 
@@ -172,7 +172,7 @@ promote_sampletype(distributions...) = promote_type(map(sampletype, distribution
 
 Promotes `samplefloattype` of the `distributions` to a single type. See also `promote_type`.
 
-See also: [`ExponentialFamily.sampletype`](@ref), [`ExponentialFamily.samplefloattype`](@ref), [`ExponentialFamily.promote_sampletype`](@ref)
+See also: [`sampletype`](@ref), [`samplefloattype`](@ref), [`promote_sampletype`](@ref)
 """
 function promote_samplefloattype(distributions...)
     return promote_type(map(samplefloattype, distributions)...)
