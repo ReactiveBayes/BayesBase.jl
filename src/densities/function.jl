@@ -11,7 +11,6 @@ getdomain(dist::AbstractContinuousGenericLogPdf) = dist.domain
 getlogpdf(dist::AbstractContinuousGenericLogPdf) = dist.logpdf
 
 BayesBase.value_support(::Type{<:AbstractContinuousGenericLogPdf}) = Continuous
-BayesBase.value_support(::AbstractContinuousGenericLogPdf) = Continuous
 
 # We throw an error on purpose, since we do not want to use `AbstractContinuousGenericLogPdf` much without approximations
 # We want to encourage a user to use approximate generic log-pdfs as much as possible instead
@@ -92,7 +91,6 @@ function ContinuousUnivariateLogPdf(f::Function)
 end
 
 BayesBase.variate_form(::Type{<:ContinuousUnivariateLogPdf}) = Univariate
-BayesBase.variate_form(::ContinuousUnivariateLogPdf) = Univariate
 
 function BayesBase.promote_variate_type(
     ::Type{Univariate}, ::Type{AbstractContinuousGenericLogPdf}
@@ -172,7 +170,6 @@ struct ContinuousMultivariateLogPdf{D<:DomainSets.Domain,F} <:
 end
 
 BayesBase.variate_form(::Type{<:ContinuousMultivariateLogPdf}) = Multivariate
-BayesBase.variate_form(::ContinuousMultivariateLogPdf) = Multivariate
 
 function BayesBase.promote_variate_type(
     ::Type{Multivariate}, ::Type{AbstractContinuousGenericLogPdf}

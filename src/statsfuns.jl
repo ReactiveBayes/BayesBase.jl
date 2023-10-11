@@ -22,8 +22,6 @@ export mirrorlog,
     logpdf_sampling_optimized,
     logpdf_optimized,
     sampling_optimized,
-    components,
-    component,
     UnspecifiedDomain,
     UnspecifiedDimension,
     fuse_supports,
@@ -163,20 +161,6 @@ Returns a version of `d` specifically optimized to call `rand` and `rand!`. By d
 """
 sampling_optimized(something) = something
 
-"""
-    components(d)
-
-Returns components of a distribution `d` (joint or a mixture).
-"""
-function components end
-
-"""
-    component(d, k)
-
-Returns `k`-th component of a distribution `d` (joint or a mixture).
-"""
-function component end
-
 """Unknown domain that is used as a placeholder when exact domain knowledge is unavailable"""
 struct UnspecifiedDomain <: Domain{Any} end
 
@@ -226,3 +210,9 @@ isequal_typeof(left, right) = typeof(left) === typeof(right)
 @generated function generated_distribution_typewrapper(distribution)
     return Base.typename(distribution).wrapper
 end
+
+"""An object representing infinity."""
+struct Infinity end
+
+"""An object representing minus infinity."""
+struct MinusInfinity end
