@@ -85,8 +85,10 @@ include("statsfuns.jl")
 include("promotion.jl")
 include("prod.jl")
 
-include("densities/factorizedjoint.jl")
-include("densities/mixture.jl")
+include("densities/pointmass.jl")
 include("densities/function.jl")
+include("densities/mixture.jl")
+include("densities/factorizedjoint.jl")
+
 
 end

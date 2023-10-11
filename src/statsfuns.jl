@@ -210,3 +210,9 @@ isequal_typeof(left, right) = typeof(left) === typeof(right)
 @generated function generated_distribution_typewrapper(distribution)
     return Base.typename(distribution).wrapper
 end
+
+"""An object representing infinity."""
+struct Infinity end
+
+"""An object representing minus infinity."""
+struct MinusInfinity end
