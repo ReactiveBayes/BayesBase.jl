@@ -29,7 +29,7 @@
         @test_throws MethodError logpdf(dist, ones(T, 2))
         @test_throws MethodError logpdf(dist, ones(T, 2, 2))
 
-        @test (@inferred entropy(dist)) == BayesBase.MinusInfinity()
+        @test (@inferred entropy(dist)) == BayesBase.MinusInfinity(T)
 
         @test @inferred(T, mean(dist)) == scalar
         @test @inferred(T, mode(dist)) == scalar
@@ -81,7 +81,7 @@ end
         @test_throws MethodError logpdf(dist, one(T))
         @test_throws MethodError logpdf(dist, ones(T, 2, 2))
 
-        @test (@inferred entropy(dist)) == BayesBase.MinusInfinity()
+        @test (@inferred entropy(dist)) == BayesBase.MinusInfinity(T)
 
         @test @inferred(AbstractVector{T}, mean(dist)) == vector
         @test @inferred(AbstractVector{T}, mode(dist)) == vector
@@ -142,7 +142,7 @@ end
         @test_throws MethodError logpdf(dist, one(T))
         @test_throws MethodError logpdf(dist, ones(T, 2))
 
-        @test (@inferred entropy(dist)) == BayesBase.MinusInfinity()
+        @test (@inferred entropy(dist)) == BayesBase.MinusInfinity(T)
 
         @test @inferred(AbstractMatrix{T}, mean(dist)) == matrix
         @test @inferred(AbstractMatrix{T}, mode(dist)) == matrix
@@ -199,7 +199,7 @@ end
         @test_throws MethodError logpdf(dist, one(T))
         @test_throws MethodError logpdf(dist, ones(T, 2))
 
-        @test (@inferred entropy(dist)) == BayesBase.MinusInfinity()
+        @test (@inferred entropy(dist)) == BayesBase.MinusInfinity(T)
 
         @test mean(dist) == matrix
         @test mode(dist) == matrix

@@ -44,7 +44,7 @@ function Base.size(distribution::PointMass, index...)
 end
 
 # `entropy` for the `PointMass` is not defined
-BayesBase.entropy(::PointMass) = MinusInfinity()
+BayesBase.entropy(dist::PointMass{T}) where {T} = MinusInfinity(paramfloattype(dist))
 
 # Real-based univariate point mass
 

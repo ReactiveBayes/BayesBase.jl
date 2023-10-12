@@ -43,6 +43,7 @@ function deep_eltype end
 
 deep_eltype(::Type{T}) where {T} = T
 deep_eltype(::Type{T}) where {T<:AbstractArray} = deep_eltype(eltype(T))
+deep_eltype(::Type{I}) where {I<:UniformScaling} = deep_eltype(eltype(I))
 deep_eltype(any) = deep_eltype(typeof(any))
 
 """

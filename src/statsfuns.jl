@@ -26,7 +26,8 @@ export mirrorlog,
     UnspecifiedDimension,
     fuse_supports,
     isequal_typeof,
-    distribution_typewrapper
+    distribution_typewrapper,
+    CountingReal
 
 """
     mirrorlog(x)
@@ -211,8 +212,109 @@ isequal_typeof(left, right) = typeof(left) === typeof(right)
     return Base.typename(distribution).wrapper
 end
 
+"""
+    CountingReal
+
+`CountingReal` implements a real "number" that counts 'infinities' in a separate field.
+See also [`BayesBase.Infinity`](@ref) and [`BayesBase.MinusInfinity`](@ref).
+
+# Arguments
+- `value::T`: value of type `<: Real`
+- `infinities::Int`: number of added/subtracted infinities
+
+```jldoctest
+julia> r = BayesBase.CountingReal(0.0, 0)
+BayesBase.CountingReal{Float64}(0.0, 0)
+
+julia> float(r)
+0.0
+
+julia> r = r + BayesBase.Infinity()
+CountingReal(0.0, 1)
+
+julia> float(r)
+Inf
+
+julia> r = r + BayesBase.MinusInfinity()
+CountingReal(0.0, 0)
+
+julia> float(r)
+0.0
+```
+"""
+struct CountingReal{T<:Real}
+    value::T
+    infinities::Int
+end
+
+CountingReal(value::T) where {T<:Real} = CountingReal{T}(value, 0)
+
+function CountingReal(::Type{T}, infinities::Int) where {T<:Real}
+    return CountingReal{T}(zero(T), infinities)
+end
+
+value(a::CountingReal) = a.value
+infinities(a::CountingReal) = a.infinities
+
 """An object representing infinity."""
-struct Infinity end
+Infinity(::Type{T}) where {T} = CountingReal(zero(T), 1)
 
 """An object representing minus infinity."""
-struct MinusInfinity end
+MinusInfinity(::Type{T}) where {T} = CountingReal(zero(T), -1)
+
+Base.isfinite(a::CountingReal) = !isinf(a)
+Base.isinf(a::CountingReal) = !(iszero(infinities(a))) || isinf(value(a))
+Base.isnan(a::CountingReal) = isnan(value(a))
+
+Base.eltype(::Type{CountingReal{T}}) where {T} = T
+Base.eltype(::Type{CountingReal}) = Real
+Base.eltype(::T) where {T<:CountingReal} = eltype(T)
+
+Base.:+(a::CountingReal) = CountingReal(+value(a), +infinities(a))
+Base.:-(a::CountingReal) = CountingReal(-value(a), -infinities(a))
+
+Base.:+(a::CountingReal, b::Real) = CountingReal(value(a) + b, infinities(a))
+Base.:-(a::CountingReal, b::Real) = CountingReal(value(a) - b, infinities(a))
+Base.:+(b::Real, a::CountingReal) = CountingReal(b + value(a), +infinities(a))
+Base.:-(b::Real, a::CountingReal) = CountingReal(b - value(a), -infinities(a))
+
+function Base.:*(::CountingReal, ::Real)
+    return error("`CountingReal` multiplication with `Real` is dissalowed")
+end
+function Base.:*(::Real, ::CountingReal)
+    return error("`CountingReal` multiplication with `Real` is dissalowed")
+end
+
+Base.:*(a::CountingReal, b::Integer) = CountingReal(value(a) * b, infinities(a) * b)
+Base.:*(a::Integer, b::CountingReal) = CountingReal(a * value(b), a * infinities(b))
+
+Base.:/(::CountingReal, ::Real) = error("`CountingReal` division is dissalowed")
+Base.:/(::Real, ::CountingReal) = error("`CountingReal` division is dissalowed")
+
+function Base.:+(a::CountingReal, b::CountingReal)
+    return CountingReal(value(a) + value(b), infinities(a) + infinities(b))
+end
+function Base.:-(a::CountingReal, b::CountingReal)
+    return CountingReal(value(a) - value(b), infinities(a) - infinities(b))
+end
+
+Base.convert(::Type{CountingReal}, v::T) where {T<:Real} = CountingReal(v)
+Base.convert(::Type{CountingReal{T}}, v::T) where {T<:Real} = CountingReal(v)
+function Base.convert(::Type{CountingReal{T}}, v::R) where {T<:Real,R<:Real}
+    return CountingReal(convert(T, v))
+end
+function Base.convert(::Type{CountingReal{T}}, v::CountingReal{R}) where {T<:Real,R<:Real}
+    return CountingReal{T}(convert(T, value(v)), infinities(v))
+end
+
+Base.float(a::CountingReal{T}) where {T} = isfinite(a) ? value(a) : convert(T, Inf)
+Base.zero(::Type{CountingReal{T}}) where {T<:Real} = CountingReal(zero(T))
+
+function Base.promote_rule(::Type{CountingReal{T1}}, ::Type{T2}) where {T1<:Real,T2<:Real}
+    return CountingReal{promote_type(T1, T2)}
+end
+Base.promote_rule(::Type{CountingReal}, ::Type{T}) where {T<:Real} = CountingReal{T}
+
+function Base.:(==)(left::CountingReal{T}, right::CountingReal{T}) where {T}
+    return (value(left) == value(right)) && (infinities(left) == infinities(right))
+end
