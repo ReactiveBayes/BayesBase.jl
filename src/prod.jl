@@ -9,7 +9,9 @@ export prod,
     PreserveTypeRightProd,
     GenericProd,
     ProductOf,
-    LinearizedProductOf
+    LinearizedProductOf,
+    TerminalProdArgument,
+    resolve_prod_strategy
 
 """
     UnspecifiedProd
@@ -429,3 +431,86 @@ function Base.prod(
 ) where {L,R}
     return ProductOf(push!(getleft(left), right), getright(left))
 end
+
+"""
+    TerminalProdArgument(argument)
+
+`TerminalProdArgument` is a specialized wrapper structure. When used as an argument to the `prod` function, it returns itself without considering any product strategy 
+and does not perform any safety checks (e.g. `variate_form` or `support`). Attempting to calculate the product of two instances of `TerminalProdArgument` will raise an error. 
+Use `.argument` field to get the underlying wrapped argument.
+"""
+struct TerminalProdArgument{T}
+    argument::T
+end
+
+function Base.show(io::IO, prod::TerminalProdArgument)
+    return print(io, "TerminalProdArgument(", prod.argument, ")")
+end
+Base.convert(::Type{TerminalProdArgument}, something) = TerminalProdArgument(something)
+Base.convert(::Type{TerminalProdArgument}, terminal::TerminalProdArgument) = terminal
+
+BayesBase.paramfloattype(terminal::TerminalProdArgument) = paramfloattype(terminal.argument)
+function BayesBase.convert_paramfloattype(
+    ::Type{T}, terminal::TerminalProdArgument
+) where {T}
+    return TerminalProdArgument(convert_paramfloattype(T, terminal.argument))
+end
+
+function default_prod_rule(::Type{<:TerminalProdArgument}, ::Type{T}) where {T}
+    return PreserveTypeProd(TerminalProdArgument)
+end
+function default_prod_rule(::Type{T}, ::Type{<:TerminalProdArgument}) where {T}
+    return PreserveTypeProd(TerminalProdArgument)
+end
+function default_prod_rule(::Type{<:TerminalProdArgument}, ::Type{<:TerminalProdArgument})
+    return PreserveTypeProd(TerminalProdArgument)
+end
+
+function Base.prod(
+    ::PreserveTypeProd{TerminalProdArgument}, left::TerminalProdArgument, right
+)
+    return left
+end
+function Base.prod(
+    ::PreserveTypeProd{TerminalProdArgument}, left, right::TerminalProdArgument
+)
+    return right
+end
+function Base.prod(
+    ::PreserveTypeProd{TerminalProdArgument},
+    left::TerminalProdArgument,
+    right::TerminalProdArgument,
+)
+    return error("Invalid product: `$(left)` × `$(right)`")
+end
+
+"""
+    resolve_prod_strategy(left, right)
+
+Given two strategies, this function returns the one with higher priority, if possible.
+"""
+function resolve_prod_strategy(left, right)
+    return error(
+        "Cannot resolve strategies `$(left)` and $(right). Strategies have the same priority.",
+    )
+end
+
+function resolve_prod_strategy(left::T, right::T) where {T}
+    if (left === right)
+        return left
+    else
+        error(
+            "Cannot resolve strategies `$(left)` and $(right). Strategies have the same priority.",
+        )
+    end
+end
+
+resolve_prod_strategy(any, ::GenericProd) = any
+resolve_prod_strategy(::GenericProd, any) = any
+resolve_prod_strategy(::GenericProd, ::GenericProd) = GenericProd()
+resolve_prod_strategy(::Nothing, ::GenericProd) = GenericProd()
+resolve_prod_strategy(::GenericProd, ::Nothing) = GenericProd()
+
+resolve_prod_strategy(::Nothing, any) = any
+resolve_prod_strategy(any, ::Nothing) = any
+resolve_prod_strategy(::Nothing, ::Nothing) = nothing
