@@ -448,6 +448,7 @@ function Base.show(io::IO, prod::TerminalProdArgument)
 end
 Base.convert(::Type{TerminalProdArgument}, something) = TerminalProdArgument(something)
 Base.convert(::Type{TerminalProdArgument}, terminal::TerminalProdArgument) = terminal
+Base.isapprox(left::TerminalProdArgument, right::TerminalProdArgument; kwargs...) = isapprox(left.argument, right.argument; kwargs...)
 
 BayesBase.paramfloattype(terminal::TerminalProdArgument) = paramfloattype(terminal.argument)
 function BayesBase.convert_paramfloattype(

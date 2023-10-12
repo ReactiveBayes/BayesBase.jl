@@ -233,6 +233,10 @@ end
 @testitem "TerminalProdArgument" begin
     include("./prod_setuptests.jl")
 
+    @test TerminalProdArgument(1) ≈ TerminalProdArgument(1)
+    @test TerminalProdArgument(1.0) ≈ TerminalProdArgument(1.0) 
+    @test TerminalProdArgument(1.0) ≈ TerminalProdArgument(1.0) atol = 1e-1
+
     d1 = SomeUnknownObject()
     d2 = ObjectWithClosedProd1()
 
