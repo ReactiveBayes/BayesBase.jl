@@ -27,6 +27,7 @@ BayesBase.ContinuousMultivariateLogPdf
 BayesBase.SampleList
 BayesBase.FactorizedJoint
 BayesBase.MixtureDistribution
+BayesBase.Contingency
 ```
 
 ## [Product API](@id library-prod)
