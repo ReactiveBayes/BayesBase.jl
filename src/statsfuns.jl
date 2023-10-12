@@ -224,19 +224,19 @@ See also [`BayesBase.Infinity`](@ref) and [`BayesBase.MinusInfinity`](@ref).
 
 ```jldoctest
 julia> r = BayesBase.CountingReal(0.0, 0)
-BayesBase.CountingReal{Float64}(0.0, 0)
+CountingReal{Float64}(0.0, 0)
 
 julia> float(r)
 0.0
 
-julia> r = r + BayesBase.Infinity()
-CountingReal(0.0, 1)
+julia> r = r + BayesBase.Infinity(Float64)
+CountingReal{Float64}(0.0, 1)
 
 julia> float(r)
 Inf
 
-julia> r = r + BayesBase.MinusInfinity()
-CountingReal(0.0, 0)
+julia> r = r + BayesBase.MinusInfinity(Float64)
+CountingReal{Float64}(0.0, 0)
 
 julia> float(r)
 0.0

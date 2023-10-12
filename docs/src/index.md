@@ -56,6 +56,8 @@ BayesBase.PreserveTypeRightProd
 BayesBase.GenericProd
 BayesBase.ProductOf
 BayesBase.LinearizedProductOf
+BayesBase.TerminalProdArgument
+BayesBase.resolve_prod_strategy
 ```
 
 These strategies offer flexibility and reliability when working with different types of distributions, ensuring that the package can handle a wide range of cases effectively.
@@ -106,7 +108,8 @@ BayesBase.sampling_optimized
 BayesBase.fuse_supports
 BayesBase.UnspecifiedDomain
 BayesBase.UnspecifiedDimension
+BayesBase.distribution_typewrapper
+BayesBase.CountingReal
 BayesBase.Infinity
 BayesBase.MinusInfinity
-BayesBase.distribution_typewrapper
 ```
