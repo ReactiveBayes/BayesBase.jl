@@ -1,3 +1,5 @@
+using LinearAlgebra
+
 export deep_eltype,
     promote_variate_type,
     paramfloattype,
