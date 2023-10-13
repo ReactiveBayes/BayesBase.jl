@@ -55,3 +55,7 @@ function BayesBase.entropy(distribution::Contingency)
     P = components(distribution)
     return -mapreduce((p) -> p * clamplog(p), +, P)
 end
+
+function Base.isapprox(left::Contingency, right::Contingency; kwargs...)
+    return isapprox(components(left), components(right); kwargs...)
+end

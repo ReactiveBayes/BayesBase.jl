@@ -49,7 +49,7 @@ deep_eltype(::Type{I}) where {I<:UniformScaling} = deep_eltype(eltype(I))
 deep_eltype(any) = deep_eltype(typeof(any))
 
 """
-    promote_variate_PromoteTypeConverter(::Type{ <: VariateForm }, distribution_type)
+    promote_variate_type(::Type{ <: VariateForm }, distribution_type)
 
 Promotes (if possible) a `distribution_type` to be of the specified variate form.
 """
@@ -63,6 +63,10 @@ Promotes (if possible) a `distribution_type` to be of the same variate form as `
 function promote_variate_type(::Type{D}, T) where {D<:Distribution}
     return promote_variate_type(variate_form(D), T)
 end
+
+promote_variate_type(::Type{<:Number}, T) = promote_variate_type(Univariate, T)
+promote_variate_type(::Type{<:AbstractVector}, T) = promote_variate_type(Multivariate, T)
+promote_variate_type(::Type{<:AbstractMatrix}, T) = promote_variate_type(Matrixvariate, T)
 
 """
     paramfloattype(distribution)

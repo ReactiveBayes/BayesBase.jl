@@ -32,3 +32,12 @@ end
     @test !isnan(entropy(Contingency([0.0 1.0; 1.0 0.0])))
     @test !isinf(entropy(Contingency([0.0 1.0; 1.0 0.0])))
 end
+
+@testitem "Contingency: isapprox" begin
+    for n in 2:5
+        A = rand(n, n)
+        @test Contingency(A) ≈ Contingency(A)
+        @test Contingency(A, Val(true)) ≈ Contingency(A, Val(true))
+        @test Contingency(A, Val(false)) ≈ Contingency(A, Val(false))
+    end
+end
