@@ -5,6 +5,7 @@ export mirrorlog,
     logmvbeta,
     clamplog,
     mvtrigamma,
+    dtanh,
     vague,
     probvec,
     weightedmean,
@@ -63,6 +64,13 @@ logmvbeta(x) = sum(loggamma, x) - loggamma(sum(x))
 Computes multivariate trigamma function .
 """
 mvtrigamma(p, x) = sum(trigamma(x + (one(x) - i) / 2) for i in 1:p)
+
+"""
+    dtanh(x)
+
+Alias for `1 - tanh(x) ^ 2`
+"""
+dtanh(x) = one(x) - abs2(tanh(x))
 
 """
     vague(distribution_type, [ dims... ])

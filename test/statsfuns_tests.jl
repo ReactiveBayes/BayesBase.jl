@@ -26,6 +26,14 @@ end
     end
 end
 
+@testitem "dtanh" begin 
+    for T in (Float32, Float64, BigFloat)
+        foreach(rand(T, 10)) do number
+            @test dtanh(number) ≈ 1 - tanh(number) ^ 2
+        end
+    end
+end
+
 @testitem "UnspecifiedDomain" begin
     using DomainSets
 

@@ -85,6 +85,7 @@ BayesBase.xtlog
 BayesBase.logmvbeta
 BayesBase.clamplog
 BayesBase.mvtrigamma
+BayesBase.dtanh
 BayesBase.probvec
 BayesBase.mean_std
 BayesBase.mean_var
