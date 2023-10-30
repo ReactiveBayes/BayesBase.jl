@@ -24,6 +24,14 @@
         end
     end
 
+    @testset "convert_paramfloattype" begin 
+        for T in (Float32, Float64, BigFloat),  multipliers in vmultipliers
+            for component in components(convert_paramfloattype(T, FactorizedJoint(multipliers)))
+                @test paramfloattype(component) === T
+            end
+        end
+    end
+
     @testset "isapprox" begin
         @test FactorizedJoint((Normal(),)) ≈ FactorizedJoint((Normal(),))
         @test !(FactorizedJoint((Normal(0, 1),)) ≈ FactorizedJoint((Normal(1, 1),)))

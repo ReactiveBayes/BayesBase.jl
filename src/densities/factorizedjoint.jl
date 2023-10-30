@@ -36,7 +36,5 @@ function BayesBase.paramfloattype(joint::FactorizedJoint)
 end
 
 function BayesBase.convert_paramfloattype(::Type{T}, joint::FactorizedJoint) where {T}
-    return FactorizedJoint(
-        map(e -> BayesBase.convert_paramfloattype(T, joint), BayesBase.components(joint))
-    )
+    return FactorizedJoint(map(e -> BayesBase.convert_paramfloattype(T, e), BayesBase.components(joint)))
 end
