@@ -443,19 +443,62 @@ struct TerminalProdArgument{T}
     argument::T
 end
 
+BayesBase.mean(prod::TerminalProdArgument) = mean(prod.argument)
+BayesBase.median(prod::TerminalProdArgument) = median(prod.argument)
+BayesBase.mode(prod::TerminalProdArgument) = mode(prod.argument)
+BayesBase.shape(prod::TerminalProdArgument) = shape(prod.argument)
+BayesBase.scale(prod::TerminalProdArgument) = scale(prod.argument)
+BayesBase.rate(prod::TerminalProdArgument) = rate(prod.argument)
+BayesBase.var(prod::TerminalProdArgument) = var(prod.argument)
+BayesBase.std(prod::TerminalProdArgument) = std(prod.argument)
+BayesBase.cov(prod::TerminalProdArgument) = cov(prod.argument)
+BayesBase.invcov(prod::TerminalProdArgument) = invcov(prod.argument)
+BayesBase.logdetcov(prod::TerminalProdArgument) = logdetcov(prod.argument)
+BayesBase.entropy(prod::TerminalProdArgument) = entropy(prod.argument)
+BayesBase.params(prod::TerminalProdArgument) = params(prod.argument)
+BayesBase.mean_cov(prod::TerminalProdArgument) = mean_cov(prod.argument)
+BayesBase.mean_var(prod::TerminalProdArgument) = mean_var(prod.argument)
+BayesBase.mean_invcov(prod::TerminalProdArgument) = mean_invcov(prod.argument)
+BayesBase.mean_precision(prod::TerminalProdArgument) = mean_precision(prod.argument)
+BayesBase.weightedmean_cov(prod::TerminalProdArgument) = weightedmean_cov(prod.argument)
+BayesBase.weightedmean_var(prod::TerminalProdArgument) = weightedmean_var(prod.argument)
+BayesBase.probvec(prod::TerminalProdArgument) = probvec(prod.argument)
+BayesBase.weightedmean(prod::TerminalProdArgument) = weightedmean(prod.argument)
+
+function BayesBase.weightedmean_invcov(prod::TerminalProdArgument)
+    return weightedmean_invcov(prod.argument)
+end
+function BayesBase.weightedmean_precision(prod::TerminalProdArgument)
+    return weightedmean_precision(prod.argument)
+end
+
+Base.precision(prod::TerminalProdArgument) = precision(prod.argument)
+Base.length(prod::TerminalProdArgument) = length(prod.argument)
+Base.ndims(prod::TerminalProdArgument) = ndims(prod.argument)
+Base.size(prod::TerminalProdArgument) = size(prod.argument)
+Base.eltype(prod::TerminalProdArgument) = eltype(prod.argument)
+
 function Base.show(io::IO, prod::TerminalProdArgument)
     return print(io, "TerminalProdArgument(", prod.argument, ")")
 end
+
 Base.convert(::Type{TerminalProdArgument}, something) = TerminalProdArgument(something)
 Base.convert(::Type{TerminalProdArgument}, terminal::TerminalProdArgument) = terminal
 
 Base.isapprox(left::TerminalProdArgument, right; kwargs...) = false
 Base.isapprox(left, right::TerminalProdArgument; kwargs...) = false
-Base.isapprox(left::TerminalProdArgument{T}, right::T; kwargs...) where {T} = isapprox(left.argument, right; kwargs...)
-Base.isapprox(left::T, right::TerminalProdArgument{T}; kwargs...) where {T} = isapprox(left, right.argument; kwargs...)
-Base.isapprox(left::TerminalProdArgument, right::TerminalProdArgument; kwargs...) = isapprox(left.argument, right.argument; kwargs...)
+function Base.isapprox(left::TerminalProdArgument{T}, right::T; kwargs...) where {T}
+    return isapprox(left.argument, right; kwargs...)
+end
+function Base.isapprox(left::T, right::TerminalProdArgument{T}; kwargs...) where {T}
+    return isapprox(left, right.argument; kwargs...)
+end
+function Base.isapprox(left::TerminalProdArgument, right::TerminalProdArgument; kwargs...)
+    return isapprox(left.argument, right.argument; kwargs...)
+end
 
 BayesBase.paramfloattype(terminal::TerminalProdArgument) = paramfloattype(terminal.argument)
+
 function BayesBase.convert_paramfloattype(
     ::Type{T}, terminal::TerminalProdArgument
 ) where {T}
