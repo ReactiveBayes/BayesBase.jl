@@ -18,6 +18,7 @@ end
         @test @inferred(eltype(convert_paramfloattype(T, [1.0, 1.0]))) === T
         @test @inferred(eltype(convert_paramfloattype(T, [1.0 1.0; 1.0 1.0]))) === T
         @test @inferred(eltype(convert_paramfloattype(T, 1.0))) === T
+        @test @inferred(eltype(convert_paramfloattype(T, I))) === T
 
         for distribution in generate_random_distributions()
             @test @inferred(paramfloattype(convert_paramfloattype(T, distribution))) === T
