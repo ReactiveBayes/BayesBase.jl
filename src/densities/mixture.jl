@@ -1,4 +1,4 @@
-using StatsFuns: softmax
+using StatsFuns: softmax, logsumexp
 using LinearAlgebra
 
 export MixtureDistribution
@@ -82,19 +82,19 @@ function Base.prod(
 end
 
 function BayesBase.compute_logscale(
-    new_dist::MixtureDistribution, left_dist::MixtureDistribution, right_dist::Any
+    new_dist::MixtureDistribution, left::MixtureDistribution, right::Any
 )
 
-    # get prior weights and components
-    w = left_dist.weights
-    dists = left_dist.components
+    # get weights and components
+    w = weights(left)
+    dists = components(left)
 
     # get new distributions
-    dists_new = map(dist -> prod(ProdAnalytical(), dist, right_dist), dists)
+    dists_new = map(dist -> prod(default_prod_rule(dist, right), dist, right), dists)
 
     # get scales
     logscales = map(
-        (dist, dist_new) -> compute_logscale(dist_new, dist, right_dist), dists, dists_new
+        (dist, dist_new) -> compute_logscale(dist_new, dist, right), dists, dists_new
     )
 
     # compute updated weights
