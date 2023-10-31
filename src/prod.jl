@@ -464,6 +464,8 @@ BayesBase.weightedmean_cov(prod::TerminalProdArgument) = weightedmean_cov(prod.a
 BayesBase.weightedmean_var(prod::TerminalProdArgument) = weightedmean_var(prod.argument)
 BayesBase.probvec(prod::TerminalProdArgument) = probvec(prod.argument)
 BayesBase.weightedmean(prod::TerminalProdArgument) = weightedmean(prod.argument)
+BayesBase.paramfloattype(prod::TerminalProdArgument) = paramfloattype(prod.argument)
+BayesBase.samplefloattype(prod::TerminalProdArgument) = samplefloattype(prod.argument)
 
 function BayesBase.weightedmean_invcov(prod::TerminalProdArgument)
     return weightedmean_invcov(prod.argument)
@@ -496,8 +498,6 @@ end
 function Base.isapprox(left::TerminalProdArgument, right::TerminalProdArgument; kwargs...)
     return isapprox(left.argument, right.argument; kwargs...)
 end
-
-BayesBase.paramfloattype(terminal::TerminalProdArgument) = paramfloattype(terminal.argument)
 
 function BayesBase.convert_paramfloattype(
     ::Type{T}, terminal::TerminalProdArgument
