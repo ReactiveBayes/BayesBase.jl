@@ -216,9 +216,10 @@ end
 
 BayesBase.entropy(sl::SampleList) = get_entropy(get_meta(sl))
 
-# `entropy` for the `SampleList` is not defined if `meta` is of type `Nothing`
-function Distributions.entropy(::SampleList{D, S, W, C, Nothing}) where {D, S, W, C}
-    error("`entropy` for the `SampleList` is not defined if `meta` is of type `Nothing`")
+function Distributions.entropy(sl::SampleList{D, S, W, C, Nothing}) where {D, S, W, C}
+    # error("`entropy` for the `SampleList` is not defined if `meta` is of type `Nothing`")
+    # We do not compute the `entropy` for the sample list, but return -Inf instead, the same as for PointMass
+    return MinusInfinity(paramfloattype(sl))
 end
 
 ## 
