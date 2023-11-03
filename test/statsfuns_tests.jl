@@ -42,8 +42,8 @@ end
     @test [0, 1] ∈ UnspecifiedDomain()
 
     @test fuse_supports(UnspecifiedDomain(), UnspecifiedDomain()) === UnspecifiedDomain()
-    @test fuse_supports(RealLine(), UnspecifiedDomain()) === RealLine()
-    @test fuse_supports(UnspecifiedDomain(), RealLine()) === RealLine()
+    @test fuse_supports(FullSpace(), UnspecifiedDomain()) === FullSpace()
+    @test fuse_supports(UnspecifiedDomain(), FullSpace()) === FullSpace()
 end
 
 @testitem "UnspecifiedDimension" begin
