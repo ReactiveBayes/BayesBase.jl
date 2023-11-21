@@ -1,22 +1,21 @@
 module BayesBase
 
 using TinyHugeNumbers
-
 using StatsAPI, StatsBase, DomainSets, Statistics, Distributions, Random
 
-using StatsAPI: params
+import StatsAPI: params
 
 export params
 
-using Statistics: mean, median, std, var, cov
+import Statistics: mean, median, std, var, cov
 
 export mean, median, std, var, cov
 
-using StatsBase: mode, entropy, weights
+import StatsBase: mode, entropy, weights
 
 export mode, entropy, weights
 
-using Distributions:
+import Distributions:
     failprob,
     succprob,
     insupport,
@@ -69,15 +68,15 @@ export failprob,
     component,
     components
 
-using DomainSets: dimension, Domain
+import DomainSets: dimension, Domain
 
 export dimension, Domain
 
-using Base: precision, prod, prod!
+import Base: precision, prod, prod!
 
 export precision, prod, prod!
 
-using Random: rand, rand!
+import Random: rand, rand!
 
 export rand, rand!
 
@@ -91,6 +90,5 @@ include("densities/samplelist.jl")
 include("densities/mixture.jl")
 include("densities/factorizedjoint.jl")
 include("densities/contingency.jl")
-
 
 end
