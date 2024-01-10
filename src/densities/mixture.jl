@@ -12,7 +12,7 @@ A custom mixture distribution implementation, parameterized by:
 
 This implementation solves:
 * [Distributions.jl Issue 1669](https://github.com/JuliaStats/Distributions.jl/issues/1669)
-* [ReactiveMP.jl Issue 253](https://github.com/biaslab/ReactiveMP.jl/issues/253)
+* [ReactiveMP.jl Issue 253](https://github.com/reactivebayes/ReactiveMP.jl/issues/253)
 
 """
 struct MixtureDistribution{C,CT<:Real}

@@ -4,12 +4,12 @@ CurrentModule = BayesBase
 
 # BayesBase.jl
 
-`BayesBase` is a package that serves as an umbrella, defining, exporting, and re-exporting methods essential for Bayesian statistics specifically for the [`RxInfer` ecosystem](https://github.com/biaslab/RxInfer.jl). 
+`BayesBase` is a package that serves as an umbrella, defining, exporting, and re-exporting methods essential for Bayesian statistics specifically for the [`RxInfer` ecosystem](https://github.com/reactivebayes/RxInfer.jl). 
 
 Related projects:
 
-- [`RxInfer`](https://github.com/biaslab/RxInfer.jl)
-- [`ExponentialFamily`](https://github.com/biaslab/ExponentialFamily.jl)
+- [`RxInfer`](https://github.com/reactivebayes/RxInfer.jl)
+- [`ExponentialFamily`](https://github.com/reactivebayes/ExponentialFamily.jl)
 
 # Index
 
