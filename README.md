@@ -16,4 +16,4 @@ Related projects:
 
 # License
 
-[MIT License](LICENSE) Copyright (c) 2023-2024 reactivebayes
+[MIT License](LICENSE) Copyright (c) 2023-2024 BIASlab, 2024-present ReactiveBayes
