@@ -1,7 +1,7 @@
 name = "BayesBase"
 uuid = "b4ee3484-f114-42fe-b91c-797d54a0c67e"
 authors = ["Bagaev Dmitry <d.v.bagaev@tue.nl> and contributors"]
-version = "1.2.0"
+version = "1.2.1"
 
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
