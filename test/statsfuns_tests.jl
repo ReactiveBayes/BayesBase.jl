@@ -145,4 +145,13 @@ end
 
         @test evaluated == container
     end
+
+    @testset "Shouldn't allocate anything for simple `logpdf!`" begin 
+        fn = InplaceLogpdf((out, x) -> out .= log.(x))
+        samples = 1:10
+        out = zeros(10)
+        fn(out, samples)
+        @test out == log.(samples)
+        @test @allocated(fn(out, samples)) === 0
+    end
 end
