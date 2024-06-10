@@ -26,10 +26,10 @@ end
     end
 end
 
-@testitem "dtanh" begin 
+@testitem "dtanh" begin
     for T in (Float32, Float64, BigFloat)
         foreach(rand(T, 10)) do number
-            @test dtanh(number) ≈ 1 - tanh(number) ^ 2
+            @test dtanh(number) ≈ 1 - tanh(number)^2
         end
     end
 end
@@ -87,7 +87,6 @@ end
 
         @test float(convert(CountingReal, r)) ≈ zero(T)
         @test float(convert(CountingReal{Float64}, r)) ≈ zero(Float64)
-
     end
 end
 
@@ -106,7 +105,6 @@ end
         samples = rand(rng, distribution, 100)
         evaluated = map(fn, samples)
 
-
         container = similar(evaluated)
         inplacefn(container, samples)
 
@@ -123,7 +121,6 @@ end
         rng = StableRNG(42)
         samples = rand(rng, distribution, 100)
         evaluated = map(fn, eachcol(samples))
-
 
         container = similar(evaluated)
         inplacefn(container, eachcol(samples))
@@ -148,6 +145,4 @@ end
 
         @test evaluated == container
     end
-
-
 end
