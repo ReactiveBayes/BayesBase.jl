@@ -332,6 +332,7 @@ end
 
 Same as `Statistics.cov(X, Y)`, but does not allocate the result. Instead uses a buffer `Z` to store the result in.
 Additionally, it allows for passing temporary buffers `tmp1`, `tmp2`, `tmp3`, `tmp4` to avoid any allocations.
+Always computes `corrected = true` covariance matrix.
 """
 function mcov!(
     Z,
@@ -343,17 +344,31 @@ function mcov!(
     tmp4=similar(Y),
 )
     mean!(tmp1, X')
-    @. tmp3 = X - tmp1'
+    # @. tmp3 = X - tmp1'
+    @turbo warn_check_args = false for j in 1:size(X, 2)
+        for i in 1:size(X, 1)
+            tmp3[i, j] = X[i, j] - tmp1[j]
+        end
+    end
 
     mean!(tmp2, Y')
-    @. tmp4 = Y - tmp2'
+    # @. tmp4 = Y - tmp2'
+    @turbo warn_check_args = false for j in 1:size(X, 2)
+        for i in 1:size(X, 1)
+            tmp4[i, j] = Y[i, j] - tmp2[j]
+        end
+    end
 
-    corrected::Bool = true
     # mul!(Z, tmp3', tmp4, 1, 0)
     BLAS.gemm!('T', 'N', true, tmp3, tmp4, false, Z)
 
-    b = 1//(size(tmp3, 1) - corrected)
-    @. Z = Z * b
+    b = 1//(size(tmp3, 1) - 1)
+    # @. Z = Z * b
+    @turbo warn_check_args = false for j in 1:size(Z, 2)
+        for i in 1:size(Z, 1)
+            Z[i, j] *= b
+        end
+    end
 
     return Z
 end
