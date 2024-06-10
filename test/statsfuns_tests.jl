@@ -26,10 +26,10 @@ end
     end
 end
 
-@testitem "dtanh" begin 
+@testitem "dtanh" begin
     for T in (Float32, Float64, BigFloat)
         foreach(rand(T, 10)) do number
-            @test dtanh(number) ≈ 1 - tanh(number) ^ 2
+            @test dtanh(number) ≈ 1 - tanh(number)^2
         end
     end
 end
@@ -87,6 +87,32 @@ end
 
         @test float(convert(CountingReal, r)) ≈ zero(T)
         @test float(convert(CountingReal{Float64}, r)) ≈ zero(Float64)
+    end
+end
 
+@testitem "mcov!" begin
+    using StatsFuns, BayesBase, JET
+    import BayesBase: mcov!
+
+    for n in 2:5:20, j in 3:5:20
+        X = rand(j, n)
+        Y = rand(j, n)
+        Z = rand(n, n)
+
+        @inferred(mcov!(Z, X, Y))
+
+        @test all(Z .≈ cov(X, Y))
+
+        tmp1 = zeros(eltype(Z), size(X, 2))
+        tmp2 = zeros(eltype(Z), size(Y, 2))
+        tmp3 = similar(X)
+        tmp4 = similar(Y)
+
+        @inferred(mcov!(Z, X, Y; tmp1=tmp1, tmp2=tmp2, tmp3=tmp3, tmp4=tmp4))
+
+        @test all(Z .≈ cov(X, Y))
+
+        @report_opt mcov!(Z, X, Y; tmp1=tmp1, tmp2=tmp2, tmp3=tmp3, tmp4=tmp4)
+        @test @allocated(mcov!(Z, X, Y; tmp1=tmp1, tmp2=tmp2, tmp3=tmp3, tmp4=tmp4)) === 0
     end
 end
