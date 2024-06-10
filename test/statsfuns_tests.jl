@@ -90,3 +90,64 @@ end
 
     end
 end
+
+@testitem "InplaceLogpdf" begin
+    import BayesBase: InplaceLogpdf
+    using Distributions, LinearAlgebra, StableRNGs
+
+    @testset "Vector based samples" begin
+        distribution = Beta(10, 10)
+        fn = (x) -> logpdf(distribution, x)
+        inplacefn = convert(InplaceLogpdf, fn)
+
+        @test fn !== inplacefn
+
+        rng = StableRNG(42)
+        samples = rand(rng, distribution, 100)
+        evaluated = map(fn, samples)
+
+
+        container = similar(evaluated)
+        inplacefn(container, samples)
+
+        @test evaluated == container
+    end
+
+    @testset "Matrix based samples" begin
+        distribution = MvNormal(ones(2), ones(2))
+        fn = (x) -> logpdf(distribution, x)
+        inplacefn = convert(InplaceLogpdf, fn)
+
+        @test inplacefn !== fn
+
+        rng = StableRNG(42)
+        samples = rand(rng, distribution, 100)
+        evaluated = map(fn, eachcol(samples))
+
+
+        container = similar(evaluated)
+        inplacefn(container, eachcol(samples))
+
+        @test evaluated == container
+    end
+
+    @testset "Do not convert already inplace version" begin
+        distribution = MvNormal(ones(2), ones(2))
+        fn = InplaceLogpdf((out, x) -> logpdf!(out, distribution, x))
+        inplacefn = convert(InplaceLogpdf, fn)
+
+        @test inplacefn === fn
+
+        rng = StableRNG(42)
+        samples = rand(rng, distribution, 100)
+        evaluated = zeros(100)
+        fn(evaluated, eachcol(samples))
+
+        container = similar(evaluated)
+        inplacefn(container, eachcol(samples))
+
+        @test evaluated == container
+    end
+
+
+end

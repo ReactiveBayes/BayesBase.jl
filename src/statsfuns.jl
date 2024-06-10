@@ -326,3 +326,72 @@ Base.promote_rule(::Type{CountingReal}, ::Type{T}) where {T<:Real} = CountingRea
 function Base.:(==)(left::CountingReal{T}, right::CountingReal{T}) where {T}
     return (value(left) == value(right)) && (infinities(left) == infinities(right))
 end
+
+"""
+    InplaceLogpdf(logpdf!)
+
+Wraps a `logpdf!` function in a type that can later on be used for dispatch. 
+The sole purpose of this wrapper type is to allow for in-place logpdf operation on a batch of samples.
+Accepts a function `logpdf!` that takes two arguments: `out` and `sample` and writes the logpdf of the sample to the `out` array.
+A regular `logpdf` function can be converted to `logpdf!` by using `convert(InplaceLogpdf, logpdf)`.
+
+```jldoctest
+julia> using Distributions, BayesBase
+
+julia> d = Beta(2, 3);
+
+julia> inplace = convert(BayesBase.InplaceLogpdf, (sample) -> logpdf(d, sample));
+
+julia> out = zeros(9);
+
+julia> inplace(out, 0.1:0.1:0.9)
+9-element Vector{Float64}:
+ -0.028399474521697776
+  0.42918163472548043
+  0.5675839575845996
+  0.5469646703818638
+  0.4054651081081646
+  0.14149956227369964
+ -0.2797139028026039
+ -0.9571127263944104
+ -2.2256240518579173
+```
+
+```jldoctest
+julia> using Distributions, BayesBase
+
+julia> d = Beta(2, 3);
+
+julia> inplace = BayesBase.InplaceLogpdf((out, sample) -> logpdf!(out, d, sample));
+
+julia> out = zeros(9);
+
+julia> inplace(out, 0.1:0.1:0.9)
+9-element Vector{Float64}:
+ -0.028399474521697776
+  0.42918163472548043
+  0.5675839575845996
+  0.5469646703818638
+  0.4054651081081646
+  0.14149956227369964
+ -0.2797139028026039
+ -0.9571127263944104
+ -2.2256240518579173
+```
+"""
+struct InplaceLogpdf{F}
+    logpdf!::F
+end
+
+function (inplace::InplaceLogpdf)(out, x)
+    inplace.logpdf!(out, x)
+    return out
+end
+
+function Base.convert(::Type{InplaceLogpdf}, something)
+    return InplaceLogpdf((out, x) -> map!(something, out, x))
+end
+
+function Base.convert(::Type{InplaceLogpdf}, inplace::InplaceLogpdf)
+    return inplace
+end

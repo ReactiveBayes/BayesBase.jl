@@ -113,4 +113,5 @@ BayesBase.distribution_typewrapper
 BayesBase.CountingReal
 BayesBase.Infinity
 BayesBase.MinusInfinity
+BayesBase.InplaceLogpdf
 ```
