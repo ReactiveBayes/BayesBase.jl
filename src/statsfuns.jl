@@ -326,3 +326,34 @@ Base.promote_rule(::Type{CountingReal}, ::Type{T}) where {T<:Real} = CountingRea
 function Base.:(==)(left::CountingReal{T}, right::CountingReal{T}) where {T}
     return (value(left) == value(right)) && (infinities(left) == infinities(right))
 end
+
+"""
+    mcov!(Z, X::AbstractMatrix, Y::AbstractMatrix; tmp1 = zeros(eltype(Z), size(X, 2)), tmp2 = zeros(eltype(Z), size(Y, 2)), tmp3 = similar(X), tmp4 = similar(Y))
+
+Same as `Statistics.cov(X, Y)`, but does not allocate the result. Instead uses a buffer `Z` to store the result in.
+Additionally, it allows for passing temporary buffers `tmp1`, `tmp2`, `tmp3`, `tmp4` to avoid any allocations.
+"""
+function mcov!(
+    Z,
+    X::AbstractMatrix,
+    Y::AbstractMatrix;
+    tmp1=zeros(eltype(Z), size(X, 2)),
+    tmp2=zeros(eltype(Z), size(Y, 2)),
+    tmp3=similar(X),
+    tmp4=similar(Y),
+)
+    mean!(tmp1, X')
+    @. tmp3 = X - tmp1'
+
+    mean!(tmp2, Y')
+    @. tmp4 = Y - tmp2'
+
+    corrected::Bool = true
+    # mul!(Z, tmp3', tmp4, 1, 0)
+    BLAS.gemm!('T', 'N', true, tmp3, tmp4, false, Z)
+
+    b = 1//(size(tmp3, 1) - corrected)
+    @. Z = Z * b
+
+    return Z
+end
