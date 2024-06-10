@@ -87,6 +87,7 @@ BayesBase.clamplog
 BayesBase.mvtrigamma
 BayesBase.dtanh
 BayesBase.probvec
+BayesBase.mcov!
 BayesBase.mean_std
 BayesBase.mean_var
 BayesBase.mean_cov

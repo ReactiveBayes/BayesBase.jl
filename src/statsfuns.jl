@@ -328,7 +328,53 @@ function Base.:(==)(left::CountingReal{T}, right::CountingReal{T}) where {T}
 end
 
 """
-    InplaceLogpdf(logpdf!)
+    mcov!(Z, X::AbstractMatrix, Y::AbstractMatrix; tmp1 = zeros(eltype(Z), size(X, 2)), tmp2 = zeros(eltype(Z), size(Y, 2)), tmp3 = similar(X), tmp4 = similar(Y))
+
+Same as `Statistics.cov(X, Y)`, but does not allocate the result. Instead uses a buffer `Z` to store the result in.
+Additionally, it allows for passing temporary buffers `tmp1`, `tmp2`, `tmp3`, `tmp4` to avoid any allocations.
+Always computes `corrected = true` covariance matrix.
+"""
+function mcov!(
+    Z,
+    X::AbstractMatrix,
+    Y::AbstractMatrix;
+    tmp1=zeros(eltype(Z), size(X, 2)),
+    tmp2=zeros(eltype(Z), size(Y, 2)),
+    tmp3=similar(X),
+    tmp4=similar(Y),
+)
+    mean!(tmp1, X')
+    # @. tmp3 = X - tmp1'
+    @turbo warn_check_args = false for j in 1:size(X, 2)
+        for i in 1:size(X, 1)
+            tmp3[i, j] = X[i, j] - tmp1[j]
+        end
+    end
+
+    mean!(tmp2, Y')
+    # @. tmp4 = Y - tmp2'
+    @turbo warn_check_args = false for j in 1:size(X, 2)
+        for i in 1:size(X, 1)
+            tmp4[i, j] = Y[i, j] - tmp2[j]
+        end
+    end
+
+    # mul!(Z, tmp3', tmp4, 1, 0)
+    BLAS.gemm!('T', 'N', true, tmp3, tmp4, false, Z)
+
+    b = 1//(size(tmp3, 1) - 1)
+    # @. Z = Z * b
+    @turbo warn_check_args = false for j in 1:size(Z, 2)
+        for i in 1:size(Z, 1)
+            Z[i, j] *= b
+        end
+    end
+
+    return Z
+end
+
+"""
+InplaceLogpdf(logpdf!)
 
 Wraps a `logpdf!` function in a type that can later on be used for dispatch. 
 The sole purpose of this wrapper type is to allow for in-place logpdf operation on a batch of samples.

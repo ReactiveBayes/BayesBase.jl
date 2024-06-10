@@ -90,6 +90,33 @@ end
     end
 end
 
+@testitem "mcov!" begin
+    using StatsFuns, BayesBase, JET
+    import BayesBase: mcov!
+
+    for n in 2:5:20, j in 3:5:20
+        X = rand(j, n)
+        Y = rand(j, n)
+        Z = rand(n, n)
+
+        @inferred(mcov!(Z, X, Y))
+
+        @test all(Z .≈ cov(X, Y))
+
+        tmp1 = zeros(eltype(Z), size(X, 2))
+        tmp2 = zeros(eltype(Z), size(Y, 2))
+        tmp3 = similar(X)
+        tmp4 = similar(Y)
+
+        @inferred(mcov!(Z, X, Y; tmp1=tmp1, tmp2=tmp2, tmp3=tmp3, tmp4=tmp4))
+
+        @test all(Z .≈ cov(X, Y))
+
+        @report_opt mcov!(Z, X, Y; tmp1=tmp1, tmp2=tmp2, tmp3=tmp3, tmp4=tmp4)
+        @test @allocated(mcov!(Z, X, Y; tmp1=tmp1, tmp2=tmp2, tmp3=tmp3, tmp4=tmp4)) === 0
+    end
+end
+
 @testitem "InplaceLogpdf" begin
     import BayesBase: InplaceLogpdf
     using Distributions, LinearAlgebra, StableRNGs
@@ -146,7 +173,7 @@ end
         @test evaluated == container
     end
 
-    @testset "Shouldn't allocate anything for simple `logpdf!`" begin 
+    @testset "Shouldn't allocate anything for simple `logpdf!`" begin
         fn = InplaceLogpdf((out, x) -> out .= log.(x))
         samples = 1:10
         out = zeros(10)
