@@ -182,10 +182,14 @@ function BayesBase.support(product::ProductOf)
     return fuse_supports(support(getleft(product)), support(getright(product)))
 end
 
+function BayesBase.insupport(product::ProductOf, x)
+    return insupport(getleft(product), x) && insupport(getright(product), x)
+end
+
 BayesBase.pdf(product::ProductOf, x) = exp(logpdf(product, x))
 
 function BayesBase.logpdf(product::ProductOf, x)
-    @assert x ∈ support(product) "The `$(x)` does not belong to the support of the product `$(product)`"
+    @assert insupport(product, x) lazy"The `$(x)` does not belong to the support of the product `$(product)`"
     return logpdf(getleft(product), x) + logpdf(getright(product), x)
 end
 
@@ -332,6 +336,7 @@ function Base.push!(product::LinearizedProductOf{F}, item::F) where {F}
 end
 
 BayesBase.support(dist::LinearizedProductOf) = support(first(dist.vector))
+BayesBase.insupport(dist::LinearizedProductOf, x) = insupport(first(dist.vector), x)
 
 Base.length(product::LinearizedProductOf) = product.length
 Base.eltype(product::LinearizedProductOf) = eltype(first(product.vector))
@@ -352,7 +357,7 @@ function Base.show(io::IO, product::LinearizedProductOf{F}) where {F}
 end
 
 function BayesBase.logpdf(product::LinearizedProductOf, x)
-    @assert x ∈ support(product) "The `$(x)` does not belong to the support of the product `$(product)`"
+    @assert insupport(product, x) "The `$(x)` does not belong to the support of the product `$(product)`"
     return mapreduce(
         (d) -> logpdf(d, x),
         +,
