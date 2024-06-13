@@ -293,3 +293,39 @@ end
         PreserveTypeRightProd(), PreserveTypeLeftProd()
     )
 end
+
+@testitem "`ProductOf` should support distributions that do not have explicitly defined `support`" begin
+    
+    struct SomeComplexDistribution end
+
+    BayesBase.support(::SomeComplexDistribution) = error("not defined")
+    BayesBase.insupport(::SomeComplexDistribution, x) = x > 0
+    BayesBase.logpdf(::SomeComplexDistribution, x) = x
+
+    prod = ProductOf(SomeComplexDistribution(), SomeComplexDistribution())
+
+    @test_throws "not defined" support(prod)
+    @test insupport(prod, 1)
+    @test !insupport(prod, -1)
+    @test logpdf(prod, 1) === 2
+    @test logpdf(prod, 2) === 4
+
+end
+
+@testitem "`LinearizedProductOf` should support distributions that do not have explicitly defined `support`" begin
+    
+    struct SomeComplexDistribution end
+
+    BayesBase.support(::SomeComplexDistribution) = error("not defined")
+    BayesBase.insupport(::SomeComplexDistribution, x) = x > 0
+    BayesBase.logpdf(::SomeComplexDistribution, x) = x
+
+    prod = LinearizedProductOf([SomeComplexDistribution(), SomeComplexDistribution()], 2)
+
+    @test_throws "not defined" support(prod)
+    @test insupport(prod, 1)
+    @test !insupport(prod, -1)
+    @test logpdf(prod, 1) === 2
+    @test logpdf(prod, 2) === 4
+
+end

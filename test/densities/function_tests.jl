@@ -191,8 +191,8 @@ end
     d5 = ContinuousUnivariateLogPdf(FullSpace(), (x) -> 2.0 * -x^2)
     d6 = ContinuousUnivariateLogPdf(HalfLine(), (x) -> 2.0 * -x^2)
 
-    @test_throws AssertionError logpdf(prod(GenericProd(), d5, d6), 1.0) # domains are different
-    @test_throws AssertionError logpdf(prod(GenericProd(), d5, d6), -1.0) # domains are different
+    @test logpdf(prod(GenericProd(), d5, d6), 1.0) ≈ -4.0
+    @test_throws AssertionError logpdf(prod(GenericProd(), d5, d6), -1.0) # supports are different
 end
 
 @testitem "ContinuousUnivariateLogPdf: vectorised-prod" begin
