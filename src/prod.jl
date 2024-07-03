@@ -418,6 +418,18 @@ function Base.prod(
 end
 
 function Base.prod(
+    ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::T, right::ProductOf{T,T}
+) where {T}
+    return LinearizedProductOf(T[left, getleft(right), getright(right)], 3)
+end
+
+function Base.prod(
+    ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::ProductOf{T,T}, right::T
+) where {T}
+    return LinearizedProductOf(T[getleft(left), getright(left), right], 3)
+end
+
+function Base.prod(
     ::GenericProd,
     ::UnspecifiedProd,
     ::UnspecifiedProd,
