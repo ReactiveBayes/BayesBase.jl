@@ -388,12 +388,6 @@ function Base.prod(
 end
 
 function Base.prod(
-    ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::ProductOf{F,F}, right::F
-) where {F}
-    return LinearizedProductOf(F[getleft(left), getright(left), right], 3)
-end
-
-function Base.prod(
     ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::ProductOf{L,R}, right::R
 ) where {L,R}
     return ProductOf(getleft(left), LinearizedProductOf(R[getright(left), right], 2))
