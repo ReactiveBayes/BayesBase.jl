@@ -295,7 +295,6 @@ end
 end
 
 @testitem "`ProductOf` should support distributions that do not have explicitly defined `support`" begin
-    
     struct SomeComplexDistribution end
 
     BayesBase.support(::SomeComplexDistribution) = error("not defined")
@@ -309,11 +308,9 @@ end
     @test !insupport(prod, -1)
     @test logpdf(prod, 1) === 2
     @test logpdf(prod, 2) === 4
-
 end
 
 @testitem "`LinearizedProductOf` should support distributions that do not have explicitly defined `support`" begin
-    
     struct SomeComplexDistribution end
 
     BayesBase.support(::SomeComplexDistribution) = error("not defined")
@@ -327,5 +324,34 @@ end
     @test !insupport(prod, -1)
     @test logpdf(prod, 1) === 2
     @test logpdf(prod, 2) === 4
+end
 
+@testitem "There should be no ambiguity in `prod` for `ProductOf`" begin
+    struct SomeArbitraryDistribution end
+
+    @test prod(
+        GenericProd(),
+        SomeArbitraryDistribution(),
+        ProductOf(SomeArbitraryDistribution(), SomeArbitraryDistribution()),
+    ) == LinearizedProductOf(
+        [
+            SomeArbitraryDistribution(),
+            SomeArbitraryDistribution(),
+            SomeArbitraryDistribution(),
+        ],
+        3,
+    )
+
+    @test prod(
+        GenericProd(),
+        ProductOf(SomeArbitraryDistribution(), SomeArbitraryDistribution()),
+        SomeArbitraryDistribution(),
+    ) == LinearizedProductOf(
+        [
+            SomeArbitraryDistribution(),
+            SomeArbitraryDistribution(),
+            SomeArbitraryDistribution(),
+        ],
+        3,
+    )
 end
