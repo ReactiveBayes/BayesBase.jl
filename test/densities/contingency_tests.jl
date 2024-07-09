@@ -20,6 +20,10 @@ end
 
     @test typeof(d2) <: Contingency
     @test components(d2) ≈ ones(4, 4) ./ 16
+
+    d3 = vague(Contingency, 5, 3)
+    @test typeof(d3) <: Contingency
+    @test components(d3) ≈ ones(5, 5, 5) ./ 125
 end
 
 @testitem "Contingency: entropy" begin
@@ -31,6 +35,17 @@ end
     @test entropy(Contingency(10.0 * [0.09 0.00; 0.00 0.91])) ≈ 0.30253782309749805
     @test !isnan(entropy(Contingency([0.0 1.0; 1.0 0.0])))
     @test !isinf(entropy(Contingency([0.0 1.0; 1.0 0.0])))
+
+    @test entropy(
+        Contingency(
+            stack([
+                0.3 * [0.2 0.1 0.7; 0.4 0.3 0.3; 0.1 0.6 0.3],
+                0.7 * [0.2 0.1 0.7; 0.4 0.3 0.3; 0.1 0.6 0.3],
+            ],),
+        ),
+    ) ≈ 2.6390313416381166
+
+    @test entropy(Contingency(ones(2, 2, 2))) == 2.0794415416798357
 end
 
 @testitem "Contingency: isapprox" begin

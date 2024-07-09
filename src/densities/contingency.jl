@@ -22,25 +22,25 @@ A `Contingency` distribution over more than two variables requires higher-order 
 - `renormalize`, optional, supports either `Val(true)` or `Val(false)`, specifies whether matrix `P` must be automatically renormalized. Does not modify the original `P` and allocates a new one for the renormalized version. If set to `false` the contingency matrix `P` **must** be normalized by hand, otherwise the result of related calculations might be wrong
 
 """
-struct Contingency{T,P<:AbstractMatrix{T}}
+struct Contingency{T,P<:AbstractArray{T}}
     p::P
 
-    Contingency{T,P}(A::AbstractMatrix) where {T,P<:AbstractMatrix{T}} = new(A)
+    Contingency{T,P}(A::AbstractArray) where {T,P<:AbstractArray{T}} = new(A)
 end
 
-Contingency(P::AbstractMatrix) = Contingency(P, Val(true))
+Contingency(P::AbstractArray) = Contingency(P, Val(true))
 
-function Contingency(P::M, ::Val{true}) where {T,M<:AbstractMatrix{T}}
+function Contingency(P::M, ::Val{true}) where {T,M<:AbstractArray{T}}
     return Contingency{T,M}(P ./ sum(P))
 end
 
-Contingency(P::M, ::Val{false}) where {T,M<:AbstractMatrix{T}} = Contingency{T,M}(P)
+Contingency(P::M, ::Val{false}) where {T,M<:AbstractArray{T}} = Contingency{T,M}(P)
 
 BayesBase.components(distribution::Contingency) = distribution.p
 BayesBase.component(distribution::Contingency, k) = distribution.p[:, k]
 
-function BayesBase.vague(::Type{<:Contingency}, dims::Int)
-    return Contingency(ones(dims, dims) ./ abs2(dims))
+function BayesBase.vague(::Type{<:Contingency}, dims::Int, nvars::Int=2)
+    return Contingency(ones([dims for _ in 1:nvars]...))
 end
 
 BayesBase.paramfloattype(distribution::Contingency) = deep_eltype(components(distribution))
