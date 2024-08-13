@@ -119,13 +119,13 @@ function BayesBase.probvec(distribution::PointMass{V}) where {T<:Real,V<:Abstrac
 end
 
 function BayesBase.cov(distribution::PointMass{M}) where {T<:Real,N,M<:AbstractArray{T,N}}
-    return error("cov(::PointMass{ <: AbstractMatrix }) is not defined")
+    return error("cov(::PointMass{ <: $M }) is not defined")
 end
 
 function BayesBase.probvec(
     distribution::PointMass{M}
 ) where {T<:Real,N,M<:AbstractArray{T,N}}
-    return error("probvec(::PointMass{ <: AbstractMatrix }) is not defined")
+    return error("probvec(::PointMass{ <: $M }) is not defined")
 end
 
 function Base.precision(distribution::PointMass{V}) where {T<:Real,V<:AbstractArray{T}}
