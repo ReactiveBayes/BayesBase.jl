@@ -51,6 +51,7 @@ end
 @testitem "Vector-based PointMass" begin
     using SpecialFunctions: loggamma
     using TinyHugeNumbers
+    using BayesBase
 
     for T in (Float16, Float32, Float64, BigFloat), N in (5, 10)
         vector = rand(T, N)
@@ -169,6 +170,69 @@ end
         end
 
         @test_throws MethodError mean(loggamma, dist)
+    end
+end
+
+@testitem "Tensor-based PointMass" begin
+    using SpecialFunctions: loggamma
+    using TinyHugeNumbers
+    using Distributions
+
+    for D in [3, 4, 5]
+        for T in (Float16, Float32, Float64, BigFloat), N in (5, 10)
+            tensor = rand(T, ntuple(_ -> N, D))
+            dist = PointMass(tensor)
+
+            @test variate_form(typeof(dist)) === Distributions.ArrayLikeVariate{D}
+            @test dist[2] === tensor[2]
+            @test dist[3] === tensor[3]
+            @test dist[ntuple(_ -> 3, D)...] === tensor[ntuple(_ -> 3, D)...]
+            for i in 1:D
+                @test size(dist, i) === size(tensor, i)
+            end
+            @test_throws BoundsError dist[N^(D + 1)]
+            @test_throws BoundsError dist[ntuple(_ -> N + 1, D)...]
+
+            @test insupport(dist, tensor)
+            @test !insupport(dist, tensor .+ tiny)
+            @test !insupport(dist, tensor .- tiny)
+
+            @test @inferred(T, pdf(dist, tensor)) == one(T)
+            @test @inferred(T, pdf(dist, tensor .+ tiny)) == zero(T)
+            @test @inferred(T, pdf(dist, tensor .- tiny)) == zero(T)
+
+            @test @inferred(T, logpdf(dist, tensor)) == zero(T)
+            @test @inferred(T, logpdf(dist, tensor .+ tiny)) == convert(T, -Inf)
+            @test @inferred(T, logpdf(dist, tensor .- tiny)) == convert(T, -Inf)
+
+            for i in 1:(D - 1)
+                @test_throws MethodError insupport(dist, ones(T, ntuple(_ -> 2, i)...))
+                @test_throws MethodError pdf(dist, ones(T, ntuple(_ -> 2, i)...))
+                @test_throws MethodError logpdf(dist, ones(T, ntuple(_ -> 2, i)...))
+            end
+
+            @test (@inferred entropy(dist)) == BayesBase.MinusInfinity(T)
+
+            @test @inferred(AbstractArray{D,T}, mean(dist)) == tensor
+            @test @inferred(AbstractArray{D,T}, mode(dist)) == tensor
+            @test @inferred(AbstractArray{D,T}, var(dist)) == zeros(ntuple(_ -> N, D)...)
+            @test @inferred(AbstractArray{D,T}, std(dist)) == zeros(ntuple(_ -> N, D)...)
+            @test @inferred(Tuple{Int,Int,Int}, ndims(dist)) == ntuple(_ -> N, D)
+            @test @inferred(Type{T}, eltype(dist)) == T
+
+            @test_throws ErrorException cov(dist)
+            @test_throws ErrorException precision(dist)
+
+            @test_throws ErrorException probvec(dist)
+            @test @inferred(
+                AbstractArray{D,T}, mean(Base.Broadcast.BroadcastFunction(log), dist)
+            ) == log.(tensor)
+            @test @inferred(
+                AbstractArray{D,T}, mean(Base.Broadcast.BroadcastFunction(loggamma), dist)
+            ) == loggamma.(tensor)
+
+            @test_throws MethodError mean(loggamma, dist)
+        end
     end
 end
 
