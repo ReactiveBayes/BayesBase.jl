@@ -18,7 +18,6 @@ StatsFuns = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
 TinyHugeNumbers = "783c9a47-75a3-44ac-a16b-f1ab7b3acf04"
 
 [compat]
-BenchmarkTools = "1.5.0"
 Distributions = "0.25"
 DomainSets = "0.5.2, 0.6, 0.7"
 LinearAlgebra = "1.9"
