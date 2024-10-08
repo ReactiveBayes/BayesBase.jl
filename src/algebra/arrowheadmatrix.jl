@@ -43,26 +43,34 @@ function LinearAlgebra.mul!(y, A::ArrowheadMatrix{T}, x::AbstractVector{T}) wher
     return y
 end
 
-function linsolve!(y, A::ArrowheadMatrix, b::AbstractVector)
+function linsolve!(y::AbstractVector{T}, A::ArrowheadMatrix{T}, b::AbstractVector{T}) where T
     n = length(A.z)
     @assert length(b) == n + 1 "Dimension mismatch."
+    @assert length(y) == n + 1 "Dimension mismatch."
 
     z = A.z
     D = A.D
     α = A.α
 
-    if any(iszero, D)
-        throw(DomainError("Matrix is singular"))
+    # Check for zeros in D to avoid division by zero
+    @inbounds for i in 1:n
+        if D[i] == 0
+            throw(DomainError("Matrix is singular"))
+        end
     end
 
-    s = zero(eltype(y))
-    @inbounds for i in 1:n
-        s += (z[i] / D[i]) * b[i]
-    end
+    s = zero(T)
+    t = zero(T)
 
-    t = zero(eltype(y))
-    @inbounds for i in 1:n
-        t += (z[i] / D[i]) * z[i]
+    # Compute s and t in a single loop to avoid recomputing z[i] / D[i]
+    @inbounds @simd for i in 1:n
+        zi = z[i]
+        Di = D[i]
+        z_div_D = zi / Di
+        bi = b[i]
+
+        s += z_div_D * bi       # Accumulate s
+        t += z_div_D * zi       # Accumulate t
     end
 
     denom = α - t
@@ -70,10 +78,12 @@ function linsolve!(y, A::ArrowheadMatrix, b::AbstractVector)
         throw(DomainError("Matrix is singular"))
     end
 
-    y[n+1] = (b[n + 1] - s) / denom
+    yn1 = (b[n + 1] - s) / denom
+    y[n + 1] = yn1
 
-    @inbounds for i in 1:n
-        y[i] = (b[i] - z[i] * y[n+1]) / D[i]
+    # Compute y[1:n]
+    @inbounds @simd for i in 1:n
+        y[i] = (b[i] - z[i] * yn1) / D[i]
     end
 
     return y
