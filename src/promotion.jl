@@ -156,6 +156,9 @@ sampletype(::Type{Univariate}, distribution) = eltype(distribution)
 sampletype(::Type{Multivariate}, distribution) = Vector{eltype(distribution)}
 sampletype(::Type{Matrixvariate}, distribution) = Matrix{eltype(distribution)}
 
+# Exceptions
+sampletype(::Gamma{T}) where {T} = T
+
 """
     samplefloattype(distribution)
 
