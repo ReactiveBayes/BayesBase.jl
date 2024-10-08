@@ -185,3 +185,38 @@ end
         @test x_arrow ≈ x_dense
     end
 end
+
+@testitem "ArrowheadMatrix: Memory allocation comparison with dense matrix" begin
+    using Test
+    include("algebrasetup_setuptests.jl")
+
+    function memory_size(x)
+        return Base.summarysize(x)
+    end
+
+    sizes = [10, 100, 1000, 10000]
+    arrow_mem = zeros(Int, length(sizes))
+    dense_mem = zeros(Int, length(sizes))
+
+    for (i, n) in enumerate(sizes)
+        α = rand()^2 + 1.0
+        z = randn(n)
+        D = rand(n).^2 .+ 1.0
+
+        A_arrow = ArrowheadMatrix(α, z, D)
+        A_dense = [Diagonal(D) z; z' α]
+
+
+        arrow_mem[i] = memory_size(A_arrow)
+        dense_mem[i] = memory_size(A_dense)
+        @test arrow_mem[i] < dense_mem[i]
+    end
+
+    mem_ratio = dense_mem ./ arrow_mem
+
+    for i in 2:length(sizes)
+        ratio_growth = mem_ratio[i] / mem_ratio[i-1]
+        size_growth = sizes[i] / sizes[i-1]
+        @test isapprox(ratio_growth, size_growth, rtol=0.5)
+    end
+end
