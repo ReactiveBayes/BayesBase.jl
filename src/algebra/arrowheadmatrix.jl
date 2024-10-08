@@ -51,21 +51,31 @@ function linsolve!(y, A::ArrowheadMatrix, b::AbstractVector)
     D = A.D
     α = A.α
 
-    if any(iszero, A.D)
+    if any(iszero, D)
         throw(DomainError("Matrix is singular"))
     end
-    @inbounds @views begin
-        s = dot(z ./ D, b[1:n])
-        t = dot(z ./ D, z)
-        denom = α - t
-    
-        if denom == 0
-            throw(DomainError("Matrix is singular"))
-        end
 
-        y[n+1] = (b[n + 1] - s) / denom
-        y[1:n] .= (b[1:n] - z * y[n+1]) ./ D
+    s = zero(eltype(y))
+    @inbounds for i in 1:n
+        s += (z[i] / D[i]) * b[i]
     end
+
+    t = zero(eltype(y))
+    @inbounds for i in 1:n
+        t += (z[i] / D[i]) * z[i]
+    end
+
+    denom = α - t
+    if denom == 0
+        throw(DomainError("Matrix is singular"))
+    end
+
+    y[n+1] = (b[n + 1] - s) / denom
+
+    @inbounds for i in 1:n
+        y[i] = (b[i] - z[i] * y[n+1]) / D[i]
+    end
+
     return y
 end
 
