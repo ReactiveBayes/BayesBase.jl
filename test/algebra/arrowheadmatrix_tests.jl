@@ -163,23 +163,18 @@ end
         
         b = randn(n+1)
         
-        # Warm-up runs
         _ = A_arrow \ b
         _ = A_dense \ b
         
-        # Benchmark ArrowheadMatrix division
-        time_arrow = @btime $A_arrow \ $b
+        time_arrow = @benchmark $A_arrow \ $b;
         allocs_arrow = @allocations A_arrow \ b
         
-        # Benchmark dense matrix division
-        time_dense = @btime $A_dense \ $b
+        time_dense = @benchmark $A_dense \ $b;
         allocs_dense = @allocations A_dense \ b
         
-        # Check if ArrowheadMatrix is more efficient
-        @test time_arrow < time_dense
+        @test minimum(time_arrow.times) < minimum(time_dense.times)/n
         @test allocs_arrow < allocs_dense
         
-        # Check correctness
         x_arrow = A_arrow \ b
         x_dense = A_dense \ b
         @test x_arrow ≈ x_dense
