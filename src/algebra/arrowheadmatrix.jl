@@ -58,6 +58,29 @@ function ArrowheadMatrix(a::T, z::Z, d::D) where {T,Z,D}
     return ArrowheadMatrix{O, T, Z, D}(a, z, d)
 end
 
+function show(io::IO, ::MIME"text/plain", A::ArrowheadMatrix)
+    n = length(A.D) + 1
+    println(io, n, "×", n, " ArrowheadMatrix{", eltype(A), "}:")
+    
+    for i in 1:n-1
+        for j in 1:n-1
+            if i == j
+                print(io, A.D[i])
+            else
+                print(io, "⋅")
+            end
+            print(io, "  ")
+        end
+        println(io, A.z[i])
+    end
+    
+    # Print the last row
+    for i in 1:n-1
+        print(io, A.z[i], "  ")
+    end
+    println(io, A.α)
+end
+
 function size(A::ArrowheadMatrix)
     n = length(A.D) + 1
     return (n, n)
@@ -199,6 +222,14 @@ dense_inv_A = convert(Matrix, A_inv)
 struct InvArrowheadMatrix{O, T, Z, P} <: AbstractMatrix{O}
     A::ArrowheadMatrix{O, T, Z, P}
 end
+
+function show(io::IO, ::MIME"text/plain", A_inv::InvArrowheadMatrix)
+    n = size(A_inv.A, 1)
+    println(io, n, "×", n, " InvArrowheadMatrix{", eltype(A_inv), "}:")
+    println(io, "Inverse of:")
+    show(io, MIME"text/plain"(), A_inv.A)
+end
+
 
 inv(A::ArrowheadMatrix) = InvArrowheadMatrix(A)
 

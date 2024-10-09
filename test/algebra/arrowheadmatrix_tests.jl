@@ -11,7 +11,7 @@ end
 
 @testitem "ArrowheadMatrix: Multiplication with Vector" begin
     include("algebrasetup_setuptests.jl")
-    for n in 2:2
+    for n in 2:20
         α = randn()
         z = randn(n)
         D = randn(n)
@@ -163,6 +163,7 @@ end
         
         b = randn(n+1)
         
+        # warm-up runs
         _ = A_arrow \ b
         _ = A_dense \ b
         
@@ -172,6 +173,7 @@ end
         time_dense = @benchmark $A_dense \ $b;
         allocs_dense = @allocations A_dense \ b
         
+        # ours at least n times faster where n is dimensionality
         @test minimum(time_arrow.times) < minimum(time_dense.times)/n
         @test allocs_arrow < allocs_dense
         
