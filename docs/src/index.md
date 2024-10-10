@@ -100,6 +100,12 @@ BayesBase.weightedmean_cov
 BayesBase.weightedmean_invcov
 ```
 
+## [Extra matrix structures](@id matrix-structures)
+```@docs
+BayesBase.ArrowheadMatrix
+BayesBase.InvArrowheadMatrix
+```
+
 ## [Helper utilities](@id library-helpers)
 
 ```@docs

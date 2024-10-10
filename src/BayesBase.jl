@@ -96,5 +96,6 @@ include("densities/samplelist.jl")
 include("densities/mixture.jl")
 include("densities/factorizedjoint.jl")
 include("densities/contingency.jl")
+include("algebra/arrowheadmatrix.jl")
 
 end
