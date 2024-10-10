@@ -183,6 +183,43 @@ end
     end
 end
 
+
+@testitem "ArrowheadMatrix: Performance comparison with dense matrix" begin
+    using BenchmarkTools
+    using FastCholesky
+    include("algebrasetup_setuptests.jl")
+
+    for n in [10, 100, 1000]
+        α = rand()^2 + 1.0  # Ensure α is not too close to zero
+        z = randn(n)
+        D = rand(n).^2 .+ 1.0 # Ensure D elements are not too close to zero
+        A_arrow = ArrowheadMatrix(α, z, D)
+        
+        # Create equivalent dense matrix
+        A_dense = [Diagonal(D) z; z' α]
+        
+        b = randn(n+1)
+        
+        # warm-up runs
+        _ = cholinv(A_arrow) \ b
+        _ = cholinv(A_dense) \ b
+        
+        time_arrow = @benchmark cholinv($A_arrow) * $b;
+        allocs_arrow = @allocations cholinv(A_arrow) * b
+        
+        time_dense = @benchmark cholinv($A_dense) * $b;
+        allocs_dense = @allocations cholinv(A_dense) * b
+        
+        # ours at least n times faster where n is dimensionality
+        @test minimum(time_arrow.times) < minimum(time_dense.times)/n
+        @test allocs_arrow < allocs_dense
+        
+        x_arrow = A_arrow \ b
+        x_dense = A_dense \ b
+        @test x_arrow ≈ x_dense
+    end
+end
+
 @testitem "ArrowheadMatrix: Memory allocation comparison with dense matrix" begin
     using Test
     include("algebrasetup_setuptests.jl")
