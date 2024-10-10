@@ -112,11 +112,11 @@ function LinearAlgebra.mul!(y, A::ArrowheadMatrix{T}, x::AbstractVector{T}) wher
     return y
 end
 
-function linsolve!(y::AbstractVector{T}, A::ArrowheadMatrix{T}, b::AbstractVector{T}) where T
+function linsolve!(y::AbstractVector{T2}, A::ArrowheadMatrix{T}, b::AbstractVector{T2}) where {T, T2}
     n = length(A.z)
 
     if length(b) != n + 1
-        throw(DimensionMismatch(1))
+        throw(DimensionMismatch())
     end
 
     z = A.z
@@ -146,7 +146,7 @@ function linsolve!(y::AbstractVector{T}, A::ArrowheadMatrix{T}, b::AbstractVecto
 
     denom = α - t
     if denom == 0
-        throw(SingularException("matrix is singular"))
+        throw(SingularException(1))
     end
 
     yn1 = (b[n + 1] - s) / denom
