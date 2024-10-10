@@ -208,7 +208,7 @@ end
         allocs_arrow = @allocations cholinv(A_arrow) * b
         
         time_dense = @benchmark cholinv($A_dense) * $b;
-        allocs_dense = @allocations cholinv(A_dense) * b
+        allocs_dense = @allocations cholinv(A_dense)  b
         
         # ours at least n times faster where n is dimensionality
         @test minimum(time_arrow.times) < minimum(time_dense.times)/n
@@ -220,7 +220,7 @@ end
     end
 end
 
-@testitem "ArrowheadMatrix: Memory allocation comparison with dense matrix" begin
+@testitem "ArrowheadMatrix: Memory allocation comparison with cholinv" begin
     using Test
     include("algebrasetup_setuptests.jl")
 
