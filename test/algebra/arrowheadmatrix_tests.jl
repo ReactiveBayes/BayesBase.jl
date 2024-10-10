@@ -47,28 +47,6 @@ end
     end
 end
 
-@testitem "ArrowheadMatrix: Handling Singular Matrices" begin
-    include("algebrasetup_setuptests.jl")
-
-    α = 0.0
-    z = [0.0, 0.0, 0.0]
-    D = [1.0, 5.0, 6.0]
-    A = ArrowheadMatrix(α, z, D)
-    
-    b = [7.0, 8.0, 9.0, 10.0]
-
-    @test_throws DomainError A \ b
-
-    α = 0.0
-    z = [1.0, 0.0, 0.0]
-    D = [0.0, 5.0, 6.0]
-    A = ArrowheadMatrix(α, z, D)
-    b = [7.0, 8.0, 9.0, 10.0]
-
-    @test_throws DomainError A \ b
-end
-
-
 @testitem "InvArrowheadMatrix: Construction and Properties" begin
     include("algebrasetup_setuptests.jl")
 
@@ -254,3 +232,120 @@ end
         @test isapprox(ratio_growth, size_growth, rtol=0.5)
     end
 end
+
+@testitem "ArrowheadMatrix: Error handling comparison with dense matrix" begin
+    include("algebrasetup_setuptests.jl")
+
+    function test_error_consistency(A_arrow, A_dense, operation)
+        arrow_error = nothing
+        dense_error = nothing
+        
+        try
+            operation(A_arrow)
+        catch e
+            arrow_error = e
+        end
+
+        try
+            operation(A_dense)
+        catch e
+            dense_error = e
+        end
+
+        if isnothing(arrow_error) && isnothing(dense_error)
+            @test true  # Both succeeded, no error
+        elseif !isnothing(arrow_error) && !isnothing(dense_error)
+            @test typeof(arrow_error) == typeof(dense_error)  # Same error type
+        else
+            @test false  # One threw an error while the other didn't
+        end
+    end
+
+    for n in [3, 10]
+        α = randn()
+        z = randn(n)
+        D = randn(n)
+        A_arrow = ArrowheadMatrix(α, z, D)
+        A_dense = [Diagonal(D) z; z' α]
+
+        # Test invalid dimension for multiplication
+        invalid_vector = randn(n+2)
+        test_error_consistency(A_arrow, A_dense, A -> A * invalid_vector)
+
+        # Test multiplication with matrix of incorrect size
+        invalid_matrix = randn(n+2, n)
+        test_error_consistency(A_arrow, A_dense, A -> A * invalid_matrix)
+
+        # Test singularity in linear solve
+        singular_α = 0.0
+        singular_z = zeros(n)
+        singular_D = vcat(0.0, ones(n-1))
+        A_arrow_singular = ArrowheadMatrix(singular_α, singular_z, singular_D)
+        A_dense_singular = [Diagonal(singular_D) singular_z; singular_z' singular_α]
+        b = randn(n+1)
+        test_error_consistency(A_arrow_singular, A_dense_singular, A -> A \ b)
+
+        # Test linear solve with vector of incorrect size
+        invalid_b = randn(n+2)
+        test_error_consistency(A_arrow, A_dense, A -> A \ invalid_b)
+    end
+end
+# @testitem "ArrowheadMatrix: Error handling comparison with dense matrix for \ and * operations" begin
+#     include("algebrasetup_setuptests.jl")
+#     using LinearAlgebra
+
+#     function test_error_consistency(A_arrow, A_dense, operation)
+#         arrow_error = nothing
+#         dense_error = nothing
+        
+#         try
+#             operation(A_arrow)
+#         catch e
+#             arrow_error = e
+#         end
+
+#         try
+#             operation(A_dense)
+#         catch e
+#             dense_error = e
+#         end
+
+#         if isnothing(arrow_error) && isnothing(dense_error)
+#             @test true  # Both succeeded, no error
+#         elseif !isnothing(arrow_error) && !isnothing(dense_error)
+#             @test typeof(arrow_error) == typeof(dense_error)  # Same error type
+#         else
+#             @test false  # One threw an error while the other didn't
+#         end
+#     end
+
+#     # Test cases
+#     for n in [3, 10]
+#         α = randn()
+#         z = randn(n)
+#         D = randn(n)
+#         A_arrow = ArrowheadMatrix(α, z, D)
+#         A_dense = [Diagonal(D) z; z' α]
+
+#         # Test invalid dimension for multiplication
+#         invalid_vector = randn(n+2)
+#         test_error_consistency(A_arrow, A_dense, A -> A * invalid_vector)
+
+#         # Test multiplication with matrix of incorrect size
+#         invalid_matrix = randn(n+2, n)
+#         test_error_consistency(A_arrow, A_dense, A -> A * invalid_matrix)
+
+#         # Test singularity in linear solve
+#         singular_α = 0.0
+#         singular_z = zeros(n)
+#         singular_D = vcat(0.0, ones(n-1))
+#         A_arrow_singular = ArrowheadMatrix(singular_α, singular_z, singular_D)
+#         A_dense_singular = [Diagonal(singular_D) singular_z; singular_z' singular_α]
+#         b = randn(n+1)
+#         test_error_consistency(A_arrow_singular, A_dense_singular, A -> A \ b)
+
+#         # Test linear solve with vector of incorrect size
+#         invalid_b = randn(n+2)
+#         test_error_consistency(A_arrow, A_dense, A -> A \ invalid_b)
+#     end
+# end

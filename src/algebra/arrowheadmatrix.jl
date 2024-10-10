@@ -1,5 +1,7 @@
 export ArrowheadMatrix, InvArrowheadMatrix
 
+
+import LinearAlgebra: SingularException
 import Base: getindex
 import LinearAlgebra: mul!
 import Base: size, *, \, inv, convert, Matrix
@@ -112,8 +114,10 @@ end
 
 function linsolve!(y::AbstractVector{T}, A::ArrowheadMatrix{T}, b::AbstractVector{T}) where T
     n = length(A.z)
-    @assert length(b) == n + 1 "Dimension mismatch."
-    @assert length(y) == n + 1 "Dimension mismatch."
+
+    if length(b) != n + 1
+        throw(DimensionMismatch(1))
+    end
 
     z = A.z
     D = A.D
@@ -122,7 +126,7 @@ function linsolve!(y::AbstractVector{T}, A::ArrowheadMatrix{T}, b::AbstractVecto
     # Check for zeros in D to avoid division by zero
     @inbounds for i in 1:n
         if D[i] == 0
-            throw(DomainError("Matrix is singular"))
+            throw(SingularException(1))
         end
     end
 
@@ -142,7 +146,7 @@ function linsolve!(y::AbstractVector{T}, A::ArrowheadMatrix{T}, b::AbstractVecto
 
     denom = α - t
     if denom == 0
-        throw(DomainError("Matrix is singular"))
+        throw(SingularException("matrix is singular"))
     end
 
     yn1 = (b[n + 1] - s) / denom
