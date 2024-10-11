@@ -1,11 +1,14 @@
 name: CI
 on:
+  workflow_dispatch:
+  pull_request:
+    types: [ready_for_review,reopened,synchronize]
+  pull_request_review:
+    types: [submitted,edited]
   push:
     branches:
-      - main
-    tags: ['*']
-  pull_request:
-  workflow_dispatch:
+      - 'main'
+    tags: '*'
 concurrency:
   # Skip intermediate builds: always.
   # Cancel intermediate builds: only if it is a pull request build.
