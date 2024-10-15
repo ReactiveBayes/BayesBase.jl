@@ -288,5 +288,102 @@ end
         # Test linear solve with vector of incorrect size
         invalid_b = randn(n+2)
         test_error_consistency(A_arrow, A_dense, A -> A \ invalid_b)
+
+        # Test BoundsError consistency
+        test_error_consistency(A_arrow, A_dense, A -> A[n+2, n+2])
+        test_error_consistency(A_arrow, A_dense, A -> A[0, 1])
+        test_error_consistency(A_arrow, A_dense, A -> A[1, 0])
+        test_error_consistency(A_arrow, A_dense, A -> A[-1, -1])
+
+        #Test ≈ error
+        test_error_consistency(A_arrow, A_dense, A -> A ≈ zeros(n+1, n+1))
+
+        #Test matmul error 
+        test_error_consistency(A_arrow, A_dense, A -> A * zeros(n+1, n+1))
+        test_error_consistency(A_arrow, A_dense, A -> zeros(n+1, n+1) * A)
+
+        #Test dot (x, inv(A), y)
+        test_error_consistency(A_arrow, A_dense, A -> dot(zeros(n+1), inv(A), zeros(n)))
+        test_error_consistency(A_arrow, A_dense, A -> dot(zeros(n), inv(A), zeros(n+1)))
+    end
+end
+
+@testitem "ArrowheadMatrix getindex based methods: matmul and ≈" begin
+    include("algebrasetup_setuptests.jl")
+    
+    @testset "ArrowheadMatrix: matmul" begin
+        for n in [3, 5, 10]
+            α = randn()
+            z = randn(n)
+            D = randn(n)
+            A = ArrowheadMatrix(α, z, D)
+            
+            B = randn(n+1, n+1)
+            
+            C_right = A * B
+            C_right_dense = convert(Matrix, A) * B
+            @test C_right ≈ C_right_dense
+            
+            C_left = B * A
+            C_left_dense = B * convert(Matrix, A)
+            @test C_left ≈ C_left_dense
+            
+            # Check that the result is a dense matrix
+            @test typeof(C_right) <: Matrix
+            @test typeof(C_left) <: Matrix
+        end
+    end
+
+    @testset "ArrowheadMatrix: ≈" begin
+        for n in [3, 5, 10]
+            α = randn()
+            z = randn(n)
+            D = randn(n)
+            A = ArrowheadMatrix(α, z, D)
+            dense_A = convert(Matrix, A)
+            @test A ≈ dense_A
+        end
+    end
+    
+end
+
+@testitem "ArrowheadMatrix: getindex with Warning" begin
+    include("algebrasetup_setuptests.jl")
+    
+    α = 2.0
+    z = [1.0, 2.0, 3.0]
+    D = [4.0, 5.0, 6.0]
+    A = ArrowheadMatrix(α, z, D)
+
+    # Test that the warning is shown only once
+    @test_logs (:warn, "getindex was called on ArrowheadMatrix. This may lead to suboptimal performance. Consider using specialized methods if available.") begin
+        @test A[1,1] == 4.0
+        @test A[2,2] == 5.0
+        @test A[3,3] == 6.0
+        @test A[4,4] == 2.0
+    end
+end
+
+@testitem "InvArrowheadMatrix: dot(x, A, y) comparison with dense matrix" begin
+    using LinearAlgebra
+    include("algebrasetup_setuptests.jl")
+
+    for n in [3, 5, 10]
+        α = rand() + n
+        z = randn(n)
+        D = rand(n) .+ n
+
+        A = ArrowheadMatrix(α, z, D)
+        A_inv = inv(A)
+
+        x = randn(n + 1)
+        y = randn(n + 1)
+
+        result_arrowhead = dot(x, A_inv, y)
+        A_dense = Matrix(A)
+        A_inv_dense = inv(A_dense)
+        result_dense = dot(x, A_inv_dense * y)
+
+        @test isapprox(result_arrowhead, result_dense, rtol=1e-5)
     end
 end
