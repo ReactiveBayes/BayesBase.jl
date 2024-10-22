@@ -60,6 +60,28 @@ function ArrowheadMatrix(a::T, z::Z, d::D) where {T,Z,D}
     return ArrowheadMatrix{O, T, Z, D}(a, z, d)
 end
 
+function Base.getindex(A::ArrowheadMatrix, i::Int, j::Int)
+
+    @warn "getindex was called on ArrowheadMatrix. This may lead to suboptimal performance. Consider using specialized methods if available." maxlog=1
+
+    n = length(A.D) + 1
+    if i < 1 || i > n || j < 1 || j > n
+        throw(BoundsError(A, (i, j)))
+    end
+    
+    if i == n && j == n
+        return A.α
+    elseif i == n
+        return A.z[j]
+    elseif j == n
+        return A.z[i]
+    elseif i == j
+        return A.D[i]
+    else
+        return zero(eltype(A))
+    end
+end
+
 function show(io::IO, ::MIME"text/plain", A::ArrowheadMatrix)
     n = length(A.D) + 1
     println(io, n, "×", n, " ArrowheadMatrix{", eltype(A), "}:")
@@ -275,3 +297,20 @@ function Base.convert(::Type{Matrix}, A_inv::InvArrowheadMatrix{T}) where T
     M .+= (u * u') / denom
     return M
 end
+
+function LinearAlgebra.dot(x::AbstractVector, A_inv::InvArrowheadMatrix, y::AbstractVector)
+    A = A_inv.A
+    n = length(A.z)
+    
+    if length(x) != n + 1 || length(y) != n + 1
+        throw(DimensionMismatch("Dimensions must match"))
+    end
+
+    # Compute A_inv * y using linsolve!
+    temp = similar(y)
+    linsolve!(temp, A, y)
+
+    # Compute the dot product of x and temp
+    return LinearAlgebra.dot(x, temp)
+end
+
