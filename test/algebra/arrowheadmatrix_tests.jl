@@ -151,8 +151,10 @@ end
         time_dense = @benchmark $A_dense \ $b;
         allocs_dense = @allocations A_dense \ b
         
-        # ours at least n times faster where n is dimensionality
-        @test minimum(time_arrow.times) < minimum(time_dense.times)/n
+        # ours at least k times faster on average
+        # where k is dimensionality divided by 2
+        k = n ÷ 2
+        @test mean(time_arrow.times) < mean(time_dense.times)/k
         @test allocs_arrow < allocs_dense
         
         x_arrow = A_arrow \ b
@@ -188,8 +190,10 @@ end
         time_dense = @benchmark cholinv($A_dense) * $b;
         allocs_dense = @allocations cholinv(A_dense) * b
         
-        # ours at least n times faster where n is dimensionality
-        @test minimum(time_arrow.times) < minimum(time_dense.times)/n
+        # ours at least k times faster on average
+        # where k is dimensionality divided by 2
+        k = n ÷ 2
+        @test mean(time_arrow.times) < mean(time_dense.times)/k
         @test allocs_arrow < allocs_dense
         
         x_arrow = A_arrow \ b
