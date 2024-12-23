@@ -101,9 +101,6 @@ end
 function Base.show(io::IO, dist::ContinuousUnivariateLogPdf)
     return print(io, "ContinuousUnivariateLogPdf(", getdomain(dist), ")")
 end
-function Base.show(io::IO, ::Type{<:ContinuousUnivariateLogPdf{D}}) where {D}
-    return print(io, "ContinuousUnivariateLogPdf{", D, "}")
-end
 
 function BayesBase.support(dist::ContinuousUnivariateLogPdf)
     return getdomain(dist)
