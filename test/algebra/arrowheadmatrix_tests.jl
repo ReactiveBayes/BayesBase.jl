@@ -128,34 +128,31 @@ end
 
 @testitem "ArrowheadMatrix: Performance comparison with dense matrix" begin
     using BenchmarkTools
+    using StableRNGs
+
     include("algebrasetup_setuptests.jl")
 
+    rng = StableRNG(1234)
+
     for n in [10, 100, 1000]
-        α = rand()^2 + 1.0  # Ensure α is not too close to zero
-        z = randn(n)
-        D = rand(n).^2 .+ 1.0 # Ensure D elements are not too close to zero
+        α = rand(rng)^2 + 1.0  # Ensure α is not too close to zero
+        z = randn(rng, n)
+        D = rand(rng, n).^2 .+ 1.0 # Ensure D elements are not too close to zero
         A_arrow = ArrowheadMatrix(α, z, D)
         
         # Create equivalent dense matrix
         A_dense = [Diagonal(D) z; z' α]
         
-        b = randn(n+1)
+        b = randn(rng, n+1)
         
-        # warm-up runs
-        _ = A_arrow \ b
-        _ = A_dense \ b
+        benchmark_arrow = @benchmark $A_arrow \ $b;
+        benchmark_dense = @benchmark $A_dense \ $b;
         
-        time_arrow = @benchmark $A_arrow \ $b;
-        allocs_arrow = @allocations A_arrow \ b
-        
-        time_dense = @benchmark $A_dense \ $b;
-        allocs_dense = @allocations A_dense \ b
-        
-        # ours at least k times faster on average
+        # our implementation is at least k times faster on average
         # where k is dimensionality divided by 2
         k = n ÷ 2
-        @test mean(time_arrow.times) < mean(time_dense.times)/k
-        @test allocs_arrow < allocs_dense
+        @test mean(benchmark_arrow.times) < mean(benchmark_dense.times)/k
+        @test benchmark_arrow.allocs < benchmark_dense.allocs
         
         x_arrow = A_arrow \ b
         x_dense = A_dense \ b
@@ -167,34 +164,30 @@ end
 @testitem "ArrowheadMatrix: Performance comparison with cholinv" begin
     using BenchmarkTools
     using FastCholesky
+    using StableRNGs
+
     include("algebrasetup_setuptests.jl")
 
+    rng = StableRNG(1234)
     for n in [10, 100, 1000]
-        α = rand()^2 + 1.0  # Ensure α is not too close to zero
-        z = randn(n)
-        D = rand(n).^2 .+ 1.0 # Ensure D elements are not too close to zero
+        α = rand(rng)^2 + 1.0  # Ensure α is not too close to zero
+        z = randn(rng, n)
+        D = rand(rng, n).^2 .+ 1.0 # Ensure D elements are not too close to zero
         A_arrow = ArrowheadMatrix(α, z, D)
         
         # Create equivalent dense matrix
         A_dense = [Diagonal(D) z; z' α]
         
-        b = randn(n+1)
+        b = randn(rng, n+1)
         
-        # warm-up runs
-        _ = cholinv(A_arrow) \ b
-        _ = cholinv(A_dense) \ b
+        benchmark_arrow = @benchmark cholinv($A_arrow) * $b;
+        benchmark_dense = @benchmark cholinv($A_dense) * $b;
         
-        time_arrow = @benchmark cholinv($A_arrow) * $b;
-        allocs_arrow = @allocations cholinv(A_arrow) * b
-        
-        time_dense = @benchmark cholinv($A_dense) * $b;
-        allocs_dense = @allocations cholinv(A_dense) * b
-        
-        # ours at least k times faster on average
+        # our implementation is at least k times faster on average
         # where k is dimensionality divided by 2
         k = n ÷ 2
-        @test mean(time_arrow.times) < mean(time_dense.times)/k
-        @test allocs_arrow < allocs_dense
+        @test mean(benchmark_arrow.times) < mean(benchmark_dense.times)/k
+        @test benchmark_arrow.allocs < benchmark_dense.allocs
         
         x_arrow = A_arrow \ b
         x_dense = A_dense \ b
