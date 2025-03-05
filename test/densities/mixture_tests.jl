@@ -135,3 +135,18 @@ end
         @test weights(new_dist) ≈ [p, 1 - p]
     end
 end
+
+@testitem "Mixture Distribution: Multivariate Normal" begin
+    using Distributions
+
+    component1 = MvNormal([1.0, 1.0], [1.0 0.5; 0.5 1.0])
+    component2 = MvNormal([2.0, 2.0], [1.0 0.5; 0.5 1.0])
+    w = [0.3, 0.7]
+
+    dist = MixtureDistribution([component1, component2], w)
+
+    mean_dist = mean(dist)
+    @test mean_dist ≈ 0.3 * [1.0, 1.0] + 0.7 * [2.0, 2.0]
+    @test var(dist) ≈ 0.3 * ([1.0 , 1.0] + [1.0, 1.0] )+ 0.7 * ([1.0, 1.0] + [4.0, 4.0] ) - mean_dist.^2
+    @test cov(dist) ≈ 0.3 * ([1.0 0.5; 0.5 1.0] + [1.0, 1.0]*[1.0, 1.0]' )+ 0.7 * ([1.0 0.5; 0.5 1.0] + [2.0, 2.0]*[2.0, 2.0]' ) - mean_dist*mean_dist'
+end
