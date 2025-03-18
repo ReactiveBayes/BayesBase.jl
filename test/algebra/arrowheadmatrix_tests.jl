@@ -337,9 +337,11 @@ end
             z = randn(n)
             D = randn(n)
             A = ArrowheadMatrix(α, z, D)
+            B = ArrowheadMatrix(α+1, z, D)
             dense_A = convert(Matrix, A)
             @test A ≈ dense_A
             @test inv(A) ≈ inv(A)
+            @test !(inv(A) ≈ inv(B))
         end
     end
     
