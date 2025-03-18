@@ -339,6 +339,7 @@ end
             A = ArrowheadMatrix(α, z, D)
             dense_A = convert(Matrix, A)
             @test A ≈ dense_A
+            @test inv(A) ≈ inv(A)
         end
     end
     
