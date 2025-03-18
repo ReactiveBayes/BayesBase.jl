@@ -317,7 +317,6 @@ end
 function Base.isapprox(A::InvArrowheadMatrix, B::InvArrowheadMatrix; 
     rtol::Real=sqrt(eps()), atol::Real=0, 
     nans::Bool=false, norm::Function=LinearAlgebra.norm)
-    # Check if the underlying ArrowheadMatrix objects are approximately equal
     return isapprox(A.A, B.A; rtol=rtol, atol=atol, nans=nans, norm=norm)
 end
 
