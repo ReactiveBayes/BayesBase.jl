@@ -6,7 +6,6 @@ DocMeta.setdocmeta!(BayesBase, :DocTestSetup, :(using BayesBase); recursive=true
 makedocs(;
     modules=[BayesBase],
     authors="Bagaev Dmitry <bvdmitri@gmail.com> and contributors",
-    repo="https://github.com/reactivebayes/BayesBase.jl/blob/{commit}{path}#{line}",
     sitename="BayesBase.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
@@ -14,12 +13,7 @@ makedocs(;
         edit_link="main",
         assets=String[],
     ),
-    pages=[
-        "Home" => "index.md",
-    ],
+    pages=["Home" => "index.md"],
 )
 
-deploydocs(;
-    repo="github.com/reactivebayes/BayesBase.jl",
-    devbranch="main",
-)
+deploydocs(; repo="github.com/ReactiveBayes/BayesBase.jl", devbranch="main", forcepush=true)
