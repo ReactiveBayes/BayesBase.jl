@@ -2,7 +2,6 @@
 import StatsBase: Weights
 
 using StaticArrays
-using LoopVectorization
 
 export SampleList, SampleListMeta
 
@@ -292,7 +291,7 @@ function approximate_prod_with_sample_list(rng::AbstractRNG, ::BootstrapImportan
     end
 
     # Normalise weights
-    @turbo for i in 1:nsamples
+    for i in 1:nsamples
         norm_weights[i] /= weights_sum
     end
 
@@ -385,7 +384,7 @@ function approximate_prod_with_sample_list(rng::AbstractRNG, ::BootstrapImportan
     H_x /= rweights_prod_sum
 
     # Normalize prod weights
-    @turbo for i in 1:nsamples
+    for i in 1:nsamples
         rweights[i] /= rweights_prod_sum
     end
 
@@ -455,7 +454,7 @@ preallocate_samples(::Type{T}, dims::Tuple, length::Int) where {T} = Vector{T}(u
 
 # Here we cast an array of arrays into a single flat array of floats for better performance
 # There is a package for this called ArraysOfArrays.jl, but the performance of handwritten version is way better
-# We provide custom optimized mean/cov function for our implementation with LoopVectorization.jl package
+# We provide custom optimized mean/cov function for our implementation
 function sample_list_linearize end
 
 function sample_list_linearize(samples::AbstractVector{T}, nsamples, size) where {T <: Number}
@@ -532,7 +531,7 @@ function sample_list_vague end
 
 function sample_list_mean!(μ, ::Type{Univariate}, sl::SampleList)
     n, samples, weights = get_data(sl)
-    @turbo for i in 1:n
+    for i in 1:n
         μ += weights[i] * samples[i]
     end
     return μ
@@ -540,7 +539,7 @@ end
 
 function sample_list_covm!(σ², μ, ::Type{Univariate}, sl::SampleList)
     n, samples, weights = get_data(sl)
-    @turbo for i in 1:n
+    for i in 1:n
         σ² += weights[i] * abs2(samples[i] - μ)
     end
     σ² = (n / (n - 1)) * σ²
@@ -554,7 +553,7 @@ end
 function sample_list_logmean(::Type{Univariate}, sl::SampleList)
     n, samples, weights = get_data(sl)
     logμ = sample_list_zero_element(sl)
-    @turbo for i in 1:n
+    for i in 1:n
         logμ += weights[i] * log(samples[i])
     end
     return logμ
@@ -563,7 +562,7 @@ end
 function sample_list_meanlogmean(::Type{Univariate}, sl::SampleList)
     n, samples, weights = get_data(sl)
     μlogμ = sample_list_zero_element(sl)
-    @turbo for i in 1:n
+    for i in 1:n
         μlogμ += weights[i] * samples[i] * log(samples[i])
     end
     return μlogμ
@@ -573,7 +572,7 @@ function sample_list_mirroredlogmean(::Type{Univariate}, sl::SampleList)
     n, samples, weights = get_data(sl)
     @assert all(0 .<= samples .< 1) "mean of `mirrorlog` of variable does not apply to variables outside of the range [0, 1]"
     mirμ = sample_list_zero_element(sl)
-    @turbo for i in 1:n
+    for i in 1:n
         mirμ += weights[i] * log(1 - samples[i])
     end
     return mirμ
@@ -591,7 +590,7 @@ end
 function sample_list_mean!(μ, ::Type{Multivariate}, sl::SampleList)
     n, samples, weights = get_data(sl)
     k = length(μ)
-    @turbo for i in 1:n, j in 1:k
+    for i in 1:n, j in 1:k
         μ[j] += (weights[i] * samples[(i - 1) * k + j])
     end
     return μ
@@ -612,7 +611,7 @@ function sample_list_covm!(Σ, μ, ::Type{Multivariate}, sl::SampleList)
         end
     end
     s = n / (n - 1)
-    @turbo for i in 1:length(Σ)
+    for i in 1:length(Σ)
         Σ[i] *= s
     end
     return Σ
@@ -627,7 +626,7 @@ function sample_list_logmean(::Type{Multivariate}, sl::SampleList)
     n, samples, weights = get_data(sl)
     logμ = sample_list_zero_element(sl)
     k = length(logμ)
-    @turbo for i in 1:n, j in 1:k
+    for i in 1:n, j in 1:k
         logμ[j] += (weights[i] * log(samples[(i - 1) * k + j]))
     end
     return logμ
@@ -637,7 +636,7 @@ function sample_list_meanlogmean(::Type{Multivariate}, sl::SampleList)
     n, samples, weights = get_data(sl)
     μlogμ = sample_list_zero_element(sl)
     k = length(μlogμ)
-    @turbo for i in 1:n, j in 1:k
+    for i in 1:n, j in 1:k
         cs = samples[(i - 1) * k + j]
         μlogμ[j] += (weights[i] * cs * log(cs))
     end
@@ -656,7 +655,7 @@ end
 function sample_list_mean!(μ, ::Type{Matrixvariate}, sl::SampleList)
     n, samples, weights = get_data(sl)
     k = length(μ)
-    @turbo for i in 1:n, j in 1:k
+    for i in 1:n, j in 1:k
         μ[j] += (weights[i] * samples[(i - 1) * k + j])
     end
     return μ
@@ -677,7 +676,7 @@ function sample_list_covm!(Σ, μ, ::Type{Matrixvariate}, sl::SampleList)
         end
     end
     s = n / (n - 1)
-    @turbo for i in 1:length(Σ)
+    for i in 1:length(Σ)
         Σ[i] *= s
     end
     return Σ
@@ -692,7 +691,7 @@ function sample_list_logmean(::Type{Matrixvariate}, sl::SampleList)
     n, samples, weights = get_data(sl)
     logμ = sample_list_zero_element(sl)
     k = length(logμ)
-    @turbo for i in 1:n, j in 1:k
+    for i in 1:n, j in 1:k
         logμ[j] += (weights[i] * log(samples[(i - 1) * k + j]))
     end
     return logμ
@@ -702,7 +701,7 @@ function sample_list_meanlogmean(::Type{Matrixvariate}, sl::SampleList)
     n, samples, weights = get_data(sl)
     μlogμ = sample_list_zero_element(sl)
     k = length(μlogμ)
-    @turbo for i in 1:n, j in 1:k
+    for i in 1:n, j in 1:k
         cs = samples[(i - 1) * k + j]
         μlogμ[j] += (weights[i] * cs * log(cs))
     end
@@ -815,7 +814,7 @@ function transform_weights!(f::Function, sl::SampleList)
     n, _, weights = get_data(sl)
     map!(f, weights, weights)
     norm = sum(weights)
-    @turbo for i in 1:n
+    for i in 1:n
         weights[i] /= norm
     end
     return sl
