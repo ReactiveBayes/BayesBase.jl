@@ -1,7 +1,6 @@
 module BayesBase
 
-using TinyHugeNumbers, LoopVectorization
-using StatsAPI, StatsBase, DomainSets, Statistics, Distributions, Random
+using StatsAPI, StatsBase, DomainSets, Statistics, Distributions, TinyHugeNumbers, Random
 
 import StatsAPI: params
 

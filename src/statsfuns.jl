@@ -345,7 +345,7 @@ function mcov!(
 )
     mean!(tmp1, X')
     # @. tmp3 = X - tmp1'
-    @turbo warn_check_args = false for j in 1:size(X, 2)
+    for j in 1:size(X, 2)
         for i in 1:size(X, 1)
             tmp3[i, j] = X[i, j] - tmp1[j]
         end
@@ -353,7 +353,7 @@ function mcov!(
 
     mean!(tmp2, Y')
     # @. tmp4 = Y - tmp2'
-    @turbo warn_check_args = false for j in 1:size(X, 2)
+    for j in 1:size(X, 2)
         for i in 1:size(X, 1)
             tmp4[i, j] = Y[i, j] - tmp2[j]
         end
@@ -364,7 +364,7 @@ function mcov!(
 
     b = 1//(size(tmp3, 1) - 1)
     # @. Z = Z * b
-    @turbo warn_check_args = false for j in 1:size(Z, 2)
+    for j in 1:size(Z, 2)
         for i in 1:size(Z, 1)
             Z[i, j] *= b
         end
