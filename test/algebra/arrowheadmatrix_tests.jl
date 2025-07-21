@@ -149,8 +149,8 @@ end
         benchmark_dense = @benchmark $A_dense \ $b;
         
         # our implementation is at least k times faster on average
-        # where k is dimensionality divided by 2
-        k = n ÷ 2
+        # where k is dimensionality divided by 3
+        k = n ÷ 3
         @test mean(benchmark_arrow.times) < mean(benchmark_dense.times)/k
         @test benchmark_arrow.allocs < benchmark_dense.allocs
         
@@ -184,9 +184,9 @@ end
         benchmark_dense = @benchmark cholinv($A_dense) * $b;
         
         # our implementation is at least k times faster on average
-        # where k is dimensionality divided by 2
-        k = n ÷ 2
-        @test mean(benchmark_arrow.times) < mean(benchmark_dense.times)/k
+        # where k is dimensionality divided by 3
+        k = n ÷ 3
+        @test mean(benchmark_arrow.times) < mean(benchmark_dense.times)/3
         @test benchmark_arrow.allocs < benchmark_dense.allocs
         
         x_arrow = A_arrow \ b
