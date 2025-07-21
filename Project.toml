@@ -16,6 +16,9 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsFuns = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
 TinyHugeNumbers = "783c9a47-75a3-44ac-a16b-f1ab7b3acf04"
 
+[weakdeps]
+FastCholesky = "2d5283b6-8564-42b6-bb00-83ed8e915756"
+
 [extensions]
 FastCholeskyExt = "FastCholesky"
 
