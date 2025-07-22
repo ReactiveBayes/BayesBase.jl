@@ -181,9 +181,6 @@ end
 function Base.show(io::IO, dist::ContinuousMultivariateLogPdf)
     return print(io, "ContinuousMultivariateLogPdf(", getdomain(dist), ")")
 end
-function Base.show(io::IO, ::Type{<:ContinuousMultivariateLogPdf{D}}) where {D}
-    return print(io, "ContinuousMultivariateLogPdf{", D, "}")
-end
 
 BayesBase.support(dist::ContinuousMultivariateLogPdf) = getdomain(dist)
 BayesBase.insupport(dist::ContinuousMultivariateLogPdf, x) = x ∈ getdomain(dist)
