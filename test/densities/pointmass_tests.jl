@@ -276,3 +276,31 @@ end
         @test mean(inv, dist) ≈ inv(matrix)
     end
 end
+
+@testitem "Base.length for PointMass" begin
+    using LinearAlgebra, SpecialFunctions, TinyHugeNumbers, Distributions, BayesBase
+
+    # Scalar PointMass
+    scalar = rand(Float64)
+    dist_scalar = PointMass(scalar)
+    @test length(dist_scalar) == 1
+
+    # Vector PointMass
+    N = 5
+    vector = rand(Float64, N)
+    dist_vector = PointMass(vector)
+    @test length(dist_vector) == N
+
+    # Matrix PointMass
+    M = 3
+    matrix = rand(Float64, M, M)
+    dist_matrix = PointMass(matrix)
+    @test length(dist_matrix) == M*M
+
+    # Tensor PointMass
+    D = 3
+    N = 2
+    tensor = rand(Float64, ntuple(_ -> N, D))
+    dist_tensor = PointMass(tensor)
+    @test length(dist_tensor) == N^D
+end
