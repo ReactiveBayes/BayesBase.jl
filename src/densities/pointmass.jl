@@ -39,6 +39,8 @@ end
 
 ##
 
+Base.length(distribution::PointMass) = length(getpointmass(distribution))
+
 function Base.getindex(distribution::PointMass, index...)
     return Base.getindex(getpointmass(distribution), index...)
 end
@@ -74,7 +76,6 @@ end
 Base.precision(::PointMass{T}) where {T<:Real} = convert(T, Inf)
 Base.ndims(::PointMass{T}) where {T<:Real} = 1
 Base.eltype(::PointMass{T}) where {T<:Real} = T
-Base.length(distribution::PointMass) = length(getpointmass(distribution))
 
 # AbstractArray-based multivariate point mass
 
