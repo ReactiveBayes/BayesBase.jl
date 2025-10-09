@@ -31,6 +31,7 @@ help:
 	@echo ''
 	@echo '${GREEN}Documentation commands:${RESET}'
 	@echo '  ${YELLOW}docs${RESET}                 Build the documentation'
+	@echo '  ${YELLOW}docs-init${RESET}            Install documentation requirements'
 	@echo '  ${YELLOW}docs-serve${RESET}           Serve documentation locally for preview in browser'
 	@echo '  ${YELLOW}docs-clean${RESET}           Clean the documentation build directory'
 	@echo ''
@@ -50,6 +51,9 @@ help:
 ## Documentation commands:
 docs: deps-docs ## Build the documentation
 	$(JULIA) $(JULIAFLAGSDOCS) docs/make.jl
+
+docs-init: deps-docs ## Serve documentation locally for preview in browser
+	$(JULIA) $(JULIAFLAGSDOCS) -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
 
 docs-serve: deps-docs ## Serve documentation locally for preview in browser
 	$(JULIA) $(JULIAFLAGSDOCS) -e 'using LiveServer; LiveServer.servedocs(launch_browser=true, port=5678)'
