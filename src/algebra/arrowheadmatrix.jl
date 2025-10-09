@@ -1,6 +1,5 @@
 export ArrowheadMatrix, InvArrowheadMatrix
 
-
 import LinearAlgebra: SingularException
 import Base: getindex
 import LinearAlgebra: mul!
@@ -50,25 +49,24 @@ dense_A = convert(Matrix, A)
 - The matrix is singular if α - dot(z ./ D, z) = 0 or if any element of D is zero.
 - For best performance, use `ldiv!` for solving linear systems when possible.
 """
-struct ArrowheadMatrix{O, T, Z, P} <: AbstractMatrix{O}
-    α::T         
-    z::Z         
+struct ArrowheadMatrix{O,T,Z,P} <: AbstractMatrix{O}
+    α::T
+    z::Z
     D::P
 end
 function ArrowheadMatrix(a::T, z::Z, d::D) where {T,Z,D}
     O = promote_type(typeof(a), eltype(z), eltype(d))
-    return ArrowheadMatrix{O, T, Z, D}(a, z, d)
+    return ArrowheadMatrix{O,T,Z,D}(a, z, d)
 end
 
 function Base.getindex(A::ArrowheadMatrix, i::Int, j::Int)
-
     @warn "getindex was called on ArrowheadMatrix. This may lead to suboptimal performance. Consider using specialized methods if available." maxlog=1
 
     n = length(A.D) + 1
     if i < 1 || i > n || j < 1 || j > n
         throw(BoundsError(A, (i, j)))
     end
-    
+
     if i == n && j == n
         return A.α
     elseif i == n
@@ -85,9 +83,9 @@ end
 function show(io::IO, ::MIME"text/plain", A::ArrowheadMatrix)
     n = length(A.D) + 1
     println(io, n, "×", n, " ArrowheadMatrix{", eltype(A), "}:")
-    
-    for i in 1:n-1
-        for j in 1:n-1
+
+    for i in 1:(n - 1)
+        for j in 1:(n - 1)
             if i == j
                 print(io, A.D[i])
             else
@@ -97,9 +95,9 @@ function show(io::IO, ::MIME"text/plain", A::ArrowheadMatrix)
         end
         println(io, A.z[i])
     end
-    
+
     # Print the last row
-    for i in 1:n-1
+    for i in 1:(n - 1)
         print(io, A.z[i], "  ")
     end
     println(io, A.α)
@@ -122,19 +120,21 @@ function Base.convert(::Type{Matrix}, A::ArrowheadMatrix{O}) where {O}
     return M
 end
 
-function LinearAlgebra.mul!(y, A::ArrowheadMatrix{T}, x::AbstractVector{T}) where T
+function LinearAlgebra.mul!(y, A::ArrowheadMatrix{T}, x::AbstractVector{T}) where {T}
     n = length(A.z)
     if length(x) != n + 1
         throw(DimensionMismatch())
     end
-    @inbounds @views begin 
+    @inbounds @views begin
         y[1:n] = A.D .* x[1:n] + A.z * x[n + 1]
         y[n + 1] = dot(A.z, x[1:n]) + A.α * x[n + 1]
     end
     return y
 end
 
-function linsolve!(y::AbstractVector{T2}, A::ArrowheadMatrix{T}, b::AbstractVector{T2}) where {T, T2}
+function linsolve!(
+    y::AbstractVector{T2}, A::ArrowheadMatrix{T}, b::AbstractVector{T2}
+) where {T,T2}
     n = length(A.z)
 
     if length(b) != n + 1
@@ -182,12 +182,14 @@ function linsolve!(y::AbstractVector{T2}, A::ArrowheadMatrix{T}, b::AbstractVect
     return y
 end
 
-function Base.:\(A::ArrowheadMatrix, b::AbstractVector{T}) where T
+function Base.:\(A::ArrowheadMatrix, b::AbstractVector{T}) where {T}
     y = similar(b)
     return linsolve!(y, A, b)
 end
 
-function LinearAlgebra.ldiv!(x::AbstractVector{T}, A::ArrowheadMatrix, b::AbstractVector{T}) where T
+function LinearAlgebra.ldiv!(
+    x::AbstractVector{T}, A::ArrowheadMatrix, b::AbstractVector{T}
+) where {T}
     return linsolve!(x, A, b)
 end
 
@@ -245,8 +247,8 @@ dense_inv_A = convert(Matrix, A_inv)
 # See Also
 - [`ArrowheadMatrix`](@ref): The original arrowhead matrix structure.
 """
-struct InvArrowheadMatrix{O, T, Z, P} <: AbstractMatrix{O}
-    A::ArrowheadMatrix{O, T, Z, P}
+struct InvArrowheadMatrix{O,T,Z,P} <: AbstractMatrix{O}
+    A::ArrowheadMatrix{O,T,Z,P}
 end
 
 function show(io::IO, ::MIME"text/plain", A_inv::InvArrowheadMatrix)
@@ -256,24 +258,23 @@ function show(io::IO, ::MIME"text/plain", A_inv::InvArrowheadMatrix)
     show(io, MIME"text/plain"(), A_inv.A)
 end
 
-
 inv(A::ArrowheadMatrix) = InvArrowheadMatrix(A)
 
 function size(A_inv::InvArrowheadMatrix)
     size(A_inv.A)
 end
 
-function LinearAlgebra.mul!(y, A_inv::InvArrowheadMatrix{T}, x::AbstractVector{T}) where T
+function LinearAlgebra.mul!(y, A_inv::InvArrowheadMatrix{T}, x::AbstractVector{T}) where {T}
     A = A_inv.A
     return linsolve!(y, A, x)
 end
 
-function Base.:\(A_inv::InvArrowheadMatrix{T}, x::AbstractVector{T}) where T
+function Base.:\(A_inv::InvArrowheadMatrix{T}, x::AbstractVector{T}) where {T}
     A = A_inv.A
     return A * x
 end
 
-function Base.convert(::Type{Matrix}, A_inv::InvArrowheadMatrix{T}) where T
+function Base.convert(::Type{Matrix}, A_inv::InvArrowheadMatrix{T}) where {T}
     A = A_inv.A
     n = length(A.z)
     z = A.z
@@ -286,7 +287,7 @@ function Base.convert(::Type{Matrix}, A_inv::InvArrowheadMatrix{T}) where T
     @assert denom != 0 "Matrix is singular."
 
     # Compute u = [ (z ./ D); -1 ]
-    u = [ z ./ D; -1.0 ]
+    u = [z ./ D; -1.0]
 
     # Compute the inverse diagonal elements
     D_inv = 1.0 ./ D
@@ -301,7 +302,7 @@ end
 function LinearAlgebra.dot(x::AbstractVector, A_inv::InvArrowheadMatrix, y::AbstractVector)
     A = A_inv.A
     n = length(A.z)
-    
+
     if length(x) != n + 1 || length(y) != n + 1
         throw(DimensionMismatch("Dimensions must match"))
     end
@@ -314,9 +315,13 @@ function LinearAlgebra.dot(x::AbstractVector, A_inv::InvArrowheadMatrix, y::Abst
     return LinearAlgebra.dot(x, temp)
 end
 
-function Base.isapprox(A::InvArrowheadMatrix, B::InvArrowheadMatrix; 
-    rtol::Real=sqrt(eps()), atol::Real=0, 
-    nans::Bool=false, norm::Function=LinearAlgebra.norm)
+function Base.isapprox(
+    A::InvArrowheadMatrix,
+    B::InvArrowheadMatrix;
+    rtol::Real=sqrt(eps()),
+    atol::Real=0,
+    nans::Bool=false,
+    norm::Function=LinearAlgebra.norm,
+)
     return isapprox(A.A, B.A; rtol=rtol, atol=atol, nans=nans, norm=norm)
 end
-

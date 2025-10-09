@@ -15,7 +15,6 @@ end
     include("./promotion_setuptests.jl")
 
     for T in (Float32, Float64, BigFloat)
-
         for athing in ([1.0, 1.0], [1.0 1.0; 1.0 1.0], 1.0, I)
             @test @inferred(eltype(convert_paramfloattype(T, athing))) === T
             @test convert_paramfloattype(T, athing) ≈ athing
@@ -23,7 +22,9 @@ end
 
         for distribution in generate_random_distributions()
             @test @inferred(paramfloattype(convert_paramfloattype(T, distribution))) === T
-            @test all(params(convert_paramfloattype(T, distribution)) .≈ params(distribution))
+            @test all(
+                params(convert_paramfloattype(T, distribution)) .≈ params(distribution)
+            )
         end
     end
 end
