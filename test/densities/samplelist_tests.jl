@@ -532,7 +532,9 @@ end
         return MvNormal(μ, Σ)
     end
 
-    function Base.prod(::AnalyticalProdForTesting, left::InverseWishart, right::InverseWishart)
+    function Base.prod(
+        ::AnalyticalProdForTesting, left::InverseWishart, right::InverseWishart
+    )
         d = size(left, 1)
         ldf, lS = params(left)
         rdf, rS = params(right)
@@ -544,7 +546,10 @@ end
     function Distributions.entropy(dist::InverseWishart)
         d = size(dist, 1)
         ν, S = params(dist)
-        d * (d - 1) / 4 * log(π) + mapreduce(i -> loggamma((ν + 1.0 - i) / 2), +, 1:d) + ν / 2 * d + (d + 1) / 2 * (logdet(S) - log(2)) -
+        d * (d - 1) / 4 * log(π) +
+        mapreduce(i -> loggamma((ν + 1.0 - i) / 2), +, 1:d) +
+        ν / 2 * d +
+        (d + 1) / 2 * (logdet(S) - log(2)) -
         (ν + d + 1) / 2 * mapreduce(i -> digamma((ν - d + i) / 2), +, 1:d)
     end
 

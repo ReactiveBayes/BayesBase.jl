@@ -9,51 +9,57 @@ abstract type AbstractSampleListSamplingMethod end
 
 struct BootstrapImportanceSampling <: AbstractSampleListSamplingMethod end
 
-mutable struct SampleListCache{M, C}
-    mean           :: M
-    cov            :: C
-    is_mean_cached :: Bool
-    is_cov_cached  :: Bool
+mutable struct SampleListCache{M,C}
+    mean::M
+    cov::C
+    is_mean_cached::Bool
+    is_cov_cached::Bool
 end
 
-SampleListCache(::Type{T}, dims::Tuple{}) where {T}         = SampleListCache(zero(T), zero(T), false, false)
-SampleListCache(::Type{T}, dims::Tuple{Int}) where {T}      = SampleListCache(zeros(T, first(dims)), zeros(T, first(dims), first(dims)), false, false)
-SampleListCache(::Type{T}, dims::Tuple{Int, Int}) where {T} = SampleListCache(zeros(T, dims), zeros(T, prod(dims), prod(dims)), false, false)
+function SampleListCache(::Type{T}, dims::Tuple{}) where {T}
+    SampleListCache(zero(T), zero(T), false, false)
+end
+function SampleListCache(::Type{T}, dims::Tuple{Int}) where {T}
+    SampleListCache(zeros(T, first(dims)), zeros(T, first(dims), first(dims)), false, false)
+end
+function SampleListCache(::Type{T}, dims::Tuple{Int,Int}) where {T}
+    SampleListCache(zeros(T, dims), zeros(T, prod(dims), prod(dims)), false, false)
+end
 
 is_mean_cached(cache::SampleListCache) = cache.is_mean_cached
-is_cov_cached(cache::SampleListCache)  = cache.is_cov_cached
+is_cov_cached(cache::SampleListCache) = cache.is_cov_cached
 
 get_mean_storage(cache::SampleListCache) = cache.mean
-get_cov_storage(cache::SampleListCache)  = cache.cov
+get_cov_storage(cache::SampleListCache) = cache.cov
 
 cache_mean!(cache::SampleListCache, mean) = begin
     cache.mean = mean
     cache.is_mean_cached = true
     mean
 end
-cache_cov!(cache::SampleListCache, cov)   = begin
+cache_cov!(cache::SampleListCache, cov) = begin
     cache.cov = cov
     cache.is_cov_cached = true
     cov
 end
 
-struct SampleListMeta{W, E, LP, LI}
-    unnormalisedweights :: W
-    entropy             :: E
-    logproposal         :: LP
-    logintegrand        :: LI
+struct SampleListMeta{W,E,LP,LI}
+    unnormalisedweights::W
+    entropy::E
+    logproposal::LP
+    logintegrand::LI
 end
 
 get_unnormalised_weights(meta::SampleListMeta) = meta.unnormalisedweights
-get_entropy(meta::SampleListMeta)              = meta.entropy
-get_logproposal(meta::SampleListMeta)          = meta.logproposal
-get_logintegrand(meta::SampleListMeta)         = meta.logintegrand
+get_entropy(meta::SampleListMeta) = meta.entropy
+get_logproposal(meta::SampleListMeta) = meta.logproposal
+get_logintegrand(meta::SampleListMeta) = meta.logintegrand
 
 call_logproposal(logproposal::Function, x) = logproposal(x)
-call_logproposal(logproposal::Any, x)      = logpdf(logproposal, x)
+call_logproposal(logproposal::Any, x) = logpdf(logproposal, x)
 
 call_logintegrand(logintegrand::Function, x) = logintegrand(x)
-call_logintegrand(logintegrand::Any, x)      = logpdf(logintegrand, x)
+call_logintegrand(logintegrand::Any, x) = logpdf(logintegrand, x)
 
 """
     SampleList
@@ -64,66 +70,91 @@ Generic distribution represented as a list of weighted samples.
 - `samples::S`
 - `weights::W`: optional, equivalent to `fill(1 / N, N)` by default, where `N` is the length of `samples` container
 """
-struct SampleList{D, S, W, C, M}
-    samples :: S
-    weights :: W
-    cache   :: C
-    meta    :: M
+struct SampleList{D,S,W,C,M}
+    samples::S
+    weights::W
+    cache::C
+    meta::M
 
-    function SampleList(::Val{D}, samples::S, weights::W, meta::M = nothing) where {D, S, W, M}
+    function SampleList(::Val{D}, samples::S, weights::W, meta::M=nothing) where {D,S,W,M}
         @assert div(length(samples), prod(D)) === length(weights) "Invalid sample list samples and weights lengths. `samples` has length $(length(samples)), `weights` has length $(length(weights))"
         @assert eltype(samples) <: Number "Invalid eltype of samples container. Should be a subtype of `Number`, but $(eltype(samples)) has been found. Samples should be stored in a linear one dimensional vector even for multivariate and matrixvariate cases."
         @assert eltype(weights) <: Number "Invalid eltype of weights container. Should be a subtype of `Number`, but $(eltype(weights)) has been found."
         cache = SampleListCache(promote_type(eltype(samples), eltype(weights)), D)
-        return new{D, S, W, typeof(cache), M}(samples, weights, cache, meta)
+        return new{D,S,W,typeof(cache),M}(samples, weights, cache, meta)
     end
 end
 
-Base.show(io::IO, sl::SampleList)         = sample_list_show(io, variate_form(typeof(sl)), sl)
-Base.similar(sl::SampleList{D}) where {D} = SampleList(Val(D), similar(sl.samples), similar(sl.weights))
+Base.show(io::IO, sl::SampleList) = sample_list_show(io, variate_form(typeof(sl)), sl)
+function Base.similar(sl::SampleList{D}) where {D}
+    SampleList(Val(D), similar(sl.samples), similar(sl.weights))
+end
 
-sample_list_show(io::IO, ::Type{Univariate}, sl::SampleList) = print(io, "SampleList(Univariate, ", length(sl), ")")
-sample_list_show(io::IO, ::Type{Multivariate}, sl::SampleList) = print(io, "SampleList(Multivariate(", ndims(sl), "), ", length(sl), ")")
-sample_list_show(io::IO, ::Type{Matrixvariate}, sl::SampleList) = print(io, "SampleList(Matrixvariate", ndims(sl), ", ", length(sl), ")")
+function sample_list_show(io::IO, ::Type{Univariate}, sl::SampleList)
+    print(io, "SampleList(Univariate, ", length(sl), ")")
+end
+function sample_list_show(io::IO, ::Type{Multivariate}, sl::SampleList)
+    print(io, "SampleList(Multivariate(", ndims(sl), "), ", length(sl), ")")
+end
+function sample_list_show(io::IO, ::Type{Matrixvariate}, sl::SampleList)
+    print(io, "SampleList(Matrixvariate", ndims(sl), ", ", length(sl), ")")
+end
 
-function SampleList(samples::S) where {S <: AbstractVector}
+function SampleList(samples::S) where {S<:AbstractVector}
     N = length(samples)
     return SampleList(samples, fill(one(deep_eltype(S)) / N, N))
 end
 
-function SampleList(samples::S, weights::W, meta::M = nothing) where {S, W, M}
+function SampleList(samples::S, weights::W, meta::M=nothing) where {S,W,M}
     nsamples = length(samples)
     @assert nsamples !== 0 "Empty samples list"
     @assert sum(weights) ≈ one(eltype(weights)) "Weights must sum up to one. sum(weights) = $(sum(weights))"
     D = size(first(samples))
-    return SampleList(Val(D), sample_list_linearize(samples, nsamples, prod(D)), weights, meta)
+    return SampleList(
+        Val(D), sample_list_linearize(samples, nsamples, prod(D)), weights, meta
+    )
 end
 
 const DEFAULT_SAMPLE_LIST_N_SAMPLES = 5000
 
 ## Utility functions
 
-BayesBase.paramfloattype(sl::SampleList) = promote_type(eltype(sl.samples), eltype(sl.weights))
+function BayesBase.paramfloattype(sl::SampleList)
+    promote_type(eltype(sl.samples), eltype(sl.weights))
+end
 
-BayesBase.convert_paramfloattype(::Type{T}, sl::SampleList{D}) where {T, D} = SampleList(Val(D), convert_paramfloattype(T, sl.samples), convert_paramfloattype(T, sl.weights), sl.meta)
+function BayesBase.convert_paramfloattype(::Type{T}, sl::SampleList{D}) where {T,D}
+    SampleList(
+        Val(D),
+        convert_paramfloattype(T, sl.samples),
+        convert_paramfloattype(T, sl.weights),
+        sl.meta,
+    )
+end
 
-Base.eltype(::Type{<:SampleList{D, S, W}}) where {D, S, W} = Tuple{sample_list_eltype(SampleList, D, S), eltype(W)}
+function Base.eltype(::Type{<:SampleList{D,S,W}}) where {D,S,W}
+    Tuple{sample_list_eltype(SampleList, D, S),eltype(W)}
+end
 
-BayesBase.sampletype(::SampleList{D, S}) where {D, S} = sample_list_eltype(SampleList, D, S)
+BayesBase.sampletype(::SampleList{D,S}) where {D,S} = sample_list_eltype(SampleList, D, S)
 
-sample_list_eltype(::Type{SampleList}, ndims::Tuple{}, ::Type{S}) where {S}         = eltype(S)
-sample_list_eltype(::Type{SampleList}, ndims::Tuple{Int}, ::Type{S}) where {S}      = SVector{ndims[1], eltype(S)}
-sample_list_eltype(::Type{SampleList}, ndims::Tuple{Int, Int}, ::Type{S}) where {S} = SMatrix{ndims[1], ndims[2], eltype(S), ndims[1] * ndims[2]}
+sample_list_eltype(::Type{SampleList}, ndims::Tuple{}, ::Type{S}) where {S} = eltype(S)
+function sample_list_eltype(::Type{SampleList}, ndims::Tuple{Int}, ::Type{S}) where {S}
+    SVector{ndims[1],eltype(S)}
+end
+function sample_list_eltype(::Type{SampleList}, ndims::Tuple{Int,Int}, ::Type{S}) where {S}
+    SMatrix{ndims[1],ndims[2],eltype(S),ndims[1] * ndims[2]}
+end
 
-BayesBase.deep_eltype(::Type{<:SampleList{D, S}}) where {D, S} = eltype(S)
+BayesBase.deep_eltype(::Type{<:SampleList{D,S}}) where {D,S} = eltype(S)
 
 ## Variate forms
 
 BayesBase.variate_form(::Type{<:SampleList{D}}) where {D} = sample_list_variate_form(D)
 
-sample_list_variate_form(::Tuple{})         = Univariate
-sample_list_variate_form(::Tuple{Int})      = Multivariate
-sample_list_variate_form(::Tuple{Int, Int}) = Matrixvariate
+sample_list_variate_form(::Tuple{}) = Univariate
+sample_list_variate_form(::Tuple{Int}) = Multivariate
+sample_list_variate_form(::Tuple{Int,Int}) = Matrixvariate
 
 ## Getters
 
@@ -132,29 +163,31 @@ get_samples(sl::SampleList) = SamplesOnlyIterator(sl)
 
 get_linear_weights(sl::SampleList) = sl.weights
 get_linear_samples(sl::SampleList) = sl.samples
-get_cache(sl::SampleList)          = sl.cache
-get_meta(sl::SampleList)           = sample_list_check_meta(sl.meta)
-is_meta_present(sl::SampleList)    = sl.meta !== nothing
+get_cache(sl::SampleList) = sl.cache
+get_meta(sl::SampleList) = sample_list_check_meta(sl.meta)
+is_meta_present(sl::SampleList) = sl.meta !== nothing
 
 get_data(sl::SampleList) = (length(sl), get_linear_samples(sl), get_linear_weights(sl))
 
-sample_list_check_meta(meta::Any)     = meta
-sample_list_check_meta(meta::Nothing) = error("SampleList object has not associated meta information with it.")
+sample_list_check_meta(meta::Any) = meta
+function sample_list_check_meta(meta::Nothing)
+    error("SampleList object has not associated meta information with it.")
+end
 
 get_unnormalised_weights(sl::SampleList) = get_unnormalised_weights(get_meta(sl))
-get_entropy(sl::SampleList)              = get_entropy(get_meta(sl))
-get_logproposal(sl::SampleList)          = get_logproposal(get_meta(sl))
-get_logintegrand(sl::SampleList)         = get_logintegrand(get_meta(sl))
+get_entropy(sl::SampleList) = get_entropy(get_meta(sl))
+get_logproposal(sl::SampleList) = get_logproposal(get_meta(sl))
+get_logintegrand(sl::SampleList) = get_logintegrand(get_meta(sl))
 
-call_logproposal(sl::SampleList, x)  = call_logproposal(get_logproposal(sl), x)
+call_logproposal(sl::SampleList, x) = call_logproposal(get_logproposal(sl), x)
 call_logintegrand(sl::SampleList, x) = call_logintegrand(get_logintegrand(sl), x)
 
 Base.length(sl::SampleList) = div(length(get_linear_samples(sl)), prod(ndims(sl)))
-Base.ndims(sl::SampleList)  = sample_list_ndims(variate_form(typeof(sl)), sl)
-Base.size(sl::SampleList)   = (length(sl),)
+Base.ndims(sl::SampleList) = sample_list_ndims(variate_form(typeof(sl)), sl)
+Base.size(sl::SampleList) = (length(sl),)
 
-sample_list_ndims(::Type{Univariate}, sl::SampleList{D}) where {D}    = 1
-sample_list_ndims(::Type{Multivariate}, sl::SampleList{D}) where {D}  = first(D)
+sample_list_ndims(::Type{Univariate}, sl::SampleList{D}) where {D} = 1
+sample_list_ndims(::Type{Multivariate}, sl::SampleList{D}) where {D} = first(D)
 sample_list_ndims(::Type{Matrixvariate}, sl::SampleList{D}) where {D} = D
 
 ## Statistics 
@@ -165,9 +198,15 @@ function sample_list_zero_element(sl::SampleList)
     return sample_list_zero_element(variate_form(typeof(sl)), T, sl)
 end
 
-sample_list_zero_element(::Type{Univariate}, ::Type{T}, sl::SampleList) where {T}    = zero(T)
-sample_list_zero_element(::Type{Multivariate}, ::Type{T}, sl::SampleList) where {T}  = zeros(T, ndims(sl))
-sample_list_zero_element(::Type{Matrixvariate}, ::Type{T}, sl::SampleList) where {T} = zeros(T, ndims(sl))
+sample_list_zero_element(::Type{Univariate}, ::Type{T}, sl::SampleList) where {T} = zero(T)
+function sample_list_zero_element(::Type{Multivariate}, ::Type{T}, sl::SampleList) where {T}
+    zeros(T, ndims(sl))
+end
+function sample_list_zero_element(
+    ::Type{Matrixvariate}, ::Type{T}, sl::SampleList
+) where {T}
+    zeros(T, ndims(sl))
+end
 
 # Generic mean_cov
 
@@ -176,11 +215,11 @@ BayesBase.mean_var(sl::SampleList) = sample_list_mean_var(variate_form(typeof(sl
 
 ##
 
-BayesBase.mean(sl::SampleList)      = sample_list_mean(sl, Val(true))
-BayesBase.var(sl::SampleList)       = last(mean_var(sl))
-BayesBase.cov(sl::SampleList)       = last(mean_cov(sl))
-BayesBase.invcov(sl::SampleList)    = inv(cov(sl))
-BayesBase.std(sl::SampleList)       = sqrt(cov(sl))
+BayesBase.mean(sl::SampleList) = sample_list_mean(sl, Val(true))
+BayesBase.var(sl::SampleList) = last(mean_var(sl))
+BayesBase.cov(sl::SampleList) = last(mean_cov(sl))
+BayesBase.invcov(sl::SampleList) = inv(cov(sl))
+BayesBase.std(sl::SampleList) = sqrt(cov(sl))
 BayesBase.logdetcov(sl::SampleList) = logdet(cov(sl))
 
 Base.precision(sl::SampleList) = invcov(sl)
@@ -197,9 +236,15 @@ end
 
 BayesBase.weightedmean(sl::SampleList) = first(weightedmean_precision(sl))
 
-BayesBase.mean(::typeof(log), sl::SampleList) = sample_list_logmean(variate_form(typeof(sl)), sl)
-BayesBase.mean(::typeof(xtlog), sl::SampleList) = sample_list_meanlogmean(variate_form(typeof(sl)), sl)
-BayesBase.mean(::typeof(mirrorlog), sl::SampleList) = sample_list_mirroredlogmean(variate_form(typeof(sl)), sl)
+function BayesBase.mean(::typeof(log), sl::SampleList)
+    sample_list_logmean(variate_form(typeof(sl)), sl)
+end
+function BayesBase.mean(::typeof(xtlog), sl::SampleList)
+    sample_list_meanlogmean(variate_form(typeof(sl)), sl)
+end
+function BayesBase.mean(::typeof(mirrorlog), sl::SampleList)
+    sample_list_mirroredlogmean(variate_form(typeof(sl)), sl)
+end
 
 # Generic version of the mean function for arbitrary `f` 
 function BayesBase.mean(f::F, sl::SampleList) where {F}
@@ -215,7 +260,7 @@ end
 
 BayesBase.entropy(sl::SampleList) = get_entropy(get_meta(sl))
 
-function Distributions.entropy(sl::SampleList{D, S, W, C, Nothing}) where {D, S, W, C}
+function Distributions.entropy(sl::SampleList{D,S,W,C,Nothing}) where {D,S,W,C}
     # error("`entropy` for the `SampleList` is not defined if `meta` is of type `Nothing`")
     # We do not compute the `entropy` for the sample list, but return -Inf instead, the same as for PointMass
     return MinusInfinity(paramfloattype(sl))
@@ -223,15 +268,31 @@ end
 
 ## 
 
-BayesBase.vague(::Type{SampleList}; nsamples::Int = DEFAULT_SAMPLE_LIST_N_SAMPLES)                        = sample_list_vague(Univariate, nsamples)
-BayesBase.vague(::Type{SampleList}, dims::Int; nsamples::Int = DEFAULT_SAMPLE_LIST_N_SAMPLES)             = sample_list_vague(Multivariate, dims, nsamples)
-BayesBase.vague(::Type{SampleList}, dims::Tuple{Int, Int}; nsamples::Int = DEFAULT_SAMPLE_LIST_N_SAMPLES) = sample_list_vague(Matrixvariate, dims, nsamples)
-BayesBase.vague(::Type{SampleList}, dim1::Int, dim2::Int; nsamples::Int = DEFAULT_SAMPLE_LIST_N_SAMPLES)  = sample_list_vague(Matrixvariate, (dim1, dim2), nsamples)
+function BayesBase.vague(::Type{SampleList}; nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES)
+    sample_list_vague(Univariate, nsamples)
+end
+function BayesBase.vague(
+    ::Type{SampleList}, dims::Int; nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES
+)
+    sample_list_vague(Multivariate, dims, nsamples)
+end
+function BayesBase.vague(
+    ::Type{SampleList}, dims::Tuple{Int,Int}; nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES
+)
+    sample_list_vague(Matrixvariate, dims, nsamples)
+end
+function BayesBase.vague(
+    ::Type{SampleList}, dim1::Int, dim2::Int; nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES
+)
+    sample_list_vague(Matrixvariate, (dim1, dim2), nsamples)
+end
 
 ##
 
 BayesBase.rand(samplelist::SampleList) = rand(Random.default_rng(), samplelist)
-BayesBase.rand(samplelist::SampleList, n::Integer) = rand(Random.default_rng(), samplelist, n)
+function BayesBase.rand(samplelist::SampleList, n::Integer)
+    rand(Random.default_rng(), samplelist, n)
+end
 
 function BayesBase.rand(rng::AbstractRNG, samplelist::SampleList)
     return rand(rng, get_samples(samplelist))
@@ -246,32 +307,44 @@ end
 sample_list_default_prod_strategy() = BootstrapImportanceSampling()
 
 ## prod related stuff
-function approximate_prod_with_sample_list(x, y, nsamples::Int = DEFAULT_SAMPLE_LIST_N_SAMPLES)
+function approximate_prod_with_sample_list(
+    x, y, nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES
+)
     return approximate_prod_with_sample_list(Random.GLOBAL_RNG, x, y, nsamples)
 end
 
-function approximate_prod_with_sample_list(rng::AbstractRNG, x, y, nsamples::Int = DEFAULT_SAMPLE_LIST_N_SAMPLES)
-    return approximate_prod_with_sample_list(rng, sample_list_default_prod_strategy(), x, y, nsamples)
+function approximate_prod_with_sample_list(
+    rng::AbstractRNG, x, y, nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES
+)
+    return approximate_prod_with_sample_list(
+        rng, sample_list_default_prod_strategy(), x, y, nsamples
+    )
 end
 
 # `x` is proposal distribution
 # `y` is integrand distribution
-function approximate_prod_with_sample_list(rng::AbstractRNG, ::BootstrapImportanceSampling, x::Any, y::Any, nsamples::Int = DEFAULT_SAMPLE_LIST_N_SAMPLES)
+function approximate_prod_with_sample_list(
+    rng::AbstractRNG,
+    ::BootstrapImportanceSampling,
+    x::Any,
+    y::Any,
+    nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES,
+)
     @assert nsamples >= 1 "Number of samples should be greater than 1"
 
     xlogpdf, xsample = logpdf_sampling_optimized(x)
     ylogpdf, ysample = logpdf_sampling_optimized(y)
 
-    T            = promote_samplefloattype(x, y)
-    U            = variate_form(typeof(x))
-    xsize        = size(x)
+    T = promote_samplefloattype(x, y)
+    U = variate_form(typeof(x))
+    xsize = size(x)
     preallocated = preallocate_samples(T, xsize, nsamples)
-    samples      = rand!(rng, xsample, reshape(preallocated, (xsize..., nsamples)))
+    samples = rand!(rng, xsample, reshape(preallocated, (xsize..., nsamples)))
 
-    raw_weights  = Vector{T}(undef, nsamples) # un-normalised
+    raw_weights = Vector{T}(undef, nsamples) # un-normalised
     norm_weights = Vector{T}(undef, nsamples) # normalised
 
-    H_x         = zero(T)
+    H_x = zero(T)
     weights_sum = zero(T)
 
     for i in 1:nsamples
@@ -283,11 +356,11 @@ function approximate_prod_with_sample_list(rng::AbstractRNG, ::BootstrapImportan
 
         raw_weight = exp(log_sample_y)
 
-        raw_weights[i]  = raw_weight
+        raw_weights[i] = raw_weight
         norm_weights[i] = raw_weight # will be renormalised later
 
         weights_sum += raw_weight
-        H_x         += raw_weight * (log_sample_x + log_sample_y)
+        H_x += raw_weight * (log_sample_x + log_sample_y)
     end
 
     # Normalise weights
@@ -305,7 +378,7 @@ function approximate_prod_with_sample_list(rng::AbstractRNG, ::BootstrapImportan
     entropy = H_x + H_y
 
     # Inform next step about the proposal and integrand to be used in entropy calculation in smoothing
-    logproposal  = xlogpdf
+    logproposal = xlogpdf
     logintegrand = ylogpdf
 
     meta = SampleListMeta(raw_weights, entropy, logproposal, logintegrand)
@@ -313,17 +386,35 @@ function approximate_prod_with_sample_list(rng::AbstractRNG, ::BootstrapImportan
     return SampleList(Val(xsize), preallocated, norm_weights, meta)
 end
 
-function approximate_prod_with_sample_list(rng::AbstractRNG, ::AbstractSampleListSamplingMethod, x::SampleList, y::SampleList, nsamples::Int = DEFAULT_SAMPLE_LIST_N_SAMPLES)
+function approximate_prod_with_sample_list(
+    rng::AbstractRNG,
+    ::AbstractSampleListSamplingMethod,
+    x::SampleList,
+    y::SampleList,
+    nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES,
+)
     error("Unsupported SampleList × SampleList prod operation.")
 end
 
-function approximate_prod_with_sample_list(rng::AbstractRNG, method::AbstractSampleListSamplingMethod, x::SampleList, y::Any, nsamples::Int = DEFAULT_SAMPLE_LIST_N_SAMPLES)
+function approximate_prod_with_sample_list(
+    rng::AbstractRNG,
+    method::AbstractSampleListSamplingMethod,
+    x::SampleList,
+    y::Any,
+    nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES,
+)
     return approximate_prod_with_sample_list(rng, method, y, x, nsamples)
 end
 
 # prod of a pdf (or distribution) message and a SampleList message
 # this function is capable to calculate entropy with SampleList messages in VMP setting
-function approximate_prod_with_sample_list(rng::AbstractRNG, ::BootstrapImportanceSampling, x::Any, y::SampleList{D}, nsamples::Int = DEFAULT_SAMPLE_LIST_N_SAMPLES) where {D}
+function approximate_prod_with_sample_list(
+    rng::AbstractRNG,
+    ::BootstrapImportanceSampling,
+    x::Any,
+    y::SampleList{D},
+    nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES,
+) where {D}
 
     # TODO: In principle it is possible to implement different prod approximation for different nsamples
     # TODO: This feature would be probably super rare in use so lets postpone it and mark as todo
@@ -362,19 +453,19 @@ function approximate_prod_with_sample_list(rng::AbstractRNG, ::BootstrapImportan
     # does nothing if `get_weights` returns an array
     rsamples, rweights = get_samples(rcontainer), vec(get_weights(rcontainer))
 
-    rweights_raw      = similar(rweights)
+    rweights_raw = similar(rweights)
     rweights_prod_sum = zero(eltype(get_weights(y)))
 
     H_x = zero(eltype(rweights_raw))
 
     # Compute sample weights
     @inbounds for i in 1:nsamples
-        log_sample_x    = logpdf(xlogpdf, samples[i]) # evaluate samples in logm4, i.e. logm4(s)
-        raw_weight      = exp(log_sample_x)       # m4(s)
+        log_sample_x = logpdf(xlogpdf, samples[i]) # evaluate samples in logm4, i.e. logm4(s)
+        raw_weight = exp(log_sample_x)       # m4(s)
         raw_weight_prod = raw_weight * weights[i] # update the weights of posterior w_unnormalized = m4(s)*w_prev
 
         rweights_raw[i] = raw_weight
-        rweights[i]     = raw_weight_prod
+        rweights[i] = raw_weight_prod
 
         rweights_prod_sum += raw_weight_prod
 
@@ -409,27 +500,34 @@ function approximate_prod_with_sample_list(rng::AbstractRNG, ::BootstrapImportan
         copyto!(get_linear_samples(rsamples), get_linear_samples(samples))
     end
 
-    meta = if is_meta_present(y) && get_logproposal(y) !== nothing && get_unnormalised_weights(y) !== nothing
-        y_unnormalised_weights     = get_unnormalised_weights(y)
-        r_unnormalised_weights     = similar(y_unnormalised_weights)
-        r_unnormalised_weights_sum = zero(eltype(r_unnormalised_weights))
-        @inbounds for i in 1:nsamples
-            r_unnormalised_weights_prod = y_unnormalised_weights[i] * rweights_raw[i]
-            r_unnormalised_weights[i]   = r_unnormalised_weights_prod
-            r_unnormalised_weights_sum  += r_unnormalised_weights_prod
+    meta =
+        if is_meta_present(y) &&
+            get_logproposal(y) !== nothing &&
+            get_unnormalised_weights(y) !== nothing
+            y_unnormalised_weights = get_unnormalised_weights(y)
+            r_unnormalised_weights = similar(y_unnormalised_weights)
+            r_unnormalised_weights_sum = zero(eltype(r_unnormalised_weights))
+            @inbounds for i in 1:nsamples
+                r_unnormalised_weights_prod = y_unnormalised_weights[i] * rweights_raw[i]
+                r_unnormalised_weights[i] = r_unnormalised_weights_prod
+                r_unnormalised_weights_sum += r_unnormalised_weights_prod
 
-            H_x += rweights[i] * (call_logproposal(y, rsamples[i]) + log(y_unnormalised_weights[i]))
+                H_x +=
+                    rweights[i] *
+                    (call_logproposal(y, rsamples[i]) + log(y_unnormalised_weights[i]))
+            end
+
+            H_y = log(r_unnormalised_weights_sum) - log(nsamples)
+            H_x = -H_x
+
+            entropy = H_x + H_y
+
+            SampleListMeta(
+                r_unnormalised_weights, entropy, get_logproposal(y), log_integrand
+            )
+        else
+            SampleListMeta(nothing, nothing, nothing, log_integrand)
         end
-
-        H_y = log(r_unnormalised_weights_sum) - log(nsamples)
-        H_x = -H_x
-
-        entropy = H_x + H_y
-
-        SampleListMeta(r_unnormalised_weights, entropy, get_logproposal(y), log_integrand)
-    else
-        SampleListMeta(nothing, nothing, nothing, log_integrand)
-    end
 
     return SampleList(Val(D), get_linear_samples(rsamples), rweights, meta)
 end
@@ -442,13 +540,17 @@ end
 
 ## Lowlevel implementation below...
 
-@inline static_getindex(::Type{Univariate}, ndims::Tuple{}, samples, i)            = samples[i]
-@inline static_getindex(::Type{Multivariate}, ndims::Tuple{Int}, samples, i)       = view(samples, :, i)
-@inline static_getindex(::Type{Matrixvariate}, ndims::Tuple{Int, Int}, samples, i) = view(samples, :, :, i)
+@inline static_getindex(::Type{Univariate}, ndims::Tuple{}, samples, i) = samples[i]
+@inline static_getindex(::Type{Multivariate}, ndims::Tuple{Int}, samples, i) = view(
+    samples, :, i
+)
+@inline static_getindex(::Type{Matrixvariate}, ndims::Tuple{Int,Int}, samples, i) = view(samples,:,:,i)
 
 ## Preallocation utilities
 
-preallocate_samples(::Type{T}, dims::Tuple, length::Int) where {T} = Vector{T}(undef, length * prod(dims))
+function preallocate_samples(::Type{T}, dims::Tuple, length::Int) where {T}
+    Vector{T}(undef, length * prod(dims))
+end
 
 ## Linearization functions
 
@@ -457,7 +559,7 @@ preallocate_samples(::Type{T}, dims::Tuple, length::Int) where {T} = Vector{T}(u
 # We provide custom optimized mean/cov function for our implementation
 function sample_list_linearize end
 
-function sample_list_linearize(samples::AbstractVector{T}, nsamples, size) where {T <: Number}
+function sample_list_linearize(samples::AbstractVector{T}, nsamples, size) where {T<:Number}
     return samples
 end
 
@@ -472,12 +574,18 @@ end
 
 ## Cache utilities
 
-sample_list_mean(sl::SampleList, cached)     = sample_list_mean(variate_form(typeof(sl)), sl, cached)
-sample_list_mean_cov(sl::SampleList, cached) = sample_list_mean_cov(variate_form(typeof(sl)), sl, cached)
+function sample_list_mean(sl::SampleList, cached)
+    sample_list_mean(variate_form(typeof(sl)), sl, cached)
+end
+function sample_list_mean_cov(sl::SampleList, cached)
+    sample_list_mean_cov(variate_form(typeof(sl)), sl, cached)
+end
 
 # Cache ignoring versions
 function sample_list_mean(::Type{U}, sl::SampleList, ::Val{false}) where {U}
-    return sample_list_mean!(fill!(similar(get_mean_storage(get_cache(sl))), zero(deep_eltype(sl))), U, sl)
+    return sample_list_mean!(
+        fill!(similar(get_mean_storage(get_cache(sl))), zero(deep_eltype(sl))), U, sl
+    )
 end
 
 function sample_list_mean_cov(::Type{U}, sl::SampleList, ::Val{false}) where {U}
@@ -490,7 +598,7 @@ end
 # By default we try to save mean in an internal cache
 function sample_list_mean(::Type{U}, sl::SampleList, ::Val{true}) where {U}
     cache = get_cache(sl)
-    mean  = get_mean_storage(cache)
+    mean = get_mean_storage(cache)
     # If no cache present, compute and save
     if !is_mean_cached(cache)
         mean = cache_mean!(cache, sample_list_mean!(mean, U, sl))
@@ -501,8 +609,8 @@ end
 # By default we try to save cov in an internal cache
 function sample_list_mean_cov(::Type{U}, sl::SampleList, ::Val{true}) where {U}
     cache = get_cache(sl)
-    mean  = sample_list_mean(U, sl, Val(true))
-    cov   = get_cov_storage(cache)
+    mean = sample_list_mean(U, sl, Val(true))
+    cov = get_cov_storage(cache)
     # If no cache present, compute and save
     if !is_cov_cached(cache)
         cov = cache_cov!(cache, sample_list_covm!(cov, mean, U, sl))
@@ -579,10 +687,12 @@ function sample_list_mirroredlogmean(::Type{Univariate}, sl::SampleList)
 end
 
 function sample_list_vague(::Type{Univariate}, nsamples::Int)
-    targetdist   = Uniform(-100, 100)
+    targetdist = Uniform(-100, 100)
     preallocated = preallocate_samples(Float64, (), nsamples)
     rand!(targetdist, preallocated)
-    return SampleList(Val(()), preallocated, fill(one(Float64) / nsamples, nsamples), nothing)
+    return SampleList(
+        Val(()), preallocated, fill(one(Float64) / nsamples, nsamples), nothing
+    )
 end
 
 ## Multivariate
@@ -644,10 +754,12 @@ function sample_list_meanlogmean(::Type{Multivariate}, sl::SampleList)
 end
 
 function sample_list_vague(::Type{Multivariate}, dims::Int, nsamples::Int)
-    targetdist   = Uniform(-100, 100)
+    targetdist = Uniform(-100, 100)
     preallocated = preallocate_samples(Float64, (dims,), nsamples)
     rand!(targetdist, preallocated)
-    return SampleList(Val((dims,)), preallocated, fill(one(Float64) / nsamples, nsamples), nothing)
+    return SampleList(
+        Val((dims,)), preallocated, fill(one(Float64) / nsamples, nsamples), nothing
+    )
 end
 
 ## Matrixvariate
@@ -708,33 +820,37 @@ function sample_list_meanlogmean(::Type{Matrixvariate}, sl::SampleList)
     return μlogμ
 end
 
-function sample_list_vague(::Type{Matrixvariate}, dims::Tuple{Int, Int}, nsamples::Int)
-    targetdist   = Uniform(-100, 100)
+function sample_list_vague(::Type{Matrixvariate}, dims::Tuple{Int,Int}, nsamples::Int)
+    targetdist = Uniform(-100, 100)
     preallocated = preallocate_samples(Float64, dims, nsamples)
     rand!(targetdist, preallocated)
-    return SampleList(Val(dims), preallocated, fill(one(Float64) / nsamples, nsamples), nothing)
+    return SampleList(
+        Val(dims), preallocated, fill(one(Float64) / nsamples, nsamples), nothing
+    )
 end
 
 ## Array operations, broadcasting and mapping
 
-struct SamplesOnlyIterator{T, L} <: AbstractVector{T}
+struct SamplesOnlyIterator{T,L} <: AbstractVector{T}
     samplelist::L
 
-    function SamplesOnlyIterator(samplelist::L) where {L <: SampleList}
-        return new{samples_type(eltype(samplelist)), L}(samplelist)
+    function SamplesOnlyIterator(samplelist::L) where {L<:SampleList}
+        return new{samples_type(eltype(samplelist)),L}(samplelist)
     end
 end
 
-samples_type(::Type{T}) where {L, R, T <: Tuple{L, R}} = L
+samples_type(::Type{T}) where {L,R,T<:Tuple{L,R}} = L
 
 @inline Base.size(iter::SamplesOnlyIterator) = (length(iter.samplelist),)
-@inline Base.getindex(iter::SamplesOnlyIterator, i::Int) = first(getindex(iter.samplelist, i))
+@inline Base.getindex(iter::SamplesOnlyIterator, i::Int) = first(
+    getindex(iter.samplelist, i)
+)
 
 @inline function Base.setindex!(iter::SamplesOnlyIterator, v, i::Int)
-    samples    = get_linear_samples(iter.samplelist)
+    samples = get_linear_samples(iter.samplelist)
     sample_len = prod(ndims(iter.samplelist))
-    left       = (i - 1) * sample_len + 1
-    right      = left + sample_len - 1
+    left = (i - 1) * sample_len + 1
+    right = left + sample_len - 1
     copyto!(view(samples, left:right), v)
     v
 end
@@ -743,10 +859,14 @@ get_linear_samples(iter::SamplesOnlyIterator) = get_linear_samples(iter.sampleli
 
 ##
 
-Base.iterate(sl::SampleList)             = (sl[1], 2)
-Base.iterate(sl::SampleList, state::Int) = state <= length(sl) ? (sl[state], state + 1) : nothing
+Base.iterate(sl::SampleList) = (sl[1], 2)
+function Base.iterate(sl::SampleList, state::Int)
+    state <= length(sl) ? (sl[state], state + 1) : nothing
+end
 
-@inline Base.getindex(sl::SampleList, i::Int) = sample_list_get_index(variate_form(typeof(sl)), ndims(sl), sl, i)
+@inline Base.getindex(sl::SampleList, i::Int) = sample_list_get_index(
+    variate_form(typeof(sl)), ndims(sl), sl, i
+)
 
 @inline function sample_list_get_index(::Type{Univariate}, ndims, sl, i)
     return (get_linear_samples(sl)[i], get_linear_weights(sl)[i])
@@ -766,16 +886,29 @@ end
     left = (i - 1) * p + 1
     right = left + p - 1
     # ndims are compile-time here
-    return (SMatrix{ndims[1], ndims[2]}(reshape(view(samples, left:right), ndims)), get_linear_weights(sl)[i])
+    return (
+        SMatrix{ndims[1],ndims[2]}(reshape(view(samples, left:right), ndims)),
+        get_linear_weights(sl)[i],
+    )
 end
 
 ## Transformation routines
 
-transform_samples(f::Function, sl::SampleList) = sample_list_transform_samples(variate_form(typeof(sl)), f, sl)
+function transform_samples(f::Function, sl::SampleList)
+    sample_list_transform_samples(variate_form(typeof(sl)), f, sl)
+end
 
-@inline input_for_transform(::Type{Univariate}, samples, size, left, right)    = samples[left]
-@inline input_for_transform(::Type{Multivariate}, samples, size, left, right)  = SVector{size}(view(samples, left:right))
-@inline input_for_transform(::Type{Matrixvariate}, samples, size, left, right) = SMatrix{size[1], size[2]}(reshape(view(samples, left:right), size))
+@inline input_for_transform(::Type{Univariate}, samples, size, left, right) = samples[left]
+@inline input_for_transform(::Type{Multivariate}, samples, size, left, right) = SVector{
+    size
+}(
+    view(samples, left:right)
+)
+@inline input_for_transform(::Type{Matrixvariate}, samples, size, left, right) = SMatrix{
+    size[1],size[2]
+}(
+    reshape(view(samples, left:right), size)
+)
 
 function sample_list_transform_samples(::Type{U}, f::Function, sl::SampleList) where {U}
     n, samples, weights = get_data(sl)
@@ -789,9 +922,11 @@ function sample_list_transform_samples(::Type{U}, f::Function, sl::SampleList) w
 
     # After computing first value compiler knows the output type and size of this type
     output_size = size(first_item)
-    output_len  = prod(output_size)
+    output_len = prod(output_size)
 
-    preallocated = preallocate_samples(promote_type(eltype(first_item), eltype(samples)), output_size, n)
+    preallocated = preallocate_samples(
+        promote_type(eltype(first_item), eltype(samples)), output_size, n
+    )
     copyto!(view(preallocated, 1:output_len), first_item)
 
     # We then compute all values from 2 to n into a preallocated buffer
@@ -803,7 +938,10 @@ function sample_list_transform_samples(::Type{U}, f::Function, sl::SampleList) w
         # We use static matrix size to ensure that we do not allocate extra memory on a heap
         # Instead we try to do all computations on stack as much as possible
         # If `f` function is "bad" and still allocates matrices this optimisation doesn't really work well
-        copyto!(preallocated[output_left:output_right], f(input_for_transform(U, samples, input_size, input_left, input_right)))
+        copyto!(
+            preallocated[output_left:output_right],
+            f(input_for_transform(U, samples, input_size, input_left, input_right)),
+        )
     end
 
     # if `f` is type stable and returns StaticArray `output_size` is a compile-time constant

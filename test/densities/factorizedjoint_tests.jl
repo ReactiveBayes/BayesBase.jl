@@ -24,9 +24,10 @@
         end
     end
 
-    @testset "convert_paramfloattype" begin 
-        for T in (Float32, Float64, BigFloat),  multipliers in vmultipliers
-            for component in components(convert_paramfloattype(T, FactorizedJoint(multipliers)))
+    @testset "convert_paramfloattype" begin
+        for T in (Float32, Float64, BigFloat), multipliers in vmultipliers
+            for component in
+                components(convert_paramfloattype(T, FactorizedJoint(multipliers)))
                 @test paramfloattype(component) === T
             end
         end

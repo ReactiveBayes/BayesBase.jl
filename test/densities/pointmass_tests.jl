@@ -121,7 +121,7 @@ end
         @test dist[3, 3] === matrix[3, 3]
         @test size(dist, 1) === size(matrix, 1)
         @test size(dist, 2) === size(matrix, 2)
-        @test_throws BoundsError dist[N^3]
+        @test_throws BoundsError dist[N ^ 3]
         @test_throws BoundsError dist[N + 1, N + 1]
 
         @test insupport(dist, matrix)
@@ -190,7 +190,7 @@ end
             for i in 1:D
                 @test size(dist, i) === size(tensor, i)
             end
-            @test_throws BoundsError dist[N^(D + 1)]
+            @test_throws BoundsError dist[N ^ (D + 1)]
             @test_throws BoundsError dist[ntuple(_ -> N + 1, D)...]
 
             @test insupport(dist, tensor)
