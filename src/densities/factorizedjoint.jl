@@ -24,8 +24,7 @@ Base.length(joint::FactorizedJoint) = length(joint.multipliers)
 
 function Base.isapprox(x::FactorizedJoint, y::FactorizedJoint; kwargs...)
     return length(x) === length(y) && all(
-        tuple -> isapprox(tuple[1], tuple[2]; kwargs...),
-        zip(components(x), components(y)),
+        tuple -> isapprox(tuple[1], tuple[2]; kwargs...), zip(components(x), components(y))
     )
 end
 
@@ -36,5 +35,7 @@ function BayesBase.paramfloattype(joint::FactorizedJoint)
 end
 
 function BayesBase.convert_paramfloattype(::Type{T}, joint::FactorizedJoint) where {T}
-    return FactorizedJoint(map(e -> BayesBase.convert_paramfloattype(T, e), BayesBase.components(joint)))
+    return FactorizedJoint(
+        map(e -> BayesBase.convert_paramfloattype(T, e), BayesBase.components(joint))
+    )
 end
