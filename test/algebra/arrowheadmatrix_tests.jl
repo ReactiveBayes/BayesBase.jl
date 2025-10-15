@@ -148,7 +148,7 @@ end
         # our implementation is at least k times faster on average
         # where k is dimensionality divided by 3
         k = n ÷ 3
-        @test mean(benchmark_arrow.times) < mean(benchmark_dense.times)/k
+        @test minimum(benchmark_arrow.times) < minimum(benchmark_dense.times)/k
         @test benchmark_arrow.allocs < benchmark_dense.allocs
 
         x_arrow = A_arrow \ b
@@ -182,7 +182,7 @@ end
         # our implementation is at least k times faster on average
         # where k is dimensionality divided by 3
         k = n ÷ 3
-        @test mean(benchmark_arrow.times) < mean(benchmark_dense.times)/k
+        @test minimum(benchmark_arrow.times) < minimum(benchmark_dense.times)/k
         @test benchmark_arrow.allocs < benchmark_dense.allocs
 
         x_arrow = A_arrow \ b

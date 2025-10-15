@@ -39,6 +39,8 @@ end
 
 ##
 
+Base.length(distribution::PointMass) = length(getpointmass(distribution))
+
 function Base.getindex(distribution::PointMass, index...)
     return Base.getindex(getpointmass(distribution), index...)
 end
