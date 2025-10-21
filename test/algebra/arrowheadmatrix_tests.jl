@@ -148,7 +148,7 @@ end
         # our implementation is at least k times faster on average
         k = @static if VERSION < v"1.12"
             n ÷ 3
-        else 
+        else
             n ÷ 5
         end
 
@@ -186,7 +186,7 @@ end
         # our implementation is at least k times faster on average
         k = @static if VERSION < v"1.12"
             n ÷ 3
-        else 
+        else
             n ÷ 5
         end
 
