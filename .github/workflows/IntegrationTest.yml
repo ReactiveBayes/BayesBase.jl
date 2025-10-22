@@ -43,7 +43,7 @@ jobs:
                   repository: ${{ matrix.package.user }}/${{ matrix.package.repo }}
                   path: downstream
 
-            - name: Load this and run the downstream tests
+            - name: Force downstream to use this PR version of BayesBase
               shell: julia --project=downstream {0}
               run: |
                   using Pkg
@@ -51,10 +51,14 @@ jobs:
                       # Force downstream to use this PR version of BayesBase
                       Pkg.develop(PackageSpec(path="."))  # add this version
                       Pkg.update()
-                      Pkg.test()  # run downstream tests
                   catch err
                       err isa Pkg.Resolve.ResolverError || rethrow()
                       # If resolver fails, assume intentional breaking change (SemVer)
                       @info "Not compatible with this release. No problem." exception=err
                       exit(0)  # Treat as success
                   end
+            - name: Run the downstream tests
+              shell: julia --project=downstream {0}
+              run: |
+                  using Pkg
+                  Pkg.test()
