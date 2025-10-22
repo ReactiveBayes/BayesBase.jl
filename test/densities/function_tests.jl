@@ -17,6 +17,24 @@
     @test_throws AssertionError ContinuousUnivariateLogPdf(FullSpace()^2, f)
 end
 
+@testitem "DiscreteUnivariateLogPdf: Constructor" begin
+    import DomainSets: FullSpace, Integers
+
+    f = (x) -> -x^2
+    d1 = DiscreteUnivariateLogPdf(f)
+    d2 = DiscreteUnivariateLogPdf(Integers(), f)
+
+    @test typeof(d1) === typeof(d2)
+    @test eltype(d1) === Int
+    @test eltype(d2) === Int
+    @test paramfloattype(d1) === Int
+    @test samplefloattype(d1) === Int
+    @test paramfloattype(d2) === Int
+    @test samplefloattype(d2) === Int
+
+    @test_throws AssertionError DiscreteUnivariateLogPdf(FullSpace()^2, f)
+end
+
 @testitem "ContinuousUnivariateLogPdf: Intentional errors" begin
     dist = ContinuousUnivariateLogPdf((x) -> x)
     @test_throws ErrorException mean(dist)
@@ -30,6 +48,18 @@ end
     @test_throws ErrorException precision(dist)
 end
 
+@testitem "DiscreteUnivariateLogPdf: Intentional errors" begin
+    dist = DiscreteUnivariateLogPdf((x) -> x)
+    @test_throws ErrorException mean(dist)
+    @test_throws ErrorException median(dist)
+    @test_throws ErrorException mode(dist)
+    @test_throws ErrorException var(dist)
+    @test_throws ErrorException std(dist)
+    @test_throws ErrorException cov(dist)
+    @test_throws ErrorException invcov(dist)
+    @test_throws ErrorException entropy(dist)
+    @test_throws ErrorException precision(dist)
+end
 @testitem "ContinuousUnivariateLogPdf: pdf/logpdf" begin
     import DomainSets: FullSpace, HalfLine
 
@@ -119,6 +149,32 @@ end
     @test all(map(p -> exp(-p^2) == pdf(d6, [p]), points2))
 end
 
+@testitem "DiscreteUnivariateLogPdf: pdf/logpdf" begin
+    import DomainSets: Interval
+
+    d1 = DiscreteUnivariateLogPdf(Interval(1, 10), (x) -> 1/x)
+
+    int8_points1 = range(Int8(1), Int8(10))
+    int32_points1 = range(Int32(1), Int32(10))
+    int64_points1 = range(Int64(1), Int64(10))
+    points1 = vcat(int8_points1, int32_points1, int64_points1)
+
+    @test all(map(p -> 1/p == d1(p), points1))
+    @test all(map(p -> 1/p == logpdf(d1, p), points1))
+    @test all(map(p -> exp(1/p) == pdf(d1, p), points1))
+    @test all(map(p -> 1/p == d1([p]), points1))
+    @test all(map(p -> 1/p == logpdf(d1, [p]), points1))
+    @test all(map(p -> exp(1/p) == pdf(d1, [p]), points1))
+
+    @test_throws AssertionError d1(-1)
+    @test_throws AssertionError logpdf(d1, -1)
+    @test_throws AssertionError pdf(d1, -1)
+    @test_throws AssertionError d1([-1])
+    @test_throws AssertionError logpdf(d1, [-1])
+    @test_throws AssertionError pdf(d1, [-1])
+
+end
+
 @testitem "ContinuousUnivariateLogPdf: test domain in logpdf" begin
     import DomainSets: FullSpace, HalfLine
 
@@ -128,6 +184,18 @@ end
     # This also throws a warning in stdout
     @test_throws AssertionError logpdf(d1, [1.0, 1.0])
     @test_throws AssertionError logpdf(d2, [1.0, 1.0])
+end
+
+@testitem "DiscreteUnivariateLogPdf: test domain in logpdf" begin
+    import DomainSets: Integers, ClosedInterval
+
+    d1 = ContinuousUnivariateLogPdf(Integers(), (x) -> 1/abs(x))
+    d2 = ContinuousUnivariateLogPdf(ClosedInterval(1 : 10), (x) -> log(x))
+
+    @test_throws AssertionError logpdf(d1, [1.0, 2.0])
+    @test_throws AssertionError logpdf(d2, [1.0, 1.0])
+    @test_throws AssertionError logpdf(d2, [1, -1])
+    @test_throws AssertionError logpdf(d2, [5, 1.0])
 end
 
 @testitem "ContinuousUnivariateLogPdf: support" begin
@@ -142,11 +210,32 @@ end
     @test -1.0 ∉ support(d2)
 end
 
+@testitem "DiscreteUnivariateLogPdf: support" begin
+    import DomainSets: Integers, ClosedInterval
+
+    d1 = DiscreteUnivariateLogPdf(Integers(), (x) -> 1.0)
+    @test 1 ∈ support(d1)
+    @test -2.11 ∉ support(d1)
+    
+    d2 = DiscreteUnivariateLogPdf(ClosedInterval(1 : 10), (x) -> 1.0)
+    @test 1 ∈ support(d2)
+    @test -1 ∉ support(d2)
+    @test -1.0 ∉ support(d2)
+    @test 4.3 ∉ support(d1)
+end
+
 @testitem "ContinuousUnivariateLogPdf: vague" begin
     d = vague(ContinuousUnivariateLogPdf)
 
     @test typeof(d) <: ContinuousUnivariateLogPdf
     @test d(rand()) ≈ 0
+end
+
+@testitem "DiscreteUnivariateLogPdf: vague" begin
+    d = vague(DiscreteUnivariateLogPdf)
+
+    @test typeof(d) <: DiscreteUnivariateLogPdf
+    @test d(rand(Int)) ≈ 0
 end
 
 @testitem "ContinuousUnivariateLogPdf: prod" begin
@@ -195,6 +284,54 @@ end
     @test_throws AssertionError logpdf(prod(GenericProd(), d5, d6), -1.0) # supports are different
 end
 
+
+@testitem "DiscreteUnivariateLogPdf: prod" begin
+    import DomainSets: Integers, ClosedInterval
+
+    dist = DiscreteUnivariateLogPdf(Integers(), (x) -> 2.0 * -x^2)
+    d2 = DiscreteUnivariateLogPdf(Integers(), (x) -> 3.0 * -x^2)
+
+    product = prod(GenericProd(), dist, d2)
+    pt1 = DiscreteUnivariateLogPdf(ClosedInterval(0:10), (x) -> logpdf(dist, x) + logpdf(d2, x))
+
+    @test variate_form(typeof(product)) === variate_form(typeof(dist))
+    @test variate_form(typeof(product)) === variate_form(typeof(d2))
+    @test value_support(typeof(product)) === value_support(typeof(dist))
+    @test value_support(typeof(product)) === value_support(typeof(d2))
+    @test support(product) === support(dist)
+    @test support(product) === support(d2)
+
+    for x in 0:10
+        @test isapprox(logpdf(product, x), logpdf(pt1, x))
+        @test isapprox(pdf(product, x), pdf(pt1, x))
+    end
+
+    result = DiscreteUnivariateLogPdf(ClosedInterval(-4, 4), (x) -> 2.0 * -x^2)
+    d4 = DiscreteUnivariateLogPdf(ClosedInterval(-4, 4), (x) -> 3.0 * -x^2)
+
+    pr2 = prod(GenericProd(), result, d4)
+    pt2 = DiscreteUnivariateLogPdf(ClosedInterval(-4, 4), (x) -> logpdf(result, x) + logpdf(d4, x))
+
+    @test variate_form(typeof(pr2)) === variate_form(typeof(result))
+    @test variate_form(typeof(pr2)) === variate_form(typeof(d4))
+    @test value_support(typeof(pr2)) === value_support(typeof(result))
+    @test value_support(typeof(pr2)) === value_support(typeof(d4))
+    @test support(pr2) === support(result)
+    @test support(pr2) === support(d4)
+
+    for x in -4:4
+        @test isapprox(logpdf(pr2, x), logpdf(pt2, x))
+        @test isapprox(pdf(pr2, x), pdf(pt2, x))
+    end
+
+    d5 = DiscreteUnivariateLogPdf(Integers(), (x) -> 2.0 * -x^2)
+    d6 = DiscreteUnivariateLogPdf(ClosedInterval(-4:4), (x) -> 2.0 * -x^2)
+
+    @show prod(GenericProd(), d5, d6)
+    @test logpdf(prod(GenericProd(), d5, d6), 1) ≈ -4.0
+    @test_throws AssertionError logpdf(prod(GenericProd(), d5, d6), -1.2) # supports are different
+end
+
 @testitem "ContinuousUnivariateLogPdf: vectorised-prod" begin
     import DomainSets: FullSpace
 
@@ -229,6 +366,41 @@ end
     end
 end
 
+
+@testitem "DiscreteUnivariateLogPdf: vectorised-prod" begin
+    import DomainSets: Integers
+
+    f = (x) -> 2.0 * -x^2
+    dist = ContinuousUnivariateLogPdf(Integers(), f)
+    result = ContinuousUnivariateLogPdf(Integers(), (x) -> 3 * f(x))
+    product = prod(GenericProd(), prod(GenericProd(), dist, dist), dist)
+
+    @test product isa LinearizedProductOf
+
+    @test variate_form(typeof(product)) === variate_form(typeof(dist))
+    @test variate_form(typeof(product)) === variate_form(typeof(result))
+    @test value_support(typeof(product)) === value_support(typeof(dist))
+    @test value_support(typeof(product)) === value_support(typeof(result))
+    @test support(product) === support(dist)
+    @test support(product) === support(result)
+
+    for x in 0:10
+        @test logpdf(product, x) ≈ logpdf(result, x)
+        @test pdf(product, x) ≈ pdf(result, x)
+    end
+
+    # Test internal side-effects
+    another_product = prod(GenericProd(), product, dist)
+
+    for x in 0:10
+        @test logpdf(product, x) ≈ logpdf(result, x)
+        @test pdf(product, x) ≈ pdf(result, x)
+
+        @test logpdf(another_product, x) ≈ (logpdf(product, x) + logpdf(dist, x))
+        @test pdf(another_product, x) ≈ (pdf(product, x) * pdf(dist, x))
+    end
+end
+
 @testitem "ContinuousUnivariateLogPdf: convert" begin
     import DomainSets: FullSpace
 
@@ -240,6 +412,19 @@ end
 
     c2 = convert(ContinuousUnivariateLogPdf, c)
     @test typeof(c2) <: ContinuousUnivariateLogPdf
+end
+
+@testitem "DiscreteUnivariateLogPdf: convert" begin
+    import DomainSets: Integers
+
+    d = Integers()
+    l = (x) -> 1.0
+
+    c = convert(DiscreteUnivariateLogPdf, d, l)
+    @test typeof(c) <: DiscreteUnivariateLogPdf
+
+    c2 = convert(DiscreteUnivariateLogPdf, c)
+    @test typeof(c2) <: DiscreteUnivariateLogPdf
 end
 
 @testitem "ContinuousMultivariateLogPdf: Constructor" begin
