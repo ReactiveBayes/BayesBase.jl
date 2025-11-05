@@ -79,7 +79,7 @@ deps-scripts: ## Install script dependencies
 	$(JULIA) $(JULIAFLAGSSCRIPTS) -e 'using Pkg; Pkg.instantiate()'
 
 test: deps ## Run project tests
-	$(JULIA) $(JULIAFLAGS) -e 'using Pkg; Pkg.test(test_args = split("$(test_args)") .|> string)'	
+	$(JULIA) $(JULIAFLAGS) -e 'import Pkg; Pkg.test(test_args=ARGS)' $(test_args)
 
 format: deps-scripts ## Format Julia code
 	$(JULIA) $(JULIAFLAGSSCRIPTS) $(FORMATTER) --overwrite
