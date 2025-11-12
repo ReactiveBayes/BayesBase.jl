@@ -1,0 +1,69 @@
+name: Format Check
+on:
+  push:
+    branches:
+      - main
+    tags: ['*']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  format-check:
+    name: Code Format Check
+    runs-on: ubuntu-latest
+    # Skip PRs from forks (no write permissions)
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: julia-actions/setup-julia@v2
+      - uses: julia-actions/cache@v2
+
+      - name: Run formatter check
+        id: format_check
+        run: |
+          if ! make check-format; then
+            echo "format_needs_fix=true" >> $GITHUB_OUTPUT
+          else
+            echo "format_needs_fix=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Apply formatter if needed
+        if: steps.format_check.outputs.format_needs_fix == 'true'
+        run: |
+          make format
+
+      - name: Create/update auto-format PR
+        if: steps.format_check.outputs.format_needs_fix == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "🤖 Auto-format Julia code"
+          title: "🤖 Auto-format Julia code"
+          body: |
+            This PR automatically applies Julia code formatting using `make format`.
+            Please review and merge if appropriate.
+          branch: auto-format-${{ github.event.pull_request.number }}
+          base: ${{ github.head_ref }}
+          delete-branch: true
+          labels: |
+            automated pr
+            code style
+
+      - name: Fail if formatting was needed
+        if: steps.format_check.outputs.format_needs_fix == 'true'
+        run: |
+          echo "::error::Code formatting issues detected. Auto-format PR created."
+          exit 1
