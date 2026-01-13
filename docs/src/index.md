@@ -24,6 +24,7 @@ Related projects:
 BayesBase.PointMass
 BayesBase.ContinuousUnivariateLogPdf
 BayesBase.ContinuousMultivariateLogPdf
+BayesBase.DiscreteUnivariateLogPdf
 BayesBase.SampleList
 BayesBase.FactorizedJoint
 BayesBase.MixtureDistribution
