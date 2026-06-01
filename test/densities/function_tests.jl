@@ -172,7 +172,6 @@ end
     @test_throws AssertionError d1([-1])
     @test_throws AssertionError logpdf(d1, [-1])
     @test_throws AssertionError pdf(d1, [-1])
-
 end
 
 @testitem "ContinuousUnivariateLogPdf: test domain in logpdf" begin
@@ -190,7 +189,7 @@ end
     import DomainSets: Integers, ClosedInterval
 
     d1 = ContinuousUnivariateLogPdf(Integers(), (x) -> 1/abs(x))
-    d2 = ContinuousUnivariateLogPdf(ClosedInterval(1 : 10), (x) -> log(x))
+    d2 = ContinuousUnivariateLogPdf(ClosedInterval(1:10), (x) -> log(x))
 
     @test_throws AssertionError logpdf(d1, [1.0, 2.0])
     @test_throws AssertionError logpdf(d2, [1.0, 1.0])
@@ -216,8 +215,8 @@ end
     d1 = DiscreteUnivariateLogPdf(Integers(), (x) -> 1.0)
     @test 1 ∈ support(d1)
     @test -2.11 ∉ support(d1)
-    
-    d2 = DiscreteUnivariateLogPdf(ClosedInterval(1 : 10), (x) -> 1.0)
+
+    d2 = DiscreteUnivariateLogPdf(ClosedInterval(1:10), (x) -> 1.0)
     @test 1 ∈ support(d2)
     @test -1 ∉ support(d2)
     @test -1.0 ∉ support(d2)
@@ -284,7 +283,6 @@ end
     @test_throws AssertionError logpdf(prod(GenericProd(), d5, d6), -1.0) # supports are different
 end
 
-
 @testitem "DiscreteUnivariateLogPdf: prod" begin
     import DomainSets: Integers, ClosedInterval
 
@@ -292,7 +290,9 @@ end
     d2 = DiscreteUnivariateLogPdf(Integers(), (x) -> 3.0 * -x^2)
 
     product = prod(GenericProd(), dist, d2)
-    pt1 = DiscreteUnivariateLogPdf(ClosedInterval(0:10), (x) -> logpdf(dist, x) + logpdf(d2, x))
+    pt1 = DiscreteUnivariateLogPdf(
+        ClosedInterval(0:10), (x) -> logpdf(dist, x) + logpdf(d2, x)
+    )
 
     @test variate_form(typeof(product)) === variate_form(typeof(dist))
     @test variate_form(typeof(product)) === variate_form(typeof(d2))
@@ -310,7 +310,9 @@ end
     d4 = DiscreteUnivariateLogPdf(ClosedInterval(-4, 4), (x) -> 3.0 * -x^2)
 
     pr2 = prod(GenericProd(), result, d4)
-    pt2 = DiscreteUnivariateLogPdf(ClosedInterval(-4, 4), (x) -> logpdf(result, x) + logpdf(d4, x))
+    pt2 = DiscreteUnivariateLogPdf(
+        ClosedInterval(-4, 4), (x) -> logpdf(result, x) + logpdf(d4, x)
+    )
 
     @test variate_form(typeof(pr2)) === variate_form(typeof(result))
     @test variate_form(typeof(pr2)) === variate_form(typeof(d4))
@@ -365,7 +367,6 @@ end
         @test pdf(another_product, x) ≈ (pdf(product, x) * pdf(dist, x))
     end
 end
-
 
 @testitem "DiscreteUnivariateLogPdf: vectorised-prod" begin
     import DomainSets: Integers
