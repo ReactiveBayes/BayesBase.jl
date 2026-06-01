@@ -8,64 +8,118 @@ import Base: isapprox, in
 abstract type AbstractContinuousGenericLogPdf end
 abstract type AbstractDiscreteGenericLogPdf end
 
-getdomain(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}) = dist.domain
-getlogpdf(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}) = dist.logpdf
+function getdomain(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
+)
+    dist.domain
+end
+function getlogpdf(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
+)
+    dist.logpdf
+end
 
 BayesBase.value_support(::Type{<:AbstractContinuousGenericLogPdf}) = Continuous
 BayesBase.value_support(::Type{<:AbstractDiscreteGenericLogPdf}) = Discrete
 # We throw an error on purpose, since we do not want to use `AbstractContinuousGenericLogPdf` much without approximations
 # We want to encourage a user to use approximate generic log-pdfs as much as possible instead
-function __error_genericlogpdf_not_defined(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}, f::Symbol)
+function __error_genericlogpdf_not_defined(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}, f::Symbol
+)
     return error(
         "`$f` is not defined for `$(dist)`. Use functional form constraints to approximate the resulting generic log-pdf object and to use it in the inference procedure.",
     )
 end
 
-function BayesBase.mean(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})
+function BayesBase.mean(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
+)
     return __error_genericlogpdf_not_defined(dist, :mean)
 end
-function BayesBase.median(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})
+function BayesBase.median(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
+)
     return __error_genericlogpdf_not_defined(dist, :median)
 end
-function BayesBase.mode(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})
+function BayesBase.mode(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
+)
     return __error_genericlogpdf_not_defined(dist, :mode)
 end
-function BayesBase.var(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})
+function BayesBase.var(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
+)
     return __error_genericlogpdf_not_defined(dist, :var)
 end
-function BayesBase.std(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})
+function BayesBase.std(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
+)
     return __error_genericlogpdf_not_defined(dist, :std)
 end
-function BayesBase.cov(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})
+function BayesBase.cov(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
+)
     return __error_genericlogpdf_not_defined(dist, :cov)
 end
-function BayesBase.invcov(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})
+function BayesBase.invcov(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
+)
     return __error_genericlogpdf_not_defined(dist, :invcov)
 end
-function BayesBase.entropy(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})
+function BayesBase.entropy(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
+)
     return __error_genericlogpdf_not_defined(dist, :entropy)
 end
 
-function Base.precision(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})
+function Base.precision(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
+)
     return __error_genericlogpdf_not_defined(dist, :precision)
 end
 
-Base.eltype(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}) = eltype(getdomain(dist))
+function Base.eltype(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
+)
+    eltype(getdomain(dist))
+end
 
-BayesBase.paramfloattype(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}) = deep_eltype(eltype(dist))
-BayesBase.samplefloattype(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}) = paramfloattype(dist)
+function BayesBase.paramfloattype(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
+)
+    deep_eltype(eltype(dist))
+end
+function BayesBase.samplefloattype(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
+)
+    paramfloattype(dist)
+end
 
-(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})(x::Real) = logpdf(dist, x)
-(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})(x::AbstractVector{<:Real}) = logpdf(dist, x)
+function (dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})(
+    x::Real
+)
+    logpdf(dist, x)
+end
+function (dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})(
+    x::AbstractVector{<:Real}
+)
+    logpdf(dist, x)
+end
 
-function BayesBase.logpdf(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}, x)
+function BayesBase.logpdf(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}, x
+)
     @assert x ∈ getdomain(dist) "x = $(x) does not belong to the domain ($(getdomain(dist))) of $dist"
     lpdf = getlogpdf(dist)
     return lpdf(x)
 end
 
 # We don't expect neither `pdf` nor `logpdf` to be normalised
-BayesBase.pdf(dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}, x) = exp(logpdf(dist, x))
+function BayesBase.pdf(
+    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}, x
+)
+    exp(logpdf(dist, x))
+end
 
 """
     DiscreteUnivariateLogPdf{ D <: DomainSets.Domain, F } <: AbstractDiscreteGenericLogPdf
