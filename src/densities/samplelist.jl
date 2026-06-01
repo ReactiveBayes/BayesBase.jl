@@ -541,10 +541,10 @@ end
 ## Lowlevel implementation below...
 
 @inline static_getindex(::Type{Univariate}, ndims::Tuple{}, samples, i) = samples[i]
-@inline static_getindex(::Type{Multivariate}, ndims::Tuple{Int}, samples, i) = view(
-    samples, :, i
-)
-@inline static_getindex(::Type{Matrixvariate}, ndims::Tuple{Int,Int}, samples, i) = view(samples,:,:,i)
+@inline static_getindex(::Type{Multivariate}, ndims::Tuple{Int}, samples, i) =
+    view(samples, :, i)
+@inline static_getindex(::Type{Matrixvariate}, ndims::Tuple{Int,Int}, samples, i) =
+    view(samples,:,:,i)
 
 ## Preallocation utilities
 
@@ -842,9 +842,8 @@ end
 samples_type(::Type{T}) where {L,R,T<:Tuple{L,R}} = L
 
 @inline Base.size(iter::SamplesOnlyIterator) = (length(iter.samplelist),)
-@inline Base.getindex(iter::SamplesOnlyIterator, i::Int) = first(
-    getindex(iter.samplelist, i)
-)
+@inline Base.getindex(iter::SamplesOnlyIterator, i::Int) =
+    first(getindex(iter.samplelist, i))
 
 @inline function Base.setindex!(iter::SamplesOnlyIterator, v, i::Int)
     samples = get_linear_samples(iter.samplelist)
@@ -864,9 +863,8 @@ function Base.iterate(sl::SampleList, state::Int)
     state <= length(sl) ? (sl[state], state + 1) : nothing
 end
 
-@inline Base.getindex(sl::SampleList, i::Int) = sample_list_get_index(
-    variate_form(typeof(sl)), ndims(sl), sl, i
-)
+@inline Base.getindex(sl::SampleList, i::Int) =
+    sample_list_get_index(variate_form(typeof(sl)), ndims(sl), sl, i)
 
 @inline function sample_list_get_index(::Type{Univariate}, ndims, sl, i)
     return (get_linear_samples(sl)[i], get_linear_weights(sl)[i])
@@ -899,16 +897,10 @@ function transform_samples(f::Function, sl::SampleList)
 end
 
 @inline input_for_transform(::Type{Univariate}, samples, size, left, right) = samples[left]
-@inline input_for_transform(::Type{Multivariate}, samples, size, left, right) = SVector{
-    size
-}(
-    view(samples, left:right)
-)
-@inline input_for_transform(::Type{Matrixvariate}, samples, size, left, right) = SMatrix{
-    size[1],size[2]
-}(
-    reshape(view(samples, left:right), size)
-)
+@inline input_for_transform(::Type{Multivariate}, samples, size, left, right) =
+    SVector{size}(view(samples, left:right))
+@inline input_for_transform(::Type{Matrixvariate}, samples, size, left, right) =
+    SMatrix{size[1],size[2]}(reshape(view(samples, left:right), size))
 
 function sample_list_transform_samples(::Type{U}, f::Function, sl::SampleList) where {U}
     n, samples, weights = get_data(sl)
