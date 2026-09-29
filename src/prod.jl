@@ -31,7 +31,7 @@ There are multiple strategies for prod function, e.g. `ClosedProd`, `GenericProd
 See also: [`default_prod_rule`](@ref), [`ClosedProd`](@ref), [`PreserveTypeProd`](@ref), [`GenericProd`](@ref)
 """
 function Base.prod(strategy::UnspecifiedProd, left, right)
-    throw(MethodError(prod, (strategy, left, right)))
+    return throw(MethodError(prod, (strategy, left, right)))
 end
 
 Base.prod(::UnspecifiedProd, ::Missing, right) = right
