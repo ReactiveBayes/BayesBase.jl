@@ -11,12 +11,12 @@ abstract type AbstractDiscreteGenericLogPdf end
 function getdomain(
     dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
 )
-    dist.domain
+    return dist.domain
 end
 function getlogpdf(
     dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
 )
-    dist.logpdf
+    return dist.logpdf
 end
 
 BayesBase.value_support(::Type{<:AbstractContinuousGenericLogPdf}) = Continuous
@@ -81,29 +81,29 @@ end
 function Base.eltype(
     dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
 )
-    eltype(getdomain(dist))
+    return eltype(getdomain(dist))
 end
 
 function BayesBase.paramfloattype(
     dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
 )
-    deep_eltype(eltype(dist))
+    return deep_eltype(eltype(dist))
 end
 function BayesBase.samplefloattype(
     dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
 )
-    paramfloattype(dist)
+    return paramfloattype(dist)
 end
 
 function (dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})(
     x::Real
 )
-    logpdf(dist, x)
+    return logpdf(dist, x)
 end
 function (dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})(
     x::AbstractVector{<:Real}
 )
-    logpdf(dist, x)
+    return logpdf(dist, x)
 end
 
 function BayesBase.logpdf(
@@ -118,7 +118,7 @@ end
 function BayesBase.pdf(
     dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}, x
 )
-    exp(logpdf(dist, x))
+    return exp(logpdf(dist, x))
 end
 
 """

@@ -138,7 +138,7 @@ function convert_paramfloattype(::Type{T}, container::AbstractArray) where {T}
 end
 convert_paramfloattype(::Type{T}, number::Number) where {T} = convert(T, number)
 function convert_paramfloattype(::Type{T}, scaling::UniformScaling) where {T}
-    convert(T, scaling.λ)*I
+    return convert(T, scaling.λ)*I
 end
 convert_paramfloattype(::Type, ::Nothing) = nothing
 

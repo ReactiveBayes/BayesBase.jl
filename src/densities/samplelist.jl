@@ -17,13 +17,15 @@ mutable struct SampleListCache{M,C}
 end
 
 function SampleListCache(::Type{T}, dims::Tuple{}) where {T}
-    SampleListCache(zero(T), zero(T), false, false)
+    return SampleListCache(zero(T), zero(T), false, false)
 end
 function SampleListCache(::Type{T}, dims::Tuple{Int}) where {T}
-    SampleListCache(zeros(T, first(dims)), zeros(T, first(dims), first(dims)), false, false)
+    return SampleListCache(
+        zeros(T, first(dims)), zeros(T, first(dims), first(dims)), false, false
+    )
 end
 function SampleListCache(::Type{T}, dims::Tuple{Int,Int}) where {T}
-    SampleListCache(zeros(T, dims), zeros(T, prod(dims), prod(dims)), false, false)
+    return SampleListCache(zeros(T, dims), zeros(T, prod(dims), prod(dims)), false, false)
 end
 
 is_mean_cached(cache::SampleListCache) = cache.is_mean_cached
@@ -87,17 +89,17 @@ end
 
 Base.show(io::IO, sl::SampleList) = sample_list_show(io, variate_form(typeof(sl)), sl)
 function Base.similar(sl::SampleList{D}) where {D}
-    SampleList(Val(D), similar(sl.samples), similar(sl.weights))
+    return SampleList(Val(D), similar(sl.samples), similar(sl.weights))
 end
 
 function sample_list_show(io::IO, ::Type{Univariate}, sl::SampleList)
-    print(io, "SampleList(Univariate, ", length(sl), ")")
+    return print(io, "SampleList(Univariate, ", length(sl), ")")
 end
 function sample_list_show(io::IO, ::Type{Multivariate}, sl::SampleList)
-    print(io, "SampleList(Multivariate(", ndims(sl), "), ", length(sl), ")")
+    return print(io, "SampleList(Multivariate(", ndims(sl), "), ", length(sl), ")")
 end
 function sample_list_show(io::IO, ::Type{Matrixvariate}, sl::SampleList)
-    print(io, "SampleList(Matrixvariate", ndims(sl), ", ", length(sl), ")")
+    return print(io, "SampleList(Matrixvariate", ndims(sl), ", ", length(sl), ")")
 end
 
 function SampleList(samples::S) where {S<:AbstractVector}
@@ -120,11 +122,11 @@ const DEFAULT_SAMPLE_LIST_N_SAMPLES = 5000
 ## Utility functions
 
 function BayesBase.paramfloattype(sl::SampleList)
-    promote_type(eltype(sl.samples), eltype(sl.weights))
+    return promote_type(eltype(sl.samples), eltype(sl.weights))
 end
 
 function BayesBase.convert_paramfloattype(::Type{T}, sl::SampleList{D}) where {T,D}
-    SampleList(
+    return SampleList(
         Val(D),
         convert_paramfloattype(T, sl.samples),
         convert_paramfloattype(T, sl.weights),
@@ -133,17 +135,17 @@ function BayesBase.convert_paramfloattype(::Type{T}, sl::SampleList{D}) where {T
 end
 
 function Base.eltype(::Type{<:SampleList{D,S,W}}) where {D,S,W}
-    Tuple{sample_list_eltype(SampleList, D, S),eltype(W)}
+    return Tuple{sample_list_eltype(SampleList, D, S),eltype(W)}
 end
 
 BayesBase.sampletype(::SampleList{D,S}) where {D,S} = sample_list_eltype(SampleList, D, S)
 
 sample_list_eltype(::Type{SampleList}, ndims::Tuple{}, ::Type{S}) where {S} = eltype(S)
 function sample_list_eltype(::Type{SampleList}, ndims::Tuple{Int}, ::Type{S}) where {S}
-    SVector{ndims[1],eltype(S)}
+    return SVector{ndims[1],eltype(S)}
 end
 function sample_list_eltype(::Type{SampleList}, ndims::Tuple{Int,Int}, ::Type{S}) where {S}
-    SMatrix{ndims[1],ndims[2],eltype(S),ndims[1] * ndims[2]}
+    return SMatrix{ndims[1],ndims[2],eltype(S),ndims[1] * ndims[2]}
 end
 
 BayesBase.deep_eltype(::Type{<:SampleList{D,S}}) where {D,S} = eltype(S)
@@ -171,7 +173,7 @@ get_data(sl::SampleList) = (length(sl), get_linear_samples(sl), get_linear_weigh
 
 sample_list_check_meta(meta::Any) = meta
 function sample_list_check_meta(meta::Nothing)
-    error("SampleList object has not associated meta information with it.")
+    return error("SampleList object has not associated meta information with it.")
 end
 
 get_unnormalised_weights(sl::SampleList) = get_unnormalised_weights(get_meta(sl))
@@ -200,12 +202,12 @@ end
 
 sample_list_zero_element(::Type{Univariate}, ::Type{T}, sl::SampleList) where {T} = zero(T)
 function sample_list_zero_element(::Type{Multivariate}, ::Type{T}, sl::SampleList) where {T}
-    zeros(T, ndims(sl))
+    return zeros(T, ndims(sl))
 end
 function sample_list_zero_element(
     ::Type{Matrixvariate}, ::Type{T}, sl::SampleList
 ) where {T}
-    zeros(T, ndims(sl))
+    return zeros(T, ndims(sl))
 end
 
 # Generic mean_cov
@@ -237,13 +239,13 @@ end
 BayesBase.weightedmean(sl::SampleList) = first(weightedmean_precision(sl))
 
 function BayesBase.mean(::typeof(log), sl::SampleList)
-    sample_list_logmean(variate_form(typeof(sl)), sl)
+    return sample_list_logmean(variate_form(typeof(sl)), sl)
 end
 function BayesBase.mean(::typeof(xtlog), sl::SampleList)
-    sample_list_meanlogmean(variate_form(typeof(sl)), sl)
+    return sample_list_meanlogmean(variate_form(typeof(sl)), sl)
 end
 function BayesBase.mean(::typeof(mirrorlog), sl::SampleList)
-    sample_list_mirroredlogmean(variate_form(typeof(sl)), sl)
+    return sample_list_mirroredlogmean(variate_form(typeof(sl)), sl)
 end
 
 # Generic version of the mean function for arbitrary `f` 
@@ -269,29 +271,29 @@ end
 ## 
 
 function BayesBase.vague(::Type{SampleList}; nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES)
-    sample_list_vague(Univariate, nsamples)
+    return sample_list_vague(Univariate, nsamples)
 end
 function BayesBase.vague(
     ::Type{SampleList}, dims::Int; nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES
 )
-    sample_list_vague(Multivariate, dims, nsamples)
+    return sample_list_vague(Multivariate, dims, nsamples)
 end
 function BayesBase.vague(
     ::Type{SampleList}, dims::Tuple{Int,Int}; nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES
 )
-    sample_list_vague(Matrixvariate, dims, nsamples)
+    return sample_list_vague(Matrixvariate, dims, nsamples)
 end
 function BayesBase.vague(
     ::Type{SampleList}, dim1::Int, dim2::Int; nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES
 )
-    sample_list_vague(Matrixvariate, (dim1, dim2), nsamples)
+    return sample_list_vague(Matrixvariate, (dim1, dim2), nsamples)
 end
 
 ##
 
 BayesBase.rand(samplelist::SampleList) = rand(Random.default_rng(), samplelist)
 function BayesBase.rand(samplelist::SampleList, n::Integer)
-    rand(Random.default_rng(), samplelist, n)
+    return rand(Random.default_rng(), samplelist, n)
 end
 
 function BayesBase.rand(rng::AbstractRNG, samplelist::SampleList)
@@ -393,7 +395,7 @@ function approximate_prod_with_sample_list(
     y::SampleList,
     nsamples::Int=DEFAULT_SAMPLE_LIST_N_SAMPLES,
 )
-    error("Unsupported SampleList × SampleList prod operation.")
+    return error("Unsupported SampleList × SampleList prod operation.")
 end
 
 function approximate_prod_with_sample_list(
@@ -544,12 +546,12 @@ end
 @inline static_getindex(::Type{Multivariate}, ndims::Tuple{Int}, samples, i) =
     view(samples, :, i)
 @inline static_getindex(::Type{Matrixvariate}, ndims::Tuple{Int,Int}, samples, i) =
-    view(samples,:,:,i)
+    view(samples, :, :, i)
 
 ## Preallocation utilities
 
 function preallocate_samples(::Type{T}, dims::Tuple, length::Int) where {T}
-    Vector{T}(undef, length * prod(dims))
+    return Vector{T}(undef, length * prod(dims))
 end
 
 ## Linearization functions
@@ -575,10 +577,10 @@ end
 ## Cache utilities
 
 function sample_list_mean(sl::SampleList, cached)
-    sample_list_mean(variate_form(typeof(sl)), sl, cached)
+    return sample_list_mean(variate_form(typeof(sl)), sl, cached)
 end
 function sample_list_mean_cov(sl::SampleList, cached)
-    sample_list_mean_cov(variate_form(typeof(sl)), sl, cached)
+    return sample_list_mean_cov(variate_form(typeof(sl)), sl, cached)
 end
 
 # Cache ignoring versions
@@ -860,7 +862,7 @@ get_linear_samples(iter::SamplesOnlyIterator) = get_linear_samples(iter.sampleli
 
 Base.iterate(sl::SampleList) = (sl[1], 2)
 function Base.iterate(sl::SampleList, state::Int)
-    state <= length(sl) ? (sl[state], state + 1) : nothing
+    return state <= length(sl) ? (sl[state], state + 1) : nothing
 end
 
 @inline Base.getindex(sl::SampleList, i::Int) =
@@ -893,7 +895,7 @@ end
 ## Transformation routines
 
 function transform_samples(f::Function, sl::SampleList)
-    sample_list_transform_samples(variate_form(typeof(sl)), f, sl)
+    return sample_list_transform_samples(variate_form(typeof(sl)), f, sl)
 end
 
 @inline input_for_transform(::Type{Univariate}, samples, size, left, right) = samples[left]
