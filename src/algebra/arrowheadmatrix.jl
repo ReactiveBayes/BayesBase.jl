@@ -100,7 +100,7 @@ function show(io::IO, ::MIME"text/plain", A::ArrowheadMatrix)
     for i in 1:(n - 1)
         print(io, A.z[i], "  ")
     end
-    println(io, A.α)
+    return println(io, A.α)
 end
 
 function size(A::ArrowheadMatrix)
@@ -255,13 +255,13 @@ function show(io::IO, ::MIME"text/plain", A_inv::InvArrowheadMatrix)
     n = size(A_inv.A, 1)
     println(io, n, "×", n, " InvArrowheadMatrix{", eltype(A_inv), "}:")
     println(io, "Inverse of:")
-    show(io, MIME"text/plain"(), A_inv.A)
+    return show(io, MIME"text/plain"(), A_inv.A)
 end
 
 inv(A::ArrowheadMatrix) = InvArrowheadMatrix(A)
 
 function size(A_inv::InvArrowheadMatrix)
-    size(A_inv.A)
+    return size(A_inv.A)
 end
 
 function LinearAlgebra.mul!(y, A_inv::InvArrowheadMatrix{T}, x::AbstractVector{T}) where {T}

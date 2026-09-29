@@ -142,8 +142,8 @@ end
 
         b = randn(rng, n+1)
 
-        benchmark_arrow = @benchmark $A_arrow \ $b;
-        benchmark_dense = @benchmark $A_dense \ $b;
+        benchmark_arrow = @benchmark $A_arrow \ $b
+        benchmark_dense = @benchmark $A_dense \ $b
 
         # our implementation is at least k times faster on average
         k = @static if VERSION < v"1.12"
@@ -180,8 +180,8 @@ end
 
         b = randn(rng, n+1)
 
-        benchmark_arrow = @benchmark cholinv($A_arrow) * $b;
-        benchmark_dense = @benchmark cholinv($A_dense) * $b;
+        benchmark_arrow = @benchmark cholinv($A_arrow) * $b
+        benchmark_dense = @benchmark cholinv($A_dense) * $b
 
         # our implementation is at least k times faster on average
         k = @static if VERSION < v"1.12"
