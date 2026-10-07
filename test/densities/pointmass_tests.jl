@@ -277,34 +277,23 @@ end
     end
 end
 
-@testitem "PointMass of numbers that are not Real" begin
+@testitem "The mean and mode of any PointMass are its point" begin
     using BayesBase, LinearAlgebra
 
-    # Elements that are numbers but not `Real`, as complex numbers or the numbers a compiler such as
-    # Reactant traces, are handled as the real ones
-    vector = [1.0 + 2.0im, 3.0 - 1.0im]
-    dist = PointMass(vector)
-    @test mean(dist) === vector
-    @test mode(dist) === vector
-    @test var(dist) == zeros(ComplexF64, 2)
-    @test std(dist) == zeros(ComplexF64, 2)
-    @test cov(dist) == zeros(ComplexF64, 2, 2)
-    @test ndims(dist) == 2
-    @test eltype(dist) === ComplexF64
-    @test insupport(dist, vector)
-    @test pdf(dist, vector) == one(ComplexF64)
-    @test logpdf(dist, copy(vector) .+ 1) == convert(ComplexF64, -Inf)
-    @test mean(sum, dist) == sum(vector)
-
-    matrix = [1.0+1.0im 0.0; 0.0 1.0]
-    @test mean(PointMass(matrix)) === matrix
-    @test ndims(PointMass(matrix)) == (2, 2)
-
-    # The mean and mode of any point mass are its point; these recursed until the stack overflowed
-    @test mean(PointMass(1.0 + 2.0im)) === 1.0 + 2.0im
-    @test mode(PointMass(1.0 + 2.0im)) === 1.0 + 2.0im
-    @test mean(PointMass("text")) == "text"
-    @test mean(PointMass(2.0im * I)) == 2.0im * I
+    # A point that no specialised method matches recursed until the stack overflowed: `mean(fn, d)` is
+    # `fn(mean(d))`, and Statistics' `mean(itr)` is `mean(identity, itr)`
+    for point in (
+        1.0 + 2.0im,
+        [1.0 + 2.0im, 3.0],
+        [1.0+1.0im 0.0; 0.0 1.0],
+        2.0im * I,
+        "text",
+        :symbol,
+    )
+        @test mean(PointMass(point)) == point
+        @test mode(PointMass(point)) == point
+    end
+    @test mean(sum, PointMass([1.0 + 2.0im, 3.0])) == 4.0 + 2.0im
 end
 
 @testitem "Base.length for PointMass" begin

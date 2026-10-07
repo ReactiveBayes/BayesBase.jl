@@ -87,72 +87,70 @@ Base.eltype(::PointMass{T}) where {T<:Real} = T
 
 function BayesBase.insupport(
     distribution::PointMass{V}, x::AbstractArray{T,N}
-) where {T<:Number,N,V<:AbstractArray{T,N}}
+) where {T<:Real,N,V<:AbstractArray{T,N}}
     return x == getpointmass(distribution)
 end
 
 function BayesBase.pdf(
     distribution::PointMass{V}, x::AbstractArray{T,N}
-) where {T<:Number,N,V<:AbstractArray{T,N}}
+) where {T<:Real,N,V<:AbstractArray{T,N}}
     return insupport(distribution, x) ? one(T) : zero(T)
 end
 
 function BayesBase.logpdf(
     distribution::PointMass{V}, x::AbstractArray{T,N}
-) where {T<:Number,N,V<:AbstractArray{T,N}}
+) where {T<:Real,N,V<:AbstractArray{T,N}}
     return insupport(distribution, x) ? zero(T) : convert(T, -Inf)
 end
 
-function BayesBase.mean(distribution::PointMass{V}) where {T<:Number,V<:AbstractArray{T}}
+function BayesBase.mean(distribution::PointMass{V}) where {T<:Real,V<:AbstractArray{T}}
     return getpointmass(distribution)
 end
-function BayesBase.mode(distribution::PointMass{V}) where {T<:Number,V<:AbstractArray{T}}
+function BayesBase.mode(distribution::PointMass{V}) where {T<:Real,V<:AbstractArray{T}}
     return mean(distribution)
 end
-function BayesBase.var(distribution::PointMass{V}) where {T<:Number,V<:AbstractArray{T}}
+function BayesBase.var(distribution::PointMass{V}) where {T<:Real,V<:AbstractArray{T}}
     return zeros(T, ndims(distribution))
 end
 
-function BayesBase.std(distribution::PointMass{V}) where {T<:Number,V<:AbstractArray{T}}
+function BayesBase.std(distribution::PointMass{V}) where {T<:Real,V<:AbstractArray{T}}
     return zeros(T, ndims(distribution))
 end
 
 # For vectors, covariances and probvec are defined
-function BayesBase.cov(distribution::PointMass{V}) where {T<:Number,V<:AbstractArray{T,1}}
+function BayesBase.cov(distribution::PointMass{V}) where {T<:Real,V<:AbstractArray{T,1}}
     return zeros(T, (ndims(distribution), ndims(distribution)))
 end
 
-function BayesBase.probvec(
-    distribution::PointMass{V}
-) where {T<:Number,V<:AbstractArray{T,1}}
+function BayesBase.probvec(distribution::PointMass{V}) where {T<:Real,V<:AbstractArray{T,1}}
     return mean(distribution)
 end
 
-function BayesBase.cov(distribution::PointMass{M}) where {T<:Number,N,M<:AbstractArray{T,N}}
+function BayesBase.cov(distribution::PointMass{M}) where {T<:Real,N,M<:AbstractArray{T,N}}
     return error("cov(::PointMass{ <: $M }) is not defined")
 end
 
 function BayesBase.probvec(
     distribution::PointMass{M}
-) where {T<:Number,N,M<:AbstractArray{T,N}}
+) where {T<:Real,N,M<:AbstractArray{T,N}}
     return error("probvec(::PointMass{ <: $M }) is not defined")
 end
 
-function Base.precision(distribution::PointMass{V}) where {T<:Number,V<:AbstractArray{T}}
+function Base.precision(distribution::PointMass{V}) where {T<:Real,V<:AbstractArray{T}}
     return one(T) ./ cov(distribution)
 end
 
 # We need this function for backwards compatibility
 
-function Base.ndims(distribution::PointMass{V}) where {T<:Number,V<:AbstractVector{T}}
+function Base.ndims(distribution::PointMass{V}) where {T<:Real,V<:AbstractVector{T}}
     return length(mean(distribution))
 end
 
-function Base.ndims(distribution::PointMass{M}) where {T<:Number,N,M<:AbstractArray{T,N}}
+function Base.ndims(distribution::PointMass{M}) where {T<:Real,N,M<:AbstractArray{T,N}}
     return size(mean(distribution))
 end
 
-Base.eltype(::PointMass{V}) where {T<:Number,N,V<:AbstractArray{T,N}} = T
+Base.eltype(::PointMass{V}) where {T<:Real,N,V<:AbstractArray{T,N}} = T
 
 # UniformScaling-based matrixvariate point mass
 
