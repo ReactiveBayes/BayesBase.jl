@@ -29,6 +29,12 @@ function BayesBase.mean(fn::F, distribution::PointMass) where {F<:Function}
     return fn(mean(distribution))
 end
 
+# The mean and mode of any point mass are its point. Without this fallback, a point no
+# specialised method matches recursed forever: Statistics' `mean(itr)` is `mean(identity, itr)`,
+# which is the method above
+BayesBase.mean(distribution::PointMass) = getpointmass(distribution)
+BayesBase.mode(distribution::PointMass) = mean(distribution)
+
 ##
 
 BayesBase.sampletype(::PointMass{T}) where {T} = T

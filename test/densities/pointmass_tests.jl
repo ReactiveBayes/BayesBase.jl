@@ -277,6 +277,25 @@ end
     end
 end
 
+@testitem "The mean and mode of any PointMass are its point" begin
+    using BayesBase, LinearAlgebra
+
+    # A point that no specialised method matches recursed until the stack overflowed: `mean(fn, d)` is
+    # `fn(mean(d))`, and Statistics' `mean(itr)` is `mean(identity, itr)`
+    for point in (
+        1.0 + 2.0im,
+        [1.0 + 2.0im, 3.0],
+        [1.0+1.0im 0.0; 0.0 1.0],
+        2.0im * I,
+        "text",
+        :symbol,
+    )
+        @test mean(PointMass(point)) == point
+        @test mode(PointMass(point)) == point
+    end
+    @test mean(sum, PointMass([1.0 + 2.0im, 3.0])) == 4.0 + 2.0im
+end
+
 @testitem "Base.length for PointMass" begin
     using LinearAlgebra, SpecialFunctions, TinyHugeNumbers, Distributions, BayesBase
 
