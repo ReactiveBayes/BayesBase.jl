@@ -1,0 +1,14 @@
+[deps]
+BayesBase = "b4ee3484-f114-42fe-b91c-797d54a0c67e"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Reactant = "3c362404-f566-11ee-1572-e11a4b42c853"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[sources]
+BayesBase = {path = "../.."}
+
+[compat]
+LinearAlgebra = "1"
+Reactant = "0.2.298"
+Test = "1"
+julia = "1.10"
