@@ -26,6 +26,23 @@ inverse alive as long as either wrapper is reachable.
 
 With `FastCholesky` loaded, `fastcholesky`, `cholinv`, `chollogdet` and `cholinv_logdet` reuse the
 same caches.
+
+# Reactant
+
+With `Reactant` loaded (tested with Reactant 0.2.298 on Julia 1.13, CPU backend, `Float32` and
+`Float64`), a wrapper converts with `Reactant.to_rarray` in any cache state, including a
+populated reciprocal pair, and can be constructed inside a compiled function. Inside compiled
+code `inv`, `\\`, `logdet`, `*` and broadcasting are supported with the following contract:
+
+- Caches are never written during tracing. Host-populated caches become inputs of the compiled
+  program (no factorization is emitted for them); empty caches are computed from the storage in
+  the program on every execution.
+- The cache state is part of the compile contract: a function compiled on an empty-cache wrapper
+  also accepts populated wrappers, but a function compiled on a populated wrapper fails on an
+  empty one.
+- Julia object identity and the host lock do not carry across the compiled boundary: a compiled
+  `inv` returns a new wrapper whose `inverse` holds the input values but is not `===` the input.
+- Symmetry and positive definiteness are not checked on traced input.
 """
 mutable struct MatrixWithCachedInverse{T,M<:AbstractMatrix{T}} <: AbstractMatrix{T}
     const storage::ReadOnlyMatrix{T,M}
@@ -61,6 +78,7 @@ Base.Matrix(A::MatrixWithCachedInverse) = Matrix(parent(A))
 Base.copy(A::MatrixWithCachedInverse) = copy(parent(A))
 Base.:*(A::MatrixWithCachedInverse, x::AbstractVector) = parent(A) * x
 Base.:*(A::MatrixWithCachedInverse, X::AbstractMatrix) = parent(A) * X
+Base.broadcastable(A::MatrixWithCachedInverse) = parent(A) # `A + B`, `2 .* A`, ... use the parent
 
 # An independent snapshot with empty caches (same-type `convert` returns `A` itself).
 function Base.AbstractMatrix{T}(A::MatrixWithCachedInverse) where {T}
