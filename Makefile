@@ -1,4 +1,4 @@
-.PHONY: help docs docs-serve docs-clean test format check-format clean deps deps-docs deps-scripts benchmark benchmark-compare
+.PHONY: help docs docs-serve docs-clean test test-reactant format check-format clean deps deps-docs deps-scripts benchmark benchmark-compare
 
 
 DOCSRC = docs
@@ -44,6 +44,7 @@ help:
 	@echo '  ${YELLOW}deps-docs${RESET}            Install documentation dependencies'
 	@echo '  ${YELLOW}deps-scripts${RESET}         Install script dependencies'
 	@echo '  ${YELLOW}test${RESET}                 Run project tests'
+	@echo '  ${YELLOW}test-reactant${RESET}        Run the Reactant extension tests from test/reactant'
 	@echo '  ${YELLOW}format${RESET}               Format Julia code'
 	@echo '  ${YELLOW}check-format${RESET}         Check Julia code formatting (does not modify files)'
 	@echo '  ${YELLOW}clean${RESET}                Clean all generated files'
@@ -80,6 +81,10 @@ deps-scripts: ## Install script dependencies
 
 test: deps ## Run project tests
 	$(JULIA) $(JULIAFLAGS) -e 'using Pkg; Pkg.test(test_args = split("$(test_args)") .|> string)'	
+
+test-reactant: ## Run the Reactant extension tests from test/reactant's own environment (not part of `make test`)
+	$(JULIA) --startup-file=no --project=test/reactant -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
+	$(JULIA) --startup-file=no --project=test/reactant test/reactant/runtests.jl
 
 format: deps-scripts ## Format Julia code
 	$(JULIA) $(JULIAFLAGSSCRIPTS) $(FORMATTER) --overwrite
