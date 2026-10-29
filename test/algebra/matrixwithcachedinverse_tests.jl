@@ -23,6 +23,28 @@
     end
 end
 
+@testitem "MatrixWithCachedInverse: construction from Symmetric and Hermitian views" begin
+    include("algebrasetup_setuptests.jl")
+
+    for T in (Float32, Float64, BigFloat), uplo in (:U, :L)
+        n = 5
+        S = T[1 / (i + j - 1) for i in 1:n, j in 1:n] + I
+        junk = copy(S)
+        junk[CartesianIndex(uplo === :U ? (2, 1) : (1, 2))] = T(100) # the ignored triangle holds garbage
+        for V in (Symmetric(junk, uplo), Hermitian(junk, uplo))
+            A = @inferred MatrixWithCachedInverse(V)
+            @test A isa MatrixWithCachedInverse{T,Matrix{T}}
+            @test Matrix(A) == S
+            @test A.factor === nothing && A.inverse === nothing
+            @test inv(A) ≈ inv(S)
+            @test inv(inv(A)) === A
+            @test A \ ones(T, n) ≈ S \ ones(T, n)
+            @test logdet(A) ≈ logdet(S)
+        end
+        @test MatrixWithCachedInverse(Symmetric(MatrixWithCachedInverse(S))) == S
+    end
+end
+
 @testitem "MatrixWithCachedInverse: inverse, solve and logdet" begin
     include("algebrasetup_setuptests.jl")
 

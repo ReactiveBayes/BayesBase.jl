@@ -8,7 +8,8 @@ using LinearAlgebra, ReadOnlyArrays
 An `AbstractMatrix` wrapper around an owned copy of a dense, real, symmetric positive-definite
 matrix that lazily caches its Cholesky factor and its inverse.
 
-Construction copies `A`, checks that it is square and symmetric, and performs no factorization.
+Construction copies `A` (a `Symmetric` or `Hermitian` view is materialized into a dense matrix),
+checks that it is square and symmetric, and performs no factorization.
 The first `A \\ b` or `logdet(A)` computes and caches the Cholesky factor. The first `inv(A)`
 computes the inverse once and returns another `MatrixWithCachedInverse` that already links back,
 so `inv(A) === inv(A)` and `inv(inv(A)) === A` hold without any recomputation. Positive
@@ -59,9 +60,14 @@ end
 function MatrixWithCachedInverse(m::AbstractMatrix{T}) where {T}
     LinearAlgebra.checksquare(m)
     _checksymmetric(m)
-    c = copy(m)
+    c = _materialize(m)
     return MatrixWithCachedInverse{T,typeof(c)}(c, ReentrantLock())
 end
+
+# The owned storage: a plain copy, or both triangles of a `Symmetric`/`Hermitian` view
+# written into a dense matrix of the parent's type.
+_materialize(m) = copy(m)
+_materialize(m::Union{Symmetric,Hermitian}) = copyto!(similar(parent(m)), m)
 
 function _checksymmetric(m)
     return issymmetric(m) ||
