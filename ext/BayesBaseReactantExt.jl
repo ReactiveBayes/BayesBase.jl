@@ -21,9 +21,11 @@ end
 # empty host cache, and a host cache must not hold values from one particular compilation.
 # Host-populated caches are used as program inputs; the `factorize`/`invert` recipes are ignored
 # because only Reactant's own `cholesky` lowers to the program.
-BayesBase._factor(::Any, A::Traced) = @something(A.factor, cholesky(parent(A)))
+function BayesBase.cached_cholesky_or_compute(::Any, A::Traced)
+    @something(A.factor, cholesky(parent(A)))
+end
 
-function BayesBase._inverse(::Any, A::Traced)
+function BayesBase.cached_inverse_or_compute(::Any, A::Traced)
     A.inverse === nothing || return A.inverse
     T = Reactant.unwrapped_eltype(A)
     Ainv = A \ Reactant.promote_to(TracedRArray{T,2}, I(size(A, 1)))
@@ -35,7 +37,7 @@ end
 # LinearAlgebra's `Cholesky \ b` uses an adjoint-wrapped triangular that Reactant does not
 # overload, so solve with the two triangular systems directly.
 function Base.:\(A::Traced, b::AbstractVecOrMat)
-    C = BayesBase._factor(A)
+    C = BayesBase.cached_cholesky_or_compute(A)
     if C.uplo == 'U'
         U = UpperTriangular(C.factors)
         return U \ (adjoint(U) \ b)
@@ -45,6 +47,8 @@ function Base.:\(A::Traced, b::AbstractVecOrMat)
     end
 end
 
-LinearAlgebra.logdet(A::Traced) = 2 * sum(log, diag(BayesBase._factor(A).factors))
+function LinearAlgebra.logdet(A::Traced)
+    return 2 * sum(log, diag(BayesBase.cached_cholesky_or_compute(A).factors))
+end
 
 end

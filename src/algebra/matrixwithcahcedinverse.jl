@@ -20,9 +20,7 @@ while `convert(AbstractMatrix{T}, A)` returns `A` itself when the element type a
 Lazy initialization is synchronized with a lock shared by the pair, so concurrent first requests
 share one result.
 
-This first version supports dense `Matrix{T}` inputs for `T` in `Float32`, `Float64` and
-`BigFloat`. After the inverse is computed, the pair keeps the input, its Cholesky storage and the
-inverse alive as long as either wrapper is reachable.
+# FastCholesky
 
 With `FastCholesky` loaded, `fastcholesky`, `cholinv`, `chollogdet` and `cholinv_logdet` reuse the
 same caches.
@@ -86,9 +84,13 @@ function Base.AbstractMatrix{T}(A::MatrixWithCachedInverse) where {T}
     return MatrixWithCachedInverse{T,typeof(c)}(c, ReentrantLock())
 end
 
-# The cached Cholesky factor, computed by `factorize(parent(A))` on the first request. The
-# factorization never mutates `storage`, and only a successful result is published.
-function _factor(factorize::F, A::MatrixWithCachedInverse{T,M}) where {F,T,M}
+# Returns `A.factor` when it is already set; otherwise computes it as `factorize(parent(A))`,
+# stores it in `A.factor` and returns it. The factorization never mutates `storage`, only a
+# successful result is published, and the whole step runs under `A.guard` so concurrent first
+# requests share one result.
+function cached_cholesky_or_compute(
+    factorize::F, A::MatrixWithCachedInverse{T,M}
+) where {F,T,M}
     Base.@lock A.guard begin
         C = A.factor
         if C === nothing
@@ -98,10 +100,14 @@ function _factor(factorize::F, A::MatrixWithCachedInverse{T,M}) where {F,T,M}
         C
     end
 end
-_factor(A::MatrixWithCachedInverse) = _factor(m -> cholesky(Symmetric(m)), A)
+function cached_cholesky_or_compute(A::MatrixWithCachedInverse)
+    return cached_cholesky_or_compute(m -> cholesky(Symmetric(m)), A)
+end
 
-# The cached inverse wrapper, built from the dense `invert(A)` on the first request.
-function _inverse(invert::F, A::MatrixWithCachedInverse{T,M}) where {F,T,M}
+# Returns `A.inverse` when it is already set; otherwise computes the dense `invert(A)`, wraps it
+# in a new `MatrixWithCachedInverse` sharing `A.guard`, links the pair both ways and returns the
+# wrapper. The reverse link is set before the wrapper is published, under `A.guard`.
+function cached_inverse_or_compute(invert::F, A::MatrixWithCachedInverse{T,M}) where {F,T,M}
     Base.@lock A.guard begin
         B = A.inverse
         if B === nothing
@@ -112,7 +118,9 @@ function _inverse(invert::F, A::MatrixWithCachedInverse{T,M}) where {F,T,M}
         B
     end
 end
-Base.inv(A::MatrixWithCachedInverse) = _inverse(A -> inv(_factor(A)), A)
+function Base.inv(A::MatrixWithCachedInverse)
+    return cached_inverse_or_compute(A -> inv(cached_cholesky_or_compute(A)), A)
+end
 
-Base.:\(A::MatrixWithCachedInverse, b::AbstractVecOrMat) = _factor(A) \ b
-LinearAlgebra.logdet(A::MatrixWithCachedInverse) = logdet(_factor(A))
+Base.:\(A::MatrixWithCachedInverse, b::AbstractVecOrMat) = cached_cholesky_or_compute(A) \ b
+LinearAlgebra.logdet(A::MatrixWithCachedInverse) = logdet(cached_cholesky_or_compute(A))

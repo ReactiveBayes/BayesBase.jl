@@ -83,8 +83,8 @@ end
     for T in (Float32, Float64, BigFloat)
         S = T[2 1; 1 2]
         A = @inferred MatrixWithCachedInverse(S)
-        @test (@inferred BayesBase._factor(A)) isa Cholesky{T,Matrix{T}}
-        @test (@inferred BayesBase._factor(A)) === A.factor
+        @test (@inferred BayesBase.cached_cholesky_or_compute(A)) isa Cholesky{T,Matrix{T}}
+        @test (@inferred BayesBase.cached_cholesky_or_compute(A)) === A.factor
         B = @inferred inv(A)
         @test (@inferred inv(A)) === B
         @test (@inferred inv(B)) === A
@@ -116,7 +116,7 @@ end
 
     # cold `fastcholesky` and `chollogdet` fill only the factor cache
     A = MatrixWithCachedInverse(S)
-    @test fastcholesky(A) === BayesBase._factor(A) === A.factor
+    @test fastcholesky(A) === BayesBase.cached_cholesky_or_compute(A) === A.factor
     @test A.inverse === nothing
     A = MatrixWithCachedInverse(S)
     @test chollogdet(A) ≈ logdet(S)
