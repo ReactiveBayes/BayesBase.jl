@@ -12,14 +12,14 @@
         @test A[1, 1] == S[1, 1] && A[n] == S[n]
         @test A * ones(T, n) ≈ S * ones(T, n)
         @test A * S ≈ S * S
-        @test A.factor === nothing && A.inverse === nothing
+        @test BayesBase.cached_factor(A) === nothing && A.inverse === nothing
 
         @test A \ ones(T, n) ≈ S \ ones(T, n)
-        @test A.factor isa Cholesky{T,Matrix{T}} && A.inverse === nothing
+        @test BayesBase.cached_factor(A) isa Cholesky{T,Matrix{T}} && A.inverse === nothing
 
         B = MatrixWithCachedInverse(S)
         @test logdet(B) ≈ logdet(S)
-        @test B.factor isa Cholesky{T,Matrix{T}} && B.inverse === nothing
+        @test BayesBase.cached_factor(B) isa Cholesky{T,Matrix{T}} && B.inverse === nothing
     end
 end
 
@@ -30,30 +30,30 @@ end
         S = T[2 1; 1 2]
         A = MatrixWithCachedInverse(S)
         @test issymmetric(A) && ishermitian(A)
-        @test A.factor === nothing && A.inverse === nothing
+        @test BayesBase.cached_factor(A) === nothing && A.inverse === nothing
 
         F = @inferred cholesky(A)
-        @test F === A.factor
+        @test F === BayesBase.cached_factor(A)
         @test Matrix(F) ≈ S
         @test (@inferred cholesky(A)) === F
         @test isposdef(A)
-        @test A.factor === F && A.inverse === nothing
+        @test BayesBase.cached_factor(A) === F && A.inverse === nothing
         @test cholesky(copy(A)) === F
 
         B = inv(A)
         @test cholesky(A) === F
-        @test B.factor === nothing
+        @test BayesBase.cached_factor(B) === nothing
         @test issymmetric(B) && ishermitian(B)
         @test isposdef(B)
         @test Matrix(cholesky(B)) ≈ inv(S)
-        @test cholesky(B) === B.factor
+        @test cholesky(B) === BayesBase.cached_factor(B)
         @test inv(B) === A
 
         # A cold positivity query populates the same cache as cholesky.
         C = MatrixWithCachedInverse(S)
         @test (@inferred isposdef(C))
-        @test C.factor isa Cholesky{T,Matrix{T}}
-        @test cholesky(C) === C.factor && C.inverse === nothing
+        @test BayesBase.cached_factor(C) isa Cholesky{T,Matrix{T}}
+        @test cholesky(C) === BayesBase.cached_factor(C) && C.inverse === nothing
 
         for M in (T[1 2; 2 1], T[1 1; 1 1], T[-2 0; 0 -1])
             N = MatrixWithCachedInverse(M)
@@ -61,7 +61,7 @@ end
             @test !isposdef(N)
             @test_throws PosDefException cholesky(N)
             @test !isposdef(N)
-            @test N.factor === nothing && N.inverse === nothing
+            @test BayesBase.cached_factor(N) === nothing && N.inverse === nothing
             @test Matrix(N) == M
         end
     end
@@ -172,7 +172,7 @@ end
             A = @inferred MatrixWithCachedInverse(V)
             @test A isa MatrixWithCachedInverse{T,Matrix{T}}
             @test Matrix(A) == S
-            @test A.factor === nothing && A.inverse === nothing
+            @test BayesBase.cached_factor(A) === nothing && A.inverse === nothing
             @test inv(A) ≈ inv(S)
             @test inv(inv(A)) === A
             @test A \ ones(T, n) ≈ S \ ones(T, n)
@@ -196,14 +196,14 @@ end
         @test Matrix(B) ≈ inv(F)
         @test inv(A) === B
         @test inv(B) === A
-        @test B.factor === nothing
-        @test A.factor isa Cholesky{T,Matrix{T}}
+        @test BayesBase.cached_factor(B) === nothing
+        @test BayesBase.cached_factor(A) isa Cholesky{T,Matrix{T}}
 
         @test A \ b ≈ F \ b
         @test A \ Matrix{T}(I, n, n) ≈ inv(F)
         @test logdet(A) ≈ logdet(F)
         @test logdet(B) ≈ -logdet(F)
-        @test B.factor isa Cholesky{T,Matrix{T}}
+        @test BayesBase.cached_factor(B) isa Cholesky{T,Matrix{T}}
         @test B \ b ≈ S * b
     end
 end
@@ -234,14 +234,14 @@ end
 
         for source in (fresh, factored, paired, inverse)
             @test (@inferred parent(source)) isa Matrix{T}
-            factor_before, inverse_before = source.factor, source.inverse
+            factor_before, inverse_before = BayesBase.cached_factor(source), source.inverse
             C = @inferred copy(source)
             @test C isa typeof(source)
             @test (@inferred parent(C)) isa Matrix{T}
             @test C !== source && C == source
             @test !Base.mightalias(parent(C), parent(source))
             @test C.guard !== source.guard
-            @test C.factor === factor_before
+            @test BayesBase.cached_factor(C) === factor_before
             @test C.inverse === nothing
             @test_throws CanonicalIndexError C[1, 1] = T(0)
 
@@ -252,16 +252,17 @@ end
             @test inv(C) === Cinv && inv(Cinv) === C
             @test Cinv.guard === C.guard
             if factor_before !== nothing
-                @test C.factor === factor_before
+                @test BayesBase.cached_factor(C) === factor_before
             end
-            @test source.factor === factor_before && source.inverse === inverse_before
+            @test BayesBase.cached_factor(source) === factor_before &&
+                source.inverse === inverse_before
         end
 
         # Constructing from a wrapper still materializes its storage and starts fresh.
         D = MatrixWithCachedInverse(paired)
         @test D isa typeof(paired) && D == paired
         @test !Base.mightalias(parent(D), parent(paired))
-        @test D.factor === nothing && D.inverse === nothing
+        @test BayesBase.cached_factor(D) === nothing && D.inverse === nothing
     end
 
     @test_throws DimensionMismatch MatrixWithCachedInverse(ones(2, 3))
@@ -272,7 +273,7 @@ end
     @test_throws PosDefException inv(N)
     @test_throws PosDefException N \ [1.0, 1.0]
     @test_throws PosDefException logdet(N)
-    @test N.factor === nothing && N.inverse === nothing
+    @test BayesBase.cached_factor(N) === nothing && N.inverse === nothing
 end
 
 @testitem "MatrixWithCachedInverse: inference and conversions" begin
@@ -282,7 +283,8 @@ end
         S = T[2 1; 1 2]
         A = @inferred MatrixWithCachedInverse(S)
         @test (@inferred BayesBase.cached_cholesky_or_compute(A)) isa Cholesky{T,Matrix{T}}
-        @test (@inferred BayesBase.cached_cholesky_or_compute(A)) === A.factor
+        @test (@inferred BayesBase.cached_cholesky_or_compute(A)) ===
+            BayesBase.cached_factor(A)
         B = @inferred inv(A)
         @test (@inferred inv(A)) === B
         @test (@inferred inv(B)) === A
@@ -291,7 +293,10 @@ end
         @test convert(AbstractArray{T}, A) === A
         C = AbstractMatrix{T}(A)
         @test C isa MatrixWithCachedInverse{T,Matrix{T}}
-        @test C !== A && C == A && C.factor === nothing && C.inverse === nothing
+        @test C !== A &&
+            C == A &&
+            BayesBase.cached_factor(C) === nothing &&
+            C.inverse === nothing
         D = convert(AbstractMatrix{Float64}, A)
         @test D isa MatrixWithCachedInverse{Float64,Matrix{Float64}} && D == S
         @test Matrix{T}(A) isa Matrix{T}
@@ -309,12 +314,14 @@ end
     A = MatrixWithCachedInverse(S)
     B = cholinv(A)
     @test B isa typeof(A) && Matrix(B) ≈ reference
-    @test A.factor isa Cholesky # the factor is kept for later solves and log-determinants
+    @test BayesBase.cached_factor(A) isa Cholesky # the factor is kept for later solves and log-determinants
     @test B === inv(A) && inv(B) === A && cholinv(B) === A
 
     # cold `fastcholesky` and `chollogdet` fill only the factor cache
     A = MatrixWithCachedInverse(S)
-    @test fastcholesky(A) === BayesBase.cached_cholesky_or_compute(A) === A.factor
+    @test fastcholesky(A) ===
+        BayesBase.cached_cholesky_or_compute(A) ===
+        BayesBase.cached_factor(A)
     @test cholesky(A) === fastcholesky(A)
     @test isposdef(A)
     @test A.inverse === nothing
@@ -323,14 +330,14 @@ end
     @test fastcholesky(A) === F
     A = MatrixWithCachedInverse(S)
     @test chollogdet(A) ≈ logdet(S)
-    @test A.factor isa Cholesky && A.inverse === nothing
+    @test BayesBase.cached_factor(A) isa Cholesky && A.inverse === nothing
     @test cholinv(A) === inv(A) # warm factor is reused for the inverse
 
     # cold `cholinv_logdet` fills both caches with one factorization
     A = MatrixWithCachedInverse(S)
     Ainv, l = cholinv_logdet(A)
     @test Ainv === inv(A) && Matrix(Ainv) ≈ reference && l ≈ logdet(S)
-    @test A.factor isa Cholesky
+    @test BayesBase.cached_factor(A) isa Cholesky
     @test cholinv_logdet(A) == (Ainv, l)
 end
 

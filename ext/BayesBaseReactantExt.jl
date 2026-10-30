@@ -22,7 +22,7 @@ end
 # Host-populated caches are used as program inputs; the `factorize`/`invert` recipes are ignored
 # because only Reactant's own `cholesky` lowers to the program.
 function BayesBase.cached_cholesky_or_compute(::Any, A::Traced)
-    @something(A.factor, cholesky(parent(A)))
+    @something(BayesBase.cached_factor(A), cholesky(parent(A)))
 end
 
 function BayesBase.cached_inverse_or_compute(::Any, A::Traced)

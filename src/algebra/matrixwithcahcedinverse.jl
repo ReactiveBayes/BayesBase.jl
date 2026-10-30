@@ -55,15 +55,25 @@ code `inv`, `\\`, `logdet`, `*` and broadcasting are supported with the followin
 mutable struct MatrixWithCachedInverse{T,M<:AbstractMatrix{T}} <: AbstractMatrix{T}
     const storage::M
     const guard::ReentrantLock
-    factor::Union{Nothing,Cholesky{T,M}}
+    # The cached Cholesky factor is kept as its `factors` matrix and `uplo`, not as a `Cholesky`:
+    # Reactant traces a `Union{Nothing,Cholesky{T,M}}` field into a value that violates the field
+    # type, which crashes type inference on Julia 1.10. See `cached_factor`.
+    factors::Union{Nothing,M}
+    uplo::Char
     inverse::Union{Nothing,MatrixWithCachedInverse{T,M}}
 
     # Internal: wraps an already owned matrix without copying it, with empty caches.
     function MatrixWithCachedInverse{T,M}(
         m::M, guard::ReentrantLock
     ) where {T,M<:AbstractMatrix{T}}
-        return new{T,M}(m, guard, nothing, nothing)
+        return new{T,M}(m, guard, nothing, 'U', nothing)
     end
+end
+
+# Internal: the cached Cholesky factor, or `nothing` when it has not been computed yet.
+function cached_factor(A::MatrixWithCachedInverse)
+    factors = A.factors
+    return factors === nothing ? nothing : Cholesky(factors, A.uplo, 0)
 end
 
 function MatrixWithCachedInverse(m::AbstractMatrix{T}) where {T}
@@ -92,7 +102,8 @@ Base.Matrix(A::MatrixWithCachedInverse) = Matrix(parent(A))
 function Base.copy(A::MatrixWithCachedInverse{T,M}) where {T,M}
     Base.@lock A.guard begin
         B = MatrixWithCachedInverse{T,M}(copy(parent(A)), ReentrantLock())
-        B.factor = A.factor # The cached factor is never mutated by the wrapper.
+        # The cached factor is never mutated by the wrapper.
+        B.factors, B.uplo = A.factors, A.uplo
         # The inverse must be recomputed so its reciprocal link points to B, not A.
         return B
     end
@@ -156,18 +167,18 @@ function Base.AbstractMatrix{T}(A::MatrixWithCachedInverse) where {T}
     return MatrixWithCachedInverse{T,typeof(c)}(c, ReentrantLock())
 end
 
-# Returns `A.factor` when it is already set; otherwise computes it as `factorize(parent(A))`,
-# stores it in `A.factor` and returns it. The factorization never mutates `storage`, only a
-# successful result is published, and the whole step runs under `A.guard` so concurrent first
-# requests share one result.
+# Returns the cached factor when it is already set; otherwise computes it as
+# `factorize(parent(A))`, stores it in `A.factors`/`A.uplo` and returns it. The factorization
+# never mutates `storage`, only a successful result is published, and the whole step runs under
+# `A.guard` so concurrent first requests share one result.
 function cached_cholesky_or_compute(
     factorize::F, A::MatrixWithCachedInverse{T,M}
 ) where {F,T,M}
     Base.@lock A.guard begin
-        C = A.factor
+        C = cached_factor(A)
         if C === nothing
             C = factorize(parent(A))::Cholesky{T,M}
-            A.factor = C
+            A.factors, A.uplo = C.factors, C.uplo
         end
         C
     end

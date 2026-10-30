@@ -38,7 +38,7 @@ f_arith(W, b) = (W + W) * b .- (2 .* W) * b
             # conversion keeps the cache state, the reciprocal cycle and the shared lock
             @test R isa MatrixWithCachedInverse{T} &&
                 parent(R) isa Reactant.AbstractConcreteArray
-            @test (R.factor === nothing) == (state == :empty)
+            @test (BayesBase.cached_factor(R) === nothing) == (state == :empty)
             @test (R.inverse === nothing) == (state != :pair)
             if state == :pair
                 @test R.inverse.inverse === R && R.inverse.guard === R.guard
@@ -66,7 +66,9 @@ f_arith(W, b) = (W + W) * b .- (2 .* W) * b
             end
 
             # neither the host wrappers nor the converted ones gained cache entries
-            @test (W.factor === nothing) == (state == :empty) == (R.factor === nothing)
+            @test (BayesBase.cached_factor(W) === nothing) ==
+                (state == :empty) ==
+                (BayesBase.cached_factor(R) === nothing)
             @test (W.inverse === nothing) == (state != :pair) == (R.inverse === nothing)
         end
     end
