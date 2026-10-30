@@ -23,6 +23,98 @@
     end
 end
 
+@testitem "MatrixWithCachedInverse: products use symmetric dense storage" begin
+    include("algebrasetup_setuptests.jl")
+
+    for T in (Float32, Float64, BigFloat), n in (1, 5)
+        S = T[1 / (i + j - 1) for i in 1:n, j in 1:n] + I
+        A = MatrixWithCachedInverse(S)
+        x = T.(1:n)
+        X = reshape(T.(1:(2n)), n, 2)
+
+        # Exercise both fresh wrappers and the wrapper returned by inv.
+        for B in (A, inv(A))
+            D = Matrix(B)
+            @test transpose(B) === B
+            @test adjoint(B) === B
+            @test B * x ≈ D * x
+            @test B * X ≈ D * X
+            @test X' * B ≈ X' * D
+            @test B * B ≈ D * D
+            @test A * B ≈ S * D
+            @test x' * B ≈ x' * D
+            @test x' * B * x ≈ x' * D * x
+            @test B' * x ≈ D' * x
+            @test transpose(x) * B ≈ transpose(x) * D
+            @test transpose(B) * x ≈ transpose(D) * x
+
+            for (left, right, dense_left, dense_right) in (
+                (B, x, D, x),
+                (B, X, D, X),
+                (X', B, X', D),
+                (copy(X'), B, copy(X'), D),
+                (B, B, D, D),
+                (A, B, S, D),
+            )
+                expected = dense_left * dense_right
+                result = fill(T(NaN), size(expected))
+                @test mul!(result, left, right) === result
+                @test result ≈ expected
+
+                for (α, β) in ((T(2), T(-3)), (T(0), T(2)), (T(1), T(0)))
+                    fill!(result, iszero(β) ? T(NaN) : T(2))
+                    reference = copy(result)
+                    mul!(reference, dense_left, dense_right, α, β)
+                    @test mul!(result, left, right, α, β) === result
+                    @test result ≈ reference
+                end
+            end
+        end
+    end
+end
+
+@testitem "MatrixWithCachedInverse: products avoid scalar indexing" begin
+    include("algebrasetup_setuptests.jl")
+
+    # A parent with optimized multiplication but no scalar access: falling back to
+    # generic multiplication through the wrapper must fail, regardless of timing.
+    struct MulOnlyMatrix{T} <: AbstractMatrix{T}
+        data::Matrix{T}
+    end
+    Base.size(A::MulOnlyMatrix) = size(A.data)
+    Base.getindex(::MulOnlyMatrix, ::Int, ::Int) = error("unexpected scalar indexing")
+    LinearAlgebra.mul!(
+        y::AbstractVector, A::MulOnlyMatrix, x::AbstractVector, α::Number, β::Number
+    ) = mul!(y, A.data, x, α, β)
+    LinearAlgebra.mul!(
+        C::AbstractMatrix, A::MulOnlyMatrix, B::Matrix, α::Number, β::Number
+    ) = mul!(C, A.data, B, α, β)
+    LinearAlgebra.mul!(
+        C::AbstractMatrix, A::Matrix, B::MulOnlyMatrix, α::Number, β::Number
+    ) = mul!(C, A, B.data, α, β)
+    LinearAlgebra.mul!(
+        C::AbstractMatrix, A::MulOnlyMatrix, B::MulOnlyMatrix, α::Number, β::Number
+    ) = mul!(C, A.data, B.data, α, β)
+
+    S = [2.0 1.0; 1.0 3.0]
+    # Use the internal constructor to wrap the instrumented storage without reading it.
+    A = MatrixWithCachedInverse{Float64,MulOnlyMatrix{Float64}}(
+        MulOnlyMatrix(S), ReentrantLock()
+    )
+    x = [1.0, 2.0]
+    @test S * A ≈ S * S
+    @test A * A ≈ S * S
+    @test x' * A * x ≈ x' * S * x
+    @test A' * x ≈ S' * x
+    for (left, right, expected) in
+        ((A, x, S * x), (A, S, S * S), (S, A, S * S), (A, A, S * S))
+        result = zero(expected)
+        @test mul!(result, left, right) ≈ expected
+        fill!(result, 1)
+        @test mul!(result, left, right, 2, 3) ≈ 2expected .+ 3
+    end
+end
+
 @testitem "MatrixWithCachedInverse: construction from Symmetric and Hermitian views" begin
     include("algebrasetup_setuptests.jl")
 

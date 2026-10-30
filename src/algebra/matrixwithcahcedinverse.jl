@@ -80,9 +80,58 @@ Base.@propagate_inbounds Base.getindex(A::MatrixWithCachedInverse, i::Int, j::In
     A.storage[i, j]
 Base.Matrix(A::MatrixWithCachedInverse) = Matrix(parent(A))
 Base.copy(A::MatrixWithCachedInverse) = copy(parent(A))
+Base.transpose(A::MatrixWithCachedInverse) = A
+Base.adjoint(A::MatrixWithCachedInverse{<:Real}) = A
 Base.:*(A::MatrixWithCachedInverse, x::AbstractVector) = parent(A) * x
 Base.:*(A::MatrixWithCachedInverse, X::AbstractMatrix) = parent(A) * X
 Base.broadcastable(A::MatrixWithCachedInverse) = parent(A) # `A + B`, `2 .* A`, ... use the parent
+
+# Keep products on the parent's optimized multiplication paths in either operand position.
+function LinearAlgebra.mul!(
+    y::AbstractVector, A::MatrixWithCachedInverse, x::AbstractVector
+)
+    return mul!(y, parent(A), x)
+end
+function LinearAlgebra.mul!(
+    C::AbstractMatrix, A::MatrixWithCachedInverse, B::AbstractMatrix
+)
+    return mul!(C, parent(A), B)
+end
+function LinearAlgebra.mul!(
+    C::AbstractMatrix, A::AbstractMatrix, B::MatrixWithCachedInverse
+)
+    return mul!(C, A, parent(B))
+end
+function LinearAlgebra.mul!(
+    C::AbstractMatrix, A::MatrixWithCachedInverse, B::MatrixWithCachedInverse
+)
+    return mul!(C, parent(A), parent(B))
+end
+
+function LinearAlgebra.mul!(
+    y::AbstractVector, A::MatrixWithCachedInverse, x::AbstractVector, α::Number, β::Number
+)
+    return mul!(y, parent(A), x, α, β)
+end
+function LinearAlgebra.mul!(
+    C::AbstractMatrix, A::MatrixWithCachedInverse, B::AbstractMatrix, α::Number, β::Number
+)
+    return mul!(C, parent(A), B, α, β)
+end
+function LinearAlgebra.mul!(
+    C::AbstractMatrix, A::AbstractMatrix, B::MatrixWithCachedInverse, α::Number, β::Number
+)
+    return mul!(C, A, parent(B), α, β)
+end
+function LinearAlgebra.mul!(
+    C::AbstractMatrix,
+    A::MatrixWithCachedInverse,
+    B::MatrixWithCachedInverse,
+    α::Number,
+    β::Number,
+)
+    return mul!(C, parent(A), parent(B), α, β)
+end
 
 # An independent snapshot with empty caches (same-type `convert` returns `A` itself).
 function Base.AbstractMatrix{T}(A::MatrixWithCachedInverse) where {T}
