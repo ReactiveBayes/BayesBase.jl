@@ -147,10 +147,12 @@ end
 
         # At least k times faster. A fixed factor, not one growing with `n`: on a shared CI runner,
         # with the other test items running in parallel, the measured ratio was about 16× at
-        # n = 100 and 90× at n = 1000 (483× and 8500× on an idle machine)
-        k = n < 100 ? 2 : 5
+        # n = 100 and 90× at n = 1000 (483× and 8500× on an idle machine). Timing is not checked at
+        # n = 10: both solves take well under a microsecond there, and on a Julia 1.13 runner the
+        # ratio once dropped to 1.4× (55× on an idle machine), which is noise, not a regression.
+        k = 5
 
-        @test minimum(benchmark_arrow.times) < minimum(benchmark_dense.times)/k
+        n >= 100 && @test minimum(benchmark_arrow.times) < minimum(benchmark_dense.times)/k
         @test benchmark_arrow.allocs < benchmark_dense.allocs
 
         x_arrow = A_arrow \ b
@@ -183,10 +185,12 @@ end
 
         # At least k times faster. A fixed factor, not one growing with `n`: on a shared CI runner,
         # with the other test items running in parallel, the measured ratio was about 16× at
-        # n = 100 and 90× at n = 1000 (483× and 8500× on an idle machine)
-        k = n < 100 ? 2 : 5
+        # n = 100 and 90× at n = 1000 (483× and 8500× on an idle machine). Timing is not checked at
+        # n = 10: both solves take well under a microsecond there, and on a Julia 1.13 runner the
+        # ratio once dropped to 1.4× (55× on an idle machine), which is noise, not a regression.
+        k = 5
 
-        @test minimum(benchmark_arrow.times) < minimum(benchmark_dense.times)/k
+        n >= 100 && @test minimum(benchmark_arrow.times) < minimum(benchmark_dense.times)/k
         @test benchmark_arrow.allocs < benchmark_dense.allocs
 
         x_arrow = A_arrow \ b
