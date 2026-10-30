@@ -173,12 +173,48 @@ end
     @test_throws CanonicalIndexError A[1] = 3.0
     @test_throws CanonicalIndexError B[1, 1] = 3.0
 
-    C, M, Cinv = copy(A), Matrix(A), copy(B)
-    @test C isa Matrix{Float64} && M isa Matrix{Float64} && Cinv isa Matrix{Float64}
-    C[1, 1] = 0.0
-    M[1, 1] = 0.0
-    Cinv[1, 1] = 0.0
+    for source in (A, B)
+        M = Matrix(source)
+        @test M isa Matrix{Float64}
+        M[1, 1] = 0.0
+    end
     @test A[1, 1] == 2.0 && B[1, 1] ≈ inv(S)[1, 1]
+
+    for T in (Float32, Float64, BigFloat)
+        fresh = MatrixWithCachedInverse(T.(S))
+        factored = MatrixWithCachedInverse(T.(S))
+        logdet(factored)
+        paired = MatrixWithCachedInverse(T.(S))
+        inverse = inv(paired)
+
+        for source in (fresh, factored, paired, inverse)
+            factor_before, inverse_before = source.factor, source.inverse
+            C = @inferred copy(source)
+            @test C isa typeof(source)
+            @test C !== source && C == source
+            @test !Base.mightalias(parent(C), parent(source))
+            @test C.guard !== source.guard
+            @test C.factor === factor_before
+            @test C.inverse === nothing
+            @test_throws CanonicalIndexError C[1, 1] = T(0)
+
+            Cinv = inv(C)
+            @test Cinv ≈ inv(Matrix(source))
+            @test Cinv !== inverse_before
+            @test inv(C) === Cinv && inv(Cinv) === C
+            @test Cinv.guard === C.guard
+            if factor_before !== nothing
+                @test C.factor === factor_before
+            end
+            @test source.factor === factor_before && source.inverse === inverse_before
+        end
+
+        # Constructing from a wrapper still materializes its storage and starts fresh.
+        D = MatrixWithCachedInverse(paired)
+        @test D isa typeof(paired) && D == paired
+        @test !Base.mightalias(parent(D), parent(paired))
+        @test D.factor === nothing && D.inverse === nothing
+    end
 
     @test_throws DimensionMismatch MatrixWithCachedInverse(ones(2, 3))
     @test_throws ArgumentError MatrixWithCachedInverse([1.0 2.0; 3.0 4.0])

@@ -15,8 +15,10 @@ computes the inverse once and returns another `MatrixWithCachedInverse` that alr
 so `inv(A) === inv(A)` and `inv(inv(A)) === A` hold without any recomputation. Positive
 definiteness is checked on the first factorization request (`PosDefException`).
 
-Element writes through the wrapper and its inverse are rejected; `Matrix(A)` and `copy(A)` return
-independent writable dense copies. `AbstractMatrix{T}(A)` returns a new wrapper with empty caches,
+Element writes through the wrapper and its inverse are rejected; `Matrix(A)` returns an
+independent writable dense copy. `copy(A)` preserves the wrapper with independent storage and a
+fresh lock, reuses any cached Cholesky factor, and starts with an empty inverse cache.
+`AbstractMatrix{T}(A)` returns a new wrapper with empty caches,
 while `convert(AbstractMatrix{T}, A)` returns `A` itself when the element type already matches.
 Lazy initialization is synchronized with a lock shared by the pair, so concurrent first requests
 share one result.
@@ -67,6 +69,7 @@ end
 # The owned storage: a plain copy, or both triangles of a `Symmetric`/`Hermitian` view
 # written into a dense matrix of the parent's type.
 _materialize(m) = copy(m)
+_materialize(m::MatrixWithCachedInverse) = copy(parent(m))
 _materialize(m::Union{Symmetric,Hermitian}) = copyto!(similar(parent(m)), m)
 
 function _checksymmetric(m)
@@ -79,7 +82,14 @@ Base.size(A::MatrixWithCachedInverse) = size(A.storage)
 Base.@propagate_inbounds Base.getindex(A::MatrixWithCachedInverse, i::Int, j::Int) =
     A.storage[i, j]
 Base.Matrix(A::MatrixWithCachedInverse) = Matrix(parent(A))
-Base.copy(A::MatrixWithCachedInverse) = copy(parent(A))
+function Base.copy(A::MatrixWithCachedInverse{T,M}) where {T,M}
+    Base.@lock A.guard begin
+        B = MatrixWithCachedInverse{T,M}(copy(parent(A)), ReentrantLock())
+        B.factor = A.factor # The cached factor is never mutated by the wrapper.
+        # The inverse must be recomputed so its reciprocal link points to B, not A.
+        return B
+    end
+end
 Base.transpose(A::MatrixWithCachedInverse) = A
 Base.adjoint(A::MatrixWithCachedInverse{<:Real}) = A
 Base.:*(A::MatrixWithCachedInverse, x::AbstractVector) = parent(A) * x
