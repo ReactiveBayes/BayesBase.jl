@@ -105,6 +105,7 @@ BayesBase.weightedmean_invcov
 ```@docs
 BayesBase.ArrowheadMatrix
 BayesBase.InvArrowheadMatrix
+BayesBase.MatrixWithCachedInverse
 ```
 
 ## [Helper utilities](@id library-helpers)
