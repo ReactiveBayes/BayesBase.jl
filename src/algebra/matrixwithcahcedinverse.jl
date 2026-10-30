@@ -10,10 +10,12 @@ matrix that lazily caches its Cholesky factor and its inverse.
 
 Construction copies `A` (a `Symmetric` or `Hermitian` view is materialized into a dense matrix),
 checks that it is square and symmetric, and performs no factorization.
-The first `A \\ b` or `logdet(A)` computes and caches the Cholesky factor. The first `inv(A)`
-computes the inverse once and returns another `MatrixWithCachedInverse` that already links back,
+The first `cholesky(A)`, `isposdef(A)`, `A \\ b` or `logdet(A)` computes and caches the Cholesky
+factor. The first `inv(A)` computes the inverse once and returns another `MatrixWithCachedInverse`
+that already links back,
 so `inv(A) === inv(A)` and `inv(inv(A)) === A` hold without any recomputation. Positive
-definiteness is checked on the first factorization request (`PosDefException`).
+definiteness is checked on the first factorization request (`PosDefException`, or `false` from
+`isposdef`). Symmetry and, for real elements, Hermitian symmetry are known without scanning.
 
 Element writes through the wrapper and its inverse are rejected; `Matrix(A)` returns an
 independent writable dense copy. `copy(A)` preserves the wrapper with independent storage and a
@@ -189,3 +191,15 @@ end
 
 Base.:\(A::MatrixWithCachedInverse, b::AbstractVecOrMat) = cached_cholesky_or_compute(A) \ b
 LinearAlgebra.logdet(A::MatrixWithCachedInverse) = logdet(cached_cholesky_or_compute(A))
+LinearAlgebra.cholesky(A::MatrixWithCachedInverse) = cached_cholesky_or_compute(A)
+LinearAlgebra.issymmetric(::MatrixWithCachedInverse) = true
+LinearAlgebra.ishermitian(::MatrixWithCachedInverse{<:Real}) = true
+
+function LinearAlgebra.isposdef(A::MatrixWithCachedInverse)
+    try
+        return isposdef(cached_cholesky_or_compute(A))
+    catch err
+        err isa PosDefException || rethrow()
+        return false
+    end
+end

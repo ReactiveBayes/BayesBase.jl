@@ -23,6 +23,50 @@
     end
 end
 
+@testitem "MatrixWithCachedInverse: cholesky and matrix properties reuse the cache" begin
+    include("algebrasetup_setuptests.jl")
+
+    for T in (Float32, Float64, BigFloat)
+        S = T[2 1; 1 2]
+        A = MatrixWithCachedInverse(S)
+        @test issymmetric(A) && ishermitian(A)
+        @test A.factor === nothing && A.inverse === nothing
+
+        F = @inferred cholesky(A)
+        @test F === A.factor
+        @test Matrix(F) ≈ S
+        @test (@inferred cholesky(A)) === F
+        @test isposdef(A)
+        @test A.factor === F && A.inverse === nothing
+        @test cholesky(copy(A)) === F
+
+        B = inv(A)
+        @test cholesky(A) === F
+        @test B.factor === nothing
+        @test issymmetric(B) && ishermitian(B)
+        @test isposdef(B)
+        @test Matrix(cholesky(B)) ≈ inv(S)
+        @test cholesky(B) === B.factor
+        @test inv(B) === A
+
+        # A cold positivity query populates the same cache as cholesky.
+        C = MatrixWithCachedInverse(S)
+        @test (@inferred isposdef(C))
+        @test C.factor isa Cholesky{T,Matrix{T}}
+        @test cholesky(C) === C.factor && C.inverse === nothing
+
+        for M in (T[1 2; 2 1], T[1 1; 1 1], T[-2 0; 0 -1])
+            N = MatrixWithCachedInverse(M)
+            @test issymmetric(N) && ishermitian(N)
+            @test !isposdef(N)
+            @test_throws PosDefException cholesky(N)
+            @test !isposdef(N)
+            @test N.factor === nothing && N.inverse === nothing
+            @test Matrix(N) == M
+        end
+    end
+end
+
 @testitem "MatrixWithCachedInverse: products use symmetric dense storage" begin
     include("algebrasetup_setuptests.jl")
 
@@ -102,6 +146,7 @@ end
         MulOnlyMatrix(S), ReentrantLock()
     )
     x = [1.0, 2.0]
+    @test issymmetric(A) && ishermitian(A)
     @test S * A ≈ S * S
     @test A * A ≈ S * S
     @test x' * A * x ≈ x' * S * x
@@ -267,7 +312,12 @@ end
     # cold `fastcholesky` and `chollogdet` fill only the factor cache
     A = MatrixWithCachedInverse(S)
     @test fastcholesky(A) === BayesBase.cached_cholesky_or_compute(A) === A.factor
+    @test cholesky(A) === fastcholesky(A)
+    @test isposdef(A)
     @test A.inverse === nothing
+    A = MatrixWithCachedInverse(S)
+    F = cholesky(A)
+    @test fastcholesky(A) === F
     A = MatrixWithCachedInverse(S)
     @test chollogdet(A) ≈ logdet(S)
     @test A.factor isa Cholesky && A.inverse === nothing
