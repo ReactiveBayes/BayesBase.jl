@@ -1,6 +1,6 @@
 export MatrixWithCachedInverse
 
-using LinearAlgebra, ReadOnlyArrays
+using LinearAlgebra
 
 """
     MatrixWithCachedInverse(A::AbstractMatrix)
@@ -25,6 +25,11 @@ while `convert(AbstractMatrix{T}, A)` returns `A` itself when the element type a
 Lazy initialization is synchronized with a lock shared by the pair, so concurrent first requests
 share one result.
 
+`parent(A)` exposes the owned mutable matrix without copying. Do not mutate it while using the
+wrapper: mutations can leave cached factors and inverses stale and break symmetry assumptions.
+There is no automatic cache invalidation. The `.storage` field is internal, not public API.
+Use `Matrix(A)` when an independent writable matrix is needed.
+
 # FastCholesky
 
 With `FastCholesky` loaded, `fastcholesky`, `cholinv`, `chollogdet` and `cholinv_logdet` reuse the
@@ -48,7 +53,7 @@ code `inv`, `\\`, `logdet`, `*` and broadcasting are supported with the followin
 - Symmetry and positive definiteness are not checked on traced input.
 """
 mutable struct MatrixWithCachedInverse{T,M<:AbstractMatrix{T}} <: AbstractMatrix{T}
-    const storage::ReadOnlyMatrix{T,M}
+    const storage::M
     const guard::ReentrantLock
     factor::Union{Nothing,Cholesky{T,M}}
     inverse::Union{Nothing,MatrixWithCachedInverse{T,M}}
@@ -57,7 +62,7 @@ mutable struct MatrixWithCachedInverse{T,M<:AbstractMatrix{T}} <: AbstractMatrix
     function MatrixWithCachedInverse{T,M}(
         m::M, guard::ReentrantLock
     ) where {T,M<:AbstractMatrix{T}}
-        return new{T,M}(ReadOnlyMatrix(m), guard, nothing, nothing)
+        return new{T,M}(m, guard, nothing, nothing)
     end
 end
 
@@ -79,7 +84,7 @@ function _checksymmetric(m)
            throw(ArgumentError("MatrixWithCachedInverse requires a symmetric matrix"))
 end
 
-Base.parent(A::MatrixWithCachedInverse) = parent(A.storage)
+Base.parent(A::MatrixWithCachedInverse) = A.storage
 Base.size(A::MatrixWithCachedInverse) = size(A.storage)
 Base.@propagate_inbounds Base.getindex(A::MatrixWithCachedInverse, i::Int, j::Int) =
     A.storage[i, j]

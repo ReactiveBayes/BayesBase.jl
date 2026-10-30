@@ -233,9 +233,11 @@ end
         inverse = inv(paired)
 
         for source in (fresh, factored, paired, inverse)
+            @test (@inferred parent(source)) isa Matrix{T}
             factor_before, inverse_before = source.factor, source.inverse
             C = @inferred copy(source)
             @test C isa typeof(source)
+            @test (@inferred parent(C)) isa Matrix{T}
             @test C !== source && C == source
             @test !Base.mightalias(parent(C), parent(source))
             @test C.guard !== source.guard
@@ -244,6 +246,7 @@ end
             @test_throws CanonicalIndexError C[1, 1] = T(0)
 
             Cinv = inv(C)
+            @test (@inferred parent(Cinv)) isa Matrix{T}
             @test Cinv ≈ inv(Matrix(source))
             @test Cinv !== inverse_before
             @test inv(C) === Cinv && inv(Cinv) === C
