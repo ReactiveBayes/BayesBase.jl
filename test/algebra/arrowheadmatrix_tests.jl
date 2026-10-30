@@ -167,7 +167,7 @@ end
     include("algebrasetup_setuptests.jl")
 
     rng = StableRNG(1234)
-    for n in [64, 100, 1000]
+    for n in [500, 1000, 1200]
         α = rand(rng)^2 + 1.0  # Ensure α is not too close to zero
         z = randn(rng, n)
         D = rand(rng, n) .^ 2 .+ 1.0 # Ensure D elements are not too close to zero
