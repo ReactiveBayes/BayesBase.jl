@@ -315,13 +315,11 @@ function Base.convert(::Type{CountingReal{T}}, v::CountingReal{R}) where {T<:Rea
 end
 
 function Base.float(a::CountingReal{T}) where {T}
-    if isfinite(a)
-        return value(a)
-    elseif infinities(a) < 0 || value(a) < 0
-        return -convert(T, Inf)
-    else
-        return convert(T, Inf)
-    end
+    n = infinities(a)
+    # With no counted infinities the value itself (possibly `±Inf` or `NaN`) is the answer,
+    # otherwise the sign of the infinities counter determines the sign of the result
+    iszero(n) && return value(a)
+    return n > 0 ? convert(T, Inf) : -convert(T, Inf)
 end
 Base.zero(::Type{CountingReal{T}}) where {T<:Real} = CountingReal(zero(T))
 
