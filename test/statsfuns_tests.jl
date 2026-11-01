@@ -87,6 +87,42 @@ end
 
         @test float(convert(CountingReal, r)) ≈ zero(T)
         @test float(convert(CountingReal{Float64}, r)) ≈ zero(Float64)
+
+        # The sign of the infinity must be preserved
+        @test float(Infinity(T)) == convert(T, Inf)
+        @test float(MinusInfinity(T)) == -convert(T, Inf)
+        @test float(-Infinity(T)) == -convert(T, Inf)
+        @test float(-MinusInfinity(T)) == convert(T, Inf)
+        @test float(CountingReal(T, 1)) == convert(T, Inf)
+        @test float(CountingReal(T, -1)) == -convert(T, Inf)
+        @test float(CountingReal(T, 3)) == convert(T, Inf)
+        @test float(CountingReal(T, -3)) == -convert(T, Inf)
+        @test float(2 * MinusInfinity(T)) == -convert(T, Inf)
+        @test float(MinusInfinity(T) + MinusInfinity(T)) == -convert(T, Inf)
+        @test float(MinusInfinity(T) - Infinity(T)) == -convert(T, Inf)
+        @test float(Infinity(T) + Infinity(T) + MinusInfinity(T)) == convert(T, Inf)
+        @test float(MinusInfinity(T) + MinusInfinity(T) + Infinity(T)) == -convert(T, Inf)
+
+        # The finite part must not affect the sign of the infinity
+        @test float(Infinity(T) - 5) == convert(T, Inf)
+        @test float(5 - MinusInfinity(T)) == convert(T, Inf)
+        @test float(MinusInfinity(T) + 5) == -convert(T, Inf)
+        @test float(-5 - Infinity(T)) == -convert(T, Inf)
+        @test float(CountingReal(convert(T, -5), 1)) == convert(T, Inf)
+        @test float(CountingReal(convert(T, 5), -1)) == -convert(T, Inf)
+
+        # A non-finite value without counted infinities is returned as is
+        @test float(CountingReal(convert(T, Inf), 0)) == convert(T, Inf)
+        @test float(CountingReal(convert(T, -Inf), 0)) == -convert(T, Inf)
+        @test isnan(float(CountingReal(convert(T, NaN), 0)))
+
+        # The result type matches the underlying type
+        @test float(MinusInfinity(T)) isa T
+        @test float(Infinity(T) - 5) isa T
+
+        # Values returned by the library
+        @test float(entropy(PointMass(one(T)))) == -convert(T, Inf)
+        @test float(-entropy(PointMass(one(T)))) == convert(T, Inf)
     end
 end
 
