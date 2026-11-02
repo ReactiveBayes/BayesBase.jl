@@ -323,3 +323,9 @@ end
     dist_tensor = PointMass(tensor)
     @test length(dist_tensor) == N^D
 end
+
+@testitem "PointMass: ndims of a UniformScaling is not defined, like its cov" tags = [:densities] begin
+    using LinearAlgebra
+
+    @test_throws "ndims(::PointMass{ <: UniformScaling }) is not defined" ndims(PointMass(2.0I))
+end

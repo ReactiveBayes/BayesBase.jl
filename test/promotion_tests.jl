@@ -140,3 +140,12 @@ end
         end
     end
 end
+
+@testitem "promote_variate_type: an unsupported promotion says so" tags = [:promotion] begin
+    using Distributions
+
+    # no package defines a matrix-variate version of a Beta distribution
+    @test_throws ArgumentError promote_variate_type(Matrix{Float64}, Beta)
+    @test_throws ArgumentError promote_variate_type(Matrixvariate, Beta)
+    @test_throws "Matrixvariate" promote_variate_type(Matrixvariate, Beta)
+end

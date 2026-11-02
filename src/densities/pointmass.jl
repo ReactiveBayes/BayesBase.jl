@@ -194,7 +194,7 @@ function Base.precision(distribution::PointMass{M}) where {T <: Real, M <: Unifo
     return one(T) ./ cov(distribution)
 end
 function Base.ndims(distribution::PointMass{M}) where {T <: Real, M <: UniformScaling{T}}
-    return size(mean(distribution))
+    return error("ndims(::PointMass{ <: UniformScaling }) is not defined")
 end
 Base.eltype(::PointMass{M}) where {T <: Real, M <: UniformScaling{T}} = T
 

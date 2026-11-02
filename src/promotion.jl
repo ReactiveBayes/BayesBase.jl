@@ -68,6 +68,11 @@ promote_variate_type(::Type{<:Number}, T) = promote_variate_type(Univariate, T)
 promote_variate_type(::Type{<:AbstractVector}, T) = promote_variate_type(Multivariate, T)
 promote_variate_type(::Type{<:AbstractMatrix}, T) = promote_variate_type(Matrixvariate, T)
 
+# Packages add methods for the pairs they support; any other pair is an error that says which
+function promote_variate_type(::Type{F}, T) where {F <: VariateForm}
+    throw(ArgumentError("cannot promote `$(T)` to the variate form `$(F)`: no method of `promote_variate_type` for this pair"))
+end
+
 """
     paramfloattype(distribution)
 

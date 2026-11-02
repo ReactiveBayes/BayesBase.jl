@@ -607,3 +607,12 @@ end
         end
     end
 end
+
+@testitem "SampleList: mean(mirrorlog, ...) is defined for univariate sample lists only" tags = [:densities] begin
+    using StableRNGs
+
+    rng = StableRNG(1)
+    @test mean(mirrorlog, SampleList(rand(rng, 10) ./ 2)) isa Real
+    @test_throws ArgumentError mean(mirrorlog, SampleList([rand(rng, 2) ./ 2 for _ in 1:10]))
+    @test_throws ArgumentError mean(mirrorlog, SampleList([rand(rng, 2, 2) ./ 2 for _ in 1:10]))
+end

@@ -677,6 +677,10 @@ function sample_list_meanlogmean(::Type{Univariate}, sl::SampleList)
     return μlogμ
 end
 
+function sample_list_mirroredlogmean(::Type{<:Union{Multivariate, Matrixvariate}}, ::SampleList)
+    throw(ArgumentError("`mean(mirrorlog, ::SampleList)` is defined for univariate sample lists only"))
+end
+
 function sample_list_mirroredlogmean(::Type{Univariate}, sl::SampleList)
     n, samples, weights = get_data(sl)
     @assert all(0 .<= samples .< 1) "mean of `mirrorlog` of variable does not apply to variables outside of the range [0, 1]"
@@ -867,11 +871,11 @@ end
 @inline Base.getindex(sl::SampleList, i::Int) =
     sample_list_get_index(variate_form(typeof(sl)), ndims(sl), sl, i)
 
-@inline function sample_list_get_index(::Type{Univariate}, ndims, sl, i)
+@inline function sample_list_get_index(::Type{Univariate}, ndims, sl::SampleList, i)
     return (get_linear_samples(sl)[i], get_linear_weights(sl)[i])
 end
 
-@inline function sample_list_get_index(::Type{Multivariate}, ndims, sl, i)
+@inline function sample_list_get_index(::Type{Multivariate}, ndims, sl::SampleList, i)
     samples = get_linear_samples(sl)
     left = (i - 1) * ndims + 1
     right = left + ndims - 1
@@ -879,7 +883,7 @@ end
     return (SVector{ndims}(view(samples, left:right)), get_linear_weights(sl)[i])
 end
 
-@inline function sample_list_get_index(::Type{Matrixvariate}, ndims, sl, i)
+@inline function sample_list_get_index(::Type{Matrixvariate}, ndims, sl::SampleList, i)
     p = prod(ndims)
     samples = get_linear_samples(sl)
     left = (i - 1) * p + 1
