@@ -44,14 +44,14 @@ end
 
 prepare_expectation(backend, q) = Prepared(backend, q)
 
-expectation(prepared::Prepared, f) = expectation(prepared.backend, f, prepared.q)
+expectation(prepared::Prepared, f::F) where {F} = expectation(prepared.backend, f, prepared.q)
 
-expectation(backend, f, q) = expectation_from(prepare_expectation(backend, q), f)
+expectation(backend, f::F, q) where {F} = expectation_from(prepare_expectation(backend, q), f)
 
 # A backend with neither a closed form for `(f, q)` nor a preparation for `q` would otherwise
 # send `expectation` and the default preparation back and forth forever
-expectation_from(prepared, f) = expectation(prepared, f)
-function expectation_from(prepared::Prepared, f)
+expectation_from(prepared, f::F) where {F} = expectation(prepared, f)
+function expectation_from(prepared::Prepared, f::F) where {F}
     return throw(NoBackendError(prepared.backend, f, prepared.q))
 end
 

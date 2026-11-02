@@ -14,7 +14,7 @@ end
 
 Base.length(product::ProductPointSet) = prod(map(length, product.sets))
 
-function expectation(product::ProductPointSet, f)
+function expectation(product::ProductPointSet, f::F) where {F}
     sets = product.sets
     indices = CartesianIndices(map(set -> Base.OneTo(length(set)), sets))
     result = _weight(sets, first(indices)) * f(_point(sets, first(indices)))

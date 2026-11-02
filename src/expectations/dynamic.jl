@@ -74,7 +74,7 @@ function haslabel(
     return !isnothing(backend) && haslabel(backend, F, Q, label)
 end
 
-function expectation(router::DynamicRouter, f, q)
+function expectation(router::DynamicRouter, f::F, q) where {F}
     backend = which_backend(router, typeof(f), typeof(q))
     isnothing(backend) && throw(NoBackendError(router, f, q))
     return expectation(backend, f, q)
@@ -114,6 +114,6 @@ function which_backend(
     return supports_all(router, T) ? router : nothing
 end
 prepare_expectation(router::DynamicRouter, q::FactorizedJoint) = prepare_product(router, q)
-function expectation(router::DynamicRouter, f, q::FactorizedJoint)
+function expectation(router::DynamicRouter, f::F, q::FactorizedJoint) where {F}
     return expectation(prepare_expectation(router, q), f)
 end

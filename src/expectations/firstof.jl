@@ -71,7 +71,7 @@ function haslabel(router::FirstOf, label::ExpectationLabel)
     return all(backend -> haslabel(backend, label), router.backends)
 end
 
-function expectation(router::FirstOf, f, q)
+function expectation(router::FirstOf, f::F, q) where {F}
     backend = which_backend(router, typeof(f), typeof(q))
     isnothing(backend) && throw(NoBackendError(router, f, q))
     return expectation(backend, f, q)
@@ -102,7 +102,7 @@ function prepare_expectation(router::FirstOf, q)
     )
 end
 
-function expectation(prepared::PreparedFirstOf, f)
+function expectation(prepared::PreparedFirstOf, f::F) where {F}
     i = choice(prepared.router, typeof(f), typeof(prepared.q))
     i == 0 && throw(NoBackendError(prepared.router, f, prepared.q))
     i == choice(prepared.router, Any, typeof(prepared.q)) &&
@@ -125,6 +125,6 @@ function which_backend(router::FirstOf, ::Type, ::Type{FactorizedJoint{T}}) wher
     return supports_all(router, T) ? router : nothing
 end
 prepare_expectation(router::FirstOf, q::FactorizedJoint) = prepare_product(router, q)
-function expectation(router::FirstOf, f, q::FactorizedJoint)
+function expectation(router::FirstOf, f::F, q::FactorizedJoint) where {F}
     return expectation(prepare_expectation(router, q), f)
 end

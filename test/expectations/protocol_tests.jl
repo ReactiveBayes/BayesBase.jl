@@ -63,3 +63,17 @@ end
     @test occursin("log", message)
     @test occursin("Normal", message)
 end
+
+@testitem "every method takes the integrand specialised" tags = [:expectations] begin
+    # Julia does not specialise a method on a function argument that it only passes on. A
+    # prepared router would then dispatch on the integrand at run time and allocate, so every
+    # method takes it as `f::F`, with a type parameter
+    for operation in (BayesBase.expectation, BayesBase.expectation_from)
+        for method in methods(operation)
+            method.module === BayesBase || continue
+            signature = Base.unwrap_unionall(method.sig)
+            length(signature.parameters) >= 3 || continue
+            @test signature.parameters[3] !== Any
+        end
+    end
+end

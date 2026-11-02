@@ -24,7 +24,7 @@ end
 
 Base.length(points::PointSet) = length(points.weights)
 
-function expectation(set::PointSet, f)
+function expectation(set::PointSet, f::F) where {F}
     points, weights = set.points, set.weights
     result = weights[1] * f(points[1])
     for i in 2:length(weights)
