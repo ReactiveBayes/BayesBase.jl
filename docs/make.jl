@@ -10,7 +10,7 @@ makedocs(
     sitename = "BayesBase.jl",
     # Every docstring appears on a page.
     checkdocs = :all,
-    pages = ["Home" => "index.md"],
+    pages = ["Home" => "index.md", "Expectations" => "expectations.md"],
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true",
         canonical = "https://reactivebayes.github.io/BayesBase.jl",

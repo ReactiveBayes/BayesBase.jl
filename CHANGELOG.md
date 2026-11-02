@@ -6,6 +6,25 @@ All notable changes to BayesBase.jl are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- The expectation protocol: one way to ask for `E_q[f]`, answered by backends defined in other
+  packages. `BayesBase.expectation` and `BayesBase.prepare_expectation`; what a backend
+  supports (`supports`, `which_backend`) and which labels hold (`Exact`, `Stochastic`,
+  `haslabel`, `isexact`, `isstochastic`, `combine_label`); random number generators from above
+  (`withrng`, `getrng`); the integrand `Logpdf`; point sets and products over `FactorizedJoint`
+  (`PointSet`, `ProductPointSet`); and routers (`FirstOf`, `DynamicRouter`, `BackendRegistry`,
+  `register_backend!`). The names are public and not exported. See the new "Expectations"
+  page of the documentation.
+- Compat.jl is a new dependency, for declaring public names on Julia 1.10.
+
+### Fixed
+
+- `promote_variate_type` for a pair no package supports throws an `ArgumentError` naming the
+  pair, instead of a `MethodError` from inside BayesBase.
+- `ndims(::PointMass{<:UniformScaling})` and `mean(mirrorlog, ::SampleList)` for a multivariate
+  or matrix-variate sample list throw errors that say what is not defined.
+
 ### Changed
 
 - BayesBase requires Julia 1.10 or later, the oldest version its CI tests.

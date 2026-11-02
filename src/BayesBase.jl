@@ -1,6 +1,7 @@
 module BayesBase
 
 using StatsAPI, StatsBase, DomainSets, Statistics, Distributions, TinyHugeNumbers, Random
+using Compat: @compat
 
 import StatsAPI: params
 
@@ -97,5 +98,22 @@ include("densities/factorizedjoint.jl")
 include("densities/contingency.jl")
 include("algebra/arrowheadmatrix.jl")
 include("algebra/matrixwithcahcedinverse.jl")
+
+# The expectation protocol: public, not exported
+@compat public expectation, prepare_expectation, Prepared, NoBackendError
+@compat public supports, which_backend, withrng, getrng, Logpdf
+@compat public ExpectationLabel, Exact, Stochastic, combine_label
+@compat public haslabel, isexact, isstochastic
+@compat public PointSet, ProductPointSet, FirstOf
+@compat public DynamicRouter, BackendRegistry, register_backend!
+
+include("expectations/protocol.jl")
+include("expectations/labels.jl")
+include("expectations/rng.jl")
+include("expectations/logpdf.jl")
+include("expectations/pointset.jl")
+include("expectations/products.jl")
+include("expectations/firstof.jl")
+include("expectations/dynamic.jl")
 
 end
