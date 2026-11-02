@@ -8,9 +8,9 @@
     "Closed forms of `E[x]` and `E[x²]` under a Normal; exact."
     struct ToyExact end
 
-    P.supports(::ToyExact, ::Type{typeof(identity)}, ::Type{<:Normal}) = true
-    P.supports(::ToyExact, ::Type{typeof(abs2)}, ::Type{<:Normal}) = true
-    P.haslabel(::ToyExact, ::P.Exact) = true
+    P.supports_expectation(::ToyExact, ::Type{typeof(identity)}, ::Type{<:Normal}) = true
+    P.supports_expectation(::ToyExact, ::Type{typeof(abs2)}, ::Type{<:Normal}) = true
+    P.has_expectation_label(::ToyExact, ::P.ExpectationExact) = true
     P.expectation(::ToyExact, ::typeof(identity), q::Normal) = mean(q)
     P.expectation(::ToyExact, ::typeof(abs2), q::Normal) = mean(q)^2 + var(q)
 
@@ -20,17 +20,17 @@
     """
     struct ToyGrid end
 
-    P.supports(::ToyGrid, ::Type, ::Type{<:Normal}) = true
-    P.supports(::ToyGrid, ::Type, ::Type{<:Categorical}) = true
-    P.supports(::ToyGrid, ::Type, ::Type{<:PointMass}) = true
-    P.haslabel(::ToyGrid, ::Type, ::Type{<:Union{Categorical, PointMass}}, ::P.Exact) = true
+    P.supports_expectation(::ToyGrid, ::Type, ::Type{<:Normal}) = true
+    P.supports_expectation(::ToyGrid, ::Type, ::Type{<:Categorical}) = true
+    P.supports_expectation(::ToyGrid, ::Type, ::Type{<:PointMass}) = true
+    P.has_expectation_label(::ToyGrid, ::Type, ::Type{<:Union{Categorical, PointMass}}, ::P.ExpectationExact) = true
 
     function P.prepare_expectation(::ToyGrid, q::Normal)
         m, s = mean(q), std(q)
-        return P.PointSet((m - sqrt(3) * s, m, m + sqrt(3) * s), (1 / 6, 2 / 3, 1 / 6))
+        return P.ExpectationPointSet((m - sqrt(3) * s, m, m + sqrt(3) * s), (1 / 6, 2 / 3, 1 / 6))
     end
-    P.prepare_expectation(::ToyGrid, q::Categorical) = P.PointSet(1:ncategories(q), probs(q))
-    P.prepare_expectation(::ToyGrid, q::PointMass) = P.PointSet((mean(q),), (1.0,))
+    P.prepare_expectation(::ToyGrid, q::Categorical) = P.ExpectationPointSet(1:ncategories(q), probs(q))
+    P.prepare_expectation(::ToyGrid, q::PointMass) = P.ExpectationPointSet((mean(q),), (1.0,))
 
     "Monte Carlo over a Normal with an RNG held by the backend; stochastic."
     struct ToySampler{R}
@@ -40,14 +40,14 @@
 
     ToySampler(n::Int) = ToySampler(n, nothing)
 
-    P.supports(::ToySampler, ::Type, ::Type{<:Normal}) = true
-    P.haslabel(::ToySampler, ::P.Stochastic) = true
-    P.getrng(sampler::ToySampler) = sampler.rng
-    P.withrng(sampler::ToySampler{Nothing}, rng) = ToySampler(sampler.n, rng)
-    P.withrng(sampler::ToySampler, rng) = sampler
+    P.supports_expectation(::ToySampler, ::Type, ::Type{<:Normal}) = true
+    P.has_expectation_label(::ToySampler, ::P.ExpectationStochastic) = true
+    P.get_expectation_rng(sampler::ToySampler) = sampler.rng
+    P.with_expectation_rng(sampler::ToySampler{Nothing}, rng) = ToySampler(sampler.n, rng)
+    P.with_expectation_rng(sampler::ToySampler, rng) = sampler
 
     function P.expectation(sampler::ToySampler, f, q::Normal)
-        isnothing(sampler.rng) && throw(ArgumentError("ToySampler has no RNG, use `withrng`"))
+        isnothing(sampler.rng) && throw(ArgumentError("ToySampler has no RNG, use `with_expectation_rng`"))
         return sum(_ -> f(rand(sampler.rng, q)), 1:(sampler.n)) / sampler.n
     end
 

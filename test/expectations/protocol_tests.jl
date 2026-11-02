@@ -1,28 +1,28 @@
 @testitem "supports: false by default, instances forward to types" tags = [:expectations] setup = [ExpectationToys] begin
     using Distributions
 
-    @test P.supports(ToyNothing(), Any, Normal) === false
-    @test P.supports(ToyNothing(), log, Normal(0, 1)) === false
-    @test P.supports(ToyExact(), identity, Normal(0, 1)) === true
-    @test P.supports(ToyExact(), typeof(identity), Normal) === true
-    @test P.supports(ToyExact(), log, Normal(0, 1)) === false
+    @test P.supports_expectation(ToyNothing(), Any, Normal) === false
+    @test P.supports_expectation(ToyNothing(), log, Normal(0, 1)) === false
+    @test P.supports_expectation(ToyExact(), identity, Normal(0, 1)) === true
+    @test P.supports_expectation(ToyExact(), typeof(identity), Normal) === true
+    @test P.supports_expectation(ToyExact(), log, Normal(0, 1)) === false
 
     # `Any` as the integrand type asks whether every integrand is supported
-    @test P.supports(ToyGrid(), Any, Normal) === true
-    @test P.supports(ToyExact(), Any, Normal) === false
+    @test P.supports_expectation(ToyGrid(), Any, Normal) === true
+    @test P.supports_expectation(ToyExact(), Any, Normal) === false
 
     # decided by inference
-    @test folds_to(P.supports, (ToyExact, typeof(identity), Normal{Float64}), true)
-    @test folds_to(P.supports, (ToyExact, typeof(log), Normal{Float64}), false)
+    @test folds_to(P.supports_expectation, (ToyExact, typeof(identity), Normal{Float64}), true)
+    @test folds_to(P.supports_expectation, (ToyExact, typeof(log), Normal{Float64}), false)
 end
 
-@testitem "which_backend of a plain backend is itself or nothing" tags = [:expectations] setup = [ExpectationToys] begin
+@testitem "which_expectation_backend of a plain backend is itself or nothing" tags = [:expectations] setup = [ExpectationToys] begin
     using Distributions
 
-    @test P.which_backend(ToyExact(), identity, Normal(0, 1)) === ToyExact()
-    @test P.which_backend(ToyExact(), log, Normal(0, 1)) === nothing
-    @test P.which_backend(ToyGrid(), Any, Normal) === ToyGrid()
-    @test @inferred(P.which_backend(ToyExact(), identity, Normal(0, 1))) === ToyExact()
+    @test P.which_expectation_backend(ToyExact(), identity, Normal(0, 1)) === ToyExact()
+    @test P.which_expectation_backend(ToyExact(), log, Normal(0, 1)) === nothing
+    @test P.which_expectation_backend(ToyGrid(), Any, Normal) === ToyGrid()
+    @test @inferred(P.which_expectation_backend(ToyExact(), identity, Normal(0, 1))) === ToyExact()
 end
 
 @testitem "expectation and prepare_expectation of a closed-form backend" tags = [:expectations] setup = [ExpectationToys] begin
@@ -34,7 +34,7 @@ end
 
     # the default preparation wraps the backend and the distribution and forwards
     prep = P.prepare_expectation(ToyExact(), q)
-    @test prep isa P.Prepared
+    @test prep isa P.PreparedExpectation
     @test P.expectation(prep, identity) == 1.0
     @test P.expectation(prep, abs2) == 5.0
 end
@@ -49,16 +49,16 @@ end
     @test P.expectation(P.prepare_expectation(ToyGrid(), q), abs2) ≈ 5.0
 end
 
-@testitem "an unsupported pair throws NoBackendError, not a stack overflow" tags = [:expectations] setup = [ExpectationToys] begin
+@testitem "an unsupported pair throws UnsupportedExpectationError, not a stack overflow" tags = [:expectations] setup = [ExpectationToys] begin
     using Distributions
 
-    @test_throws P.NoBackendError P.expectation(ToyNothing(), identity, Normal(0, 1))
-    @test_throws P.NoBackendError P.expectation(ToyExact(), log, Normal(0, 1))
-    @test_throws P.NoBackendError P.expectation(
+    @test_throws P.UnsupportedExpectationError P.expectation(ToyNothing(), identity, Normal(0, 1))
+    @test_throws P.UnsupportedExpectationError P.expectation(ToyExact(), log, Normal(0, 1))
+    @test_throws P.UnsupportedExpectationError P.expectation(
         P.prepare_expectation(ToyNothing(), Normal(0, 1)), identity
     )
 
-    message = sprint(showerror, P.NoBackendError(ToyNothing(), log, Normal(0, 1)))
+    message = sprint(showerror, P.UnsupportedExpectationError(ToyNothing(), log, Normal(0, 1)))
     @test occursin("ToyNothing", message)
     @test occursin("log", message)
     @test occursin("Normal", message)

@@ -6,21 +6,20 @@
     protocol = (
         BayesBase.expectation,
         BayesBase.prepare_expectation,
-        BayesBase.supports,
-        BayesBase.which_backend,
-        BayesBase.haslabel,
-        BayesBase.isexact,
-        BayesBase.isstochastic,
-        BayesBase.combine_label,
-        BayesBase.withrng,
-        BayesBase.getrng,
-        BayesBase.register_backend!,
+        BayesBase.supports_expectation,
+        BayesBase.which_expectation_backend,
+        BayesBase.has_expectation_label,
+        BayesBase.is_expectation_exact,
+        BayesBase.is_expectation_stochastic,
+        BayesBase.combine_expectation_label,
+        BayesBase.with_expectation_rng,
+        BayesBase.get_expectation_rng,
+        BayesBase.register_expectation_backend!,
     )
     callable(method) = Base.unwrap_unionall(method.sig).parameters[1]
     inprotocol(method) =
         any(f -> callable(method) === typeof(f), protocol) ||
-        callable(method) <: BayesBase.Logpdf ||
-        callable(method) <: Type{<:BayesBase.FirstOf}
+        callable(method) <: Type{<:BayesBase.ExpectationFirstOf}
 
     ambiguities = filter(
         ((a, b),) -> inprotocol(a) || inprotocol(b), Test.detect_ambiguities(BayesBase)

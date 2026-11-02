@@ -2,26 +2,25 @@
     const PROTOCOL = [
         :expectation,
         :prepare_expectation,
-        :Prepared,
-        :NoBackendError,
-        :supports,
-        :which_backend,
+        :PreparedExpectation,
+        :UnsupportedExpectationError,
+        :supports_expectation,
+        :which_expectation_backend,
         :ExpectationLabel,
-        :Exact,
-        :Stochastic,
-        :haslabel,
-        :isexact,
-        :isstochastic,
-        :combine_label,
-        :withrng,
-        :getrng,
-        :Logpdf,
-        :PointSet,
-        :ProductPointSet,
-        :FirstOf,
-        :DynamicRouter,
-        :BackendRegistry,
-        :register_backend!,
+        :ExpectationExact,
+        :ExpectationStochastic,
+        :has_expectation_label,
+        :is_expectation_exact,
+        :is_expectation_stochastic,
+        :combine_expectation_label,
+        :with_expectation_rng,
+        :get_expectation_rng,
+        :ExpectationPointSet,
+        :ExpectationProductPointSet,
+        :ExpectationFirstOf,
+        :ExpectationDynamicRouter,
+        :ExpectationBackendRegistry,
+        :register_expectation_backend!,
     ]
 
     for name in PROTOCOL
@@ -37,12 +36,12 @@ end
 
 @testitem "loading next to RxInfer's names does not clash" tags = [:expectations] setup = [ExpectationToys] begin
     # MessagePassingRulesBase and ReactiveMP export `Stochastic` and `isstochastic` for node
-    # types; BayesBase does not export the protocol, so a module may use both
+    # types; the protocol's names are its own, and not exported, so a module may use both
     module UsesBoth
     using BayesBase
     struct Stochastic end # stands in for the node type exported by ReactiveMP
     isstochastic(::Stochastic) = true
-    const label = BayesBase.Stochastic()
+    const label = BayesBase.ExpectationStochastic()
     end
     @test UsesBoth.isstochastic(UsesBoth.Stochastic())
     @test UsesBoth.label isa BayesBase.ExpectationLabel

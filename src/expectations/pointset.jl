@@ -1,5 +1,5 @@
 """
-    PointSet(points, weights)
+    ExpectationPointSet(points, weights)
 
 A prepared expectation that is a weighted sum, `Σᵢ wᵢ f(xᵢ)`: quadrature, cubature, sigma
 points, exact sums over a finite support, or samples with equal weights. `points` and `weights`
@@ -9,11 +9,11 @@ rules over a [`FactorizedJoint`](@ref) are made.
 The sum starts from its first term, so its type follows the integrand: dual numbers pass
 through without the point set knowing about them.
 """
-struct PointSet{P, W}
+struct ExpectationPointSet{P, W}
     points::P
     weights::W
 
-    function PointSet(points::P, weights::W) where {P, W}
+    function ExpectationPointSet(points::P, weights::W) where {P, W}
         length(points) == length(weights) || throw(
             DimensionMismatch("$(length(points)) points but $(length(weights)) weights")
         )
@@ -22,9 +22,9 @@ struct PointSet{P, W}
     end
 end
 
-Base.length(points::PointSet) = length(points.weights)
+Base.length(points::ExpectationPointSet) = length(points.weights)
 
-function expectation(set::PointSet, f::F) where {F}
+function expectation(set::ExpectationPointSet, f::F) where {F}
     points, weights = set.points, set.weights
     result = weights[1] * f(points[1])
     for i in 2:length(weights)
