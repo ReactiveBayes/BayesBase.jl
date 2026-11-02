@@ -6,6 +6,8 @@ All notable changes to BayesBase.jl are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-02
+
 ### Added
 
 - The expectation protocol: one way to ask for `E_q[f]`, answered by backends defined in other
@@ -33,4 +35,5 @@ All notable changes to BayesBase.jl are documented here. The format is based on
 - The tooling follows the ReactiveBayes PackageTemplate: the Makefile, the CI, CompatHelper,
   TagBot and documentation preview workflows, and the documentation setup.
 
-[Unreleased]: https://github.com/ReactiveBayes/BayesBase.jl/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/ReactiveBayes/BayesBase.jl/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/ReactiveBayes/BayesBase.jl/compare/v1.6.0...v1.7.0
