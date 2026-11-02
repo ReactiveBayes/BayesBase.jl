@@ -2,8 +2,8 @@
     import BayesBase: PromoteTypeConverter
 
     for original_T in (Float16, Float32, Float64),
-        target_T in (Float16, Float32, Float64),
-        n in (1, 2, 3)
+            target_T in (Float16, Float32, Float64),
+            n in (1, 2, 3)
 
         converter = PromoteTypeConverter(target_T, convert)
 

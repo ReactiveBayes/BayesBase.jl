@@ -1,8 +1,8 @@
 using BayesBase, LinearAlgebra, Distributions, StableRNGs
 
 function generate_random_distributions(
-    (::Type{V})=Any; seed=abs(rand(Int)), Types=(Float32, Float64)
-) where {V}
+        (::Type{V}) = Any; seed = abs(rand(Int)), Types = (Float32, Float64)
+    ) where {V}
     rng = StableRNG(seed)
     distributions = []
 

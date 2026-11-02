@@ -1,4 +1,3 @@
-
 import Base: prod, prod!, show, showerror
 
 export prod,
@@ -162,7 +161,7 @@ Instead, it must be further approximated as a member of some other distribution.
 
 See also: [`prod`](@ref), [`GenericProd`](@ref), [`fuse_supports`](@ref)
 """
-struct ProductOf{L,R}
+struct ProductOf{L, R}
     left::L
     right::R
 end
@@ -193,29 +192,29 @@ function BayesBase.logpdf(product::ProductOf, x)
     return logpdf(getleft(product), x) + logpdf(getright(product), x)
 end
 
-function BayesBase.variate_form(::Type{ProductOf{L,R}}) where {L,R}
+function BayesBase.variate_form(::Type{ProductOf{L, R}}) where {L, R}
     return _check_product_variate_form(variate_form(L), variate_form(R))
 end
 
-_check_product_variate_form(::Type{F}, ::Type{F}) where {F<:VariateForm} = F
+_check_product_variate_form(::Type{F}, ::Type{F}) where {F <: VariateForm} = F
 
 function _check_product_variate_form(
-    ::Type{F1}, ::Type{F2}
-) where {F1<:VariateForm,F2<:VariateForm}
+        ::Type{F1}, ::Type{F2}
+    ) where {F1 <: VariateForm, F2 <: VariateForm}
     return error(
         "`ProductOf` has different variate forms for left ($F1) and right ($F2) entries."
     )
 end
 
-function BayesBase.value_support(::Type{ProductOf{L,R}}) where {L,R}
+function BayesBase.value_support(::Type{ProductOf{L, R}}) where {L, R}
     return _check_product_value_support(value_support(L), value_support(R))
 end
 
-_check_product_value_support(::Type{S}, ::Type{S}) where {S<:ValueSupport} = S
+_check_product_value_support(::Type{S}, ::Type{S}) where {S <: ValueSupport} = S
 
 function _check_product_value_support(
-    ::Type{S1}, ::Type{S2}
-) where {S1<:ValueSupport,S2<:ValueSupport}
+        ::Type{S1}, ::Type{S2}
+    ) where {S1 <: ValueSupport, S2 <: ValueSupport}
     return error(
         "`ProductOf` has different value supports for left ($S1) and right ($S2) entries."
     )
@@ -240,7 +239,7 @@ Base.prod(::GenericProd, ::Missing, right) = right
 Base.prod(::GenericProd, left, ::Missing) = left
 Base.prod(::GenericProd, ::Missing, ::Missing) = missing
 
-function Base.prod(::GenericProd, left::L, right::R) where {L,R}
+function Base.prod(::GenericProd, left::L, right::R) where {L, R}
     return prod(GenericProd(), symmetric_default_prod_rule(L, R), left, right)
 end
 
@@ -249,7 +248,7 @@ Base.prod(::GenericProd, ::UnspecifiedProd, left, right) = ProductOf(left, right
 
 # Try to fuse the tree with analytical solutions (if possible)
 # Case (L × R) × T
-function Base.prod(::GenericProd, left::ProductOf{L,R}, right::T) where {L,R,T}
+function Base.prod(::GenericProd, left::ProductOf{L, R}, right::T) where {L, R, T}
     return prod(
         GenericProd(),
         symmetric_default_prod_rule(L, T),
@@ -261,8 +260,8 @@ end
 
 # (L × R) × T cannot be fused, simply return the `ProductOf`
 function Base.prod(
-    ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::ProductOf, right
-)
+        ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::ProductOf, right
+    )
     return ProductOf(left, right)
 end
 
@@ -282,7 +281,7 @@ function Base.prod(::GenericProd, _, something, left::ProductOf, right)
 end
 
 # Case T × (L × R)
-function Base.prod(::GenericProd, left::T, right::ProductOf{L,R}) where {L,R,T}
+function Base.prod(::GenericProd, left::T, right::ProductOf{L, R}) where {L, R, T}
     return prod(
         GenericProd(),
         symmetric_default_prod_rule(T, L),
@@ -294,8 +293,8 @@ end
 
 # T × (L × R) cannot be fused, simply return the `ProductOf`
 function Base.prod(
-    ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left, right::ProductOf
-)
+        ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left, right::ProductOf
+    )
     return ProductOf(left, right)
 end
 
@@ -376,70 +375,70 @@ function BayesBase.default_prod_rule(::Type{LinearizedProductOf{F}}, ::Type{F}) 
 end
 
 function Base.prod(
-    ::PreserveTypeProd{LinearizedProductOf{F}}, product::LinearizedProductOf{F}, item::F
-) where {F}
+        ::PreserveTypeProd{LinearizedProductOf{F}}, product::LinearizedProductOf{F}, item::F
+    ) where {F}
     return push!(product, item)
 end
 
 function Base.prod(
-    ::PreserveTypeProd{LinearizedProductOf{F}}, item::F, product::LinearizedProductOf{F}
-) where {F}
+        ::PreserveTypeProd{LinearizedProductOf{F}}, item::F, product::LinearizedProductOf{F}
+    ) where {F}
     return push!(product, item)
 end
 
 function Base.prod(
-    ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::ProductOf{L,R}, right::R
-) where {L,R}
+        ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::ProductOf{L, R}, right::R
+    ) where {L, R}
     return ProductOf(getleft(left), LinearizedProductOf(R[getright(left), right], 2))
 end
 
 function Base.prod(
-    ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::ProductOf{L,R}, right::L
-) where {L,R}
+        ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::ProductOf{L, R}, right::L
+    ) where {L, R}
     return ProductOf(LinearizedProductOf(L[getleft(left), right], 2), getright(left))
 end
 
 function Base.prod(
-    ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::L, right::ProductOf{L,R}
-) where {L,R}
+        ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::L, right::ProductOf{L, R}
+    ) where {L, R}
     return ProductOf(LinearizedProductOf(L[left, getleft(right)], 2), getright(right))
 end
 
 function Base.prod(
-    ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::R, right::ProductOf{L,R}
-) where {L,R}
+        ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::R, right::ProductOf{L, R}
+    ) where {L, R}
     return ProductOf(getleft(right), LinearizedProductOf(R[left, getright(right)], 2))
 end
 
 function Base.prod(
-    ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::T, right::ProductOf{T,T}
-) where {T}
+        ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::T, right::ProductOf{T, T}
+    ) where {T}
     return LinearizedProductOf(T[left, getleft(right), getright(right)], 3)
 end
 
 function Base.prod(
-    ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::ProductOf{T,T}, right::T
-) where {T}
+        ::GenericProd, ::UnspecifiedProd, ::UnspecifiedProd, left::ProductOf{T, T}, right::T
+    ) where {T}
     return LinearizedProductOf(T[getleft(left), getright(left), right], 3)
 end
 
 function Base.prod(
-    ::GenericProd,
-    ::UnspecifiedProd,
-    ::UnspecifiedProd,
-    left::ProductOf{L,LinearizedProductOf{R}},
-    right::R,
-) where {L,R}
+        ::GenericProd,
+        ::UnspecifiedProd,
+        ::UnspecifiedProd,
+        left::ProductOf{L, LinearizedProductOf{R}},
+        right::R,
+    ) where {L, R}
     return ProductOf(getleft(left), push!(getright(left), right))
 end
 
 function Base.prod(
-    ::GenericProd,
-    ::UnspecifiedProd,
-    ::UnspecifiedProd,
-    left::ProductOf{LinearizedProductOf{L},R},
-    right::L,
-) where {L,R}
+        ::GenericProd,
+        ::UnspecifiedProd,
+        ::UnspecifiedProd,
+        left::ProductOf{LinearizedProductOf{L}, R},
+        right::L,
+    ) where {L, R}
     return ProductOf(push!(getleft(left), right), getright(left))
 end
 
@@ -511,8 +510,8 @@ function Base.isapprox(left::TerminalProdArgument, right::TerminalProdArgument; 
 end
 
 function BayesBase.convert_paramfloattype(
-    ::Type{T}, terminal::TerminalProdArgument
-) where {T}
+        ::Type{T}, terminal::TerminalProdArgument
+    ) where {T}
     return TerminalProdArgument(convert_paramfloattype(T, terminal.argument))
 end
 
@@ -527,20 +526,20 @@ function default_prod_rule(::Type{<:TerminalProdArgument}, ::Type{<:TerminalProd
 end
 
 function Base.prod(
-    ::PreserveTypeProd{TerminalProdArgument}, left::TerminalProdArgument, right
-)
+        ::PreserveTypeProd{TerminalProdArgument}, left::TerminalProdArgument, right
+    )
     return left
 end
 function Base.prod(
-    ::PreserveTypeProd{TerminalProdArgument}, left, right::TerminalProdArgument
-)
+        ::PreserveTypeProd{TerminalProdArgument}, left, right::TerminalProdArgument
+    )
     return right
 end
 function Base.prod(
-    ::PreserveTypeProd{TerminalProdArgument},
-    left::TerminalProdArgument,
-    right::TerminalProdArgument,
-)
+        ::PreserveTypeProd{TerminalProdArgument},
+        left::TerminalProdArgument,
+        right::TerminalProdArgument,
+    )
     return error("Invalid product: `$(left)` × `$(right)`")
 end
 

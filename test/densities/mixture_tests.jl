@@ -1,4 +1,3 @@
-
 @testitem "Mixture Distribution: creation" begin
     using Distributions
 
@@ -34,7 +33,7 @@ end
     @test mean(dist) ≈ 0.3 * (0.1 / (0.1 + 0.3)) + 0.7 * 2
     @test var(dist) ≈
         0.3 * ((0.1 * 0.3) / ((0.1 + 0.3)^2 * (0.1 + 0.3 + 1)) + (0.1 / (0.1 + 0.3))^2) +
-          0.7 * (2.6^2 + 2^2) - mean(dist)^2
+        0.7 * (2.6^2 + 2^2) - mean(dist)^2
 end
 
 # resolves issue #253
@@ -87,8 +86,8 @@ end
     end
 
     function BayesBase.default_prod_rule(
-        ::Type{NormalMeanVariance}, ::Type{NormalMeanVariance}
-    )
+            ::Type{NormalMeanVariance}, ::Type{NormalMeanVariance}
+        )
         return PreserveTypeProd(NormalMeanVariance)
     end
 
@@ -100,18 +99,18 @@ end
     end
 
     function Base.prod(
-        ::PreserveTypeProd{NormalMeanVariance},
-        left::NormalMeanVariance,
-        right::NormalMeanVariance,
-    )
+            ::PreserveTypeProd{NormalMeanVariance},
+            left::NormalMeanVariance,
+            right::NormalMeanVariance,
+        )
         μ = (mean(left) * var(right) + mean(right) * var(left)) / (var(right) + var(left))
         v = (var(left) * var(right)) / (var(left) + var(right))
         return NormalMeanVariance(μ, v)
     end
 
     function BayesBase.compute_logscale(
-        ::NormalMeanVariance, left::NormalMeanVariance, right::NormalMeanVariance
-    )
+            ::NormalMeanVariance, left::NormalMeanVariance, right::NormalMeanVariance
+        )
         m_left, v_left = mean_var(left)
         m_right, v_right = mean_var(right)
         v = v_left + v_right
@@ -148,9 +147,9 @@ end
     mean_dist = mean(dist)
     @test mean_dist ≈ 0.3 * [1.0, 1.0] + 0.7 * [2.0, 2.0]
     @test var(dist) ≈
-        0.3 * ([1.0, 1.0] + [1.0, 1.0])+0.7 * ([1.0, 1.0] + [4.0, 4.0]) - mean_dist .^ 2
+        0.3 * ([1.0, 1.0] + [1.0, 1.0]) + 0.7 * ([1.0, 1.0] + [4.0, 4.0]) - mean_dist .^ 2
     @test cov(dist) ≈
-        0.3 * ([1.0 0.5; 0.5 1.0] + [1.0, 1.0]*[1.0, 1.0]')+0.7 * (
-        [1.0 0.5; 0.5 1.0] + [2.0, 2.0]*[2.0, 2.0]'
-    ) - mean_dist*mean_dist'
+        0.3 * ([1.0 0.5; 0.5 1.0] + [1.0, 1.0] * [1.0, 1.0]') + 0.7 * (
+        [1.0 0.5; 0.5 1.0] + [2.0, 2.0] * [2.0, 2.0]'
+    ) - mean_dist * mean_dist'
 end

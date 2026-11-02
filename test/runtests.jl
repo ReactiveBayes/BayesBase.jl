@@ -5,9 +5,9 @@ if get(ENV, "RUN_AQUA", "true") == "true"
     # `piracy = false` - we extend/add some of the methods to the objects defined in the Distributions.jl
     Aqua.test_all(
         BayesBase;
-        ambiguities=false,
-        piracies=false,
-        deps_compat=(; check_extras=false, check_weakdeps=true),
+        ambiguities = false,
+        piracies = false,
+        deps_compat = (; check_extras = false, check_weakdeps = true),
     )
 end
 
@@ -22,9 +22,9 @@ test_root = joinpath(pkg_root, "test")
 if isempty(ARGS)
     runtests(
         BayesBase;
-        nworkers=ncores,
-        nworker_threads=nworker_threads,
-        memory_threshold=memory_threshold,
+        nworkers = ncores,
+        nworker_threads = nworker_threads,
+        memory_threshold = memory_threshold,
     )
 else
     for arg in ARGS
@@ -41,9 +41,9 @@ else
             @info "Running selective tests from $selected_path"
             runtests(
                 selected_path;
-                nworkers=ncores,
-                nworker_threads=nworker_threads,
-                memory_threshold=memory_threshold,
+                nworkers = ncores,
+                nworker_threads = nworker_threads,
+                memory_threshold = memory_threshold,
             )
         else
             @warn "Test target not found: $arg"

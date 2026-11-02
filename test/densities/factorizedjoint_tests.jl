@@ -38,14 +38,14 @@
         @test !(FactorizedJoint((Normal(0, 1),)) ≈ FactorizedJoint((Normal(1, 1),)))
 
         @test FactorizedJoint((Gamma(1.0, 1.0), Normal(0.0, 1.0))) ≈
-            FactorizedJoint((Gamma(1.000001, 1.0), Normal(0.0, 1.0000000001))) atol = 1e-5
+            FactorizedJoint((Gamma(1.000001, 1.0), Normal(0.0, 1.0000000001))) atol = 1.0e-5
         @test !(
             FactorizedJoint((Gamma(1.0, 1.0), Normal(0.0, 1.0))) ≈
-            FactorizedJoint((Gamma(1.000001, 1.0), Normal(0.0, 5.0000000001)))
+                FactorizedJoint((Gamma(1.000001, 1.0), Normal(0.0, 5.0000000001)))
         )
         @test !(
             FactorizedJoint((Gamma(1.0, 2.0), Normal(0.0, 1.0))) ≈
-            FactorizedJoint((Gamma(1.000001, 1.0), Normal(0.0, 1.0000000001)))
+                FactorizedJoint((Gamma(1.000001, 1.0), Normal(0.0, 1.0000000001)))
         )
     end
 end

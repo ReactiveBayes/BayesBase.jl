@@ -6,7 +6,7 @@
         source = copy(S)
         A = MatrixWithCachedInverse(source)
         source[1, 1] += 1
-        @test A isa MatrixWithCachedInverse{T,Matrix{T}}
+        @test A isa MatrixWithCachedInverse{T, Matrix{T}}
         @test Matrix(A) == S
         @test size(A) == (n, n)
         @test A[1, 1] == S[1, 1] && A[n] == S[n]
@@ -15,11 +15,11 @@
         @test BayesBase.cached_factor(A) === nothing && A.inverse === nothing
 
         @test A \ ones(T, n) ≈ S \ ones(T, n)
-        @test BayesBase.cached_factor(A) isa Cholesky{T,Matrix{T}} && A.inverse === nothing
+        @test BayesBase.cached_factor(A) isa Cholesky{T, Matrix{T}} && A.inverse === nothing
 
         B = MatrixWithCachedInverse(S)
         @test logdet(B) ≈ logdet(S)
-        @test BayesBase.cached_factor(B) isa Cholesky{T,Matrix{T}} && B.inverse === nothing
+        @test BayesBase.cached_factor(B) isa Cholesky{T, Matrix{T}} && B.inverse === nothing
     end
 end
 
@@ -52,7 +52,7 @@ end
         # A cold positivity query populates the same cache as cholesky.
         C = MatrixWithCachedInverse(S)
         @test (@inferred isposdef(C))
-        @test BayesBase.cached_factor(C) isa Cholesky{T,Matrix{T}}
+        @test BayesBase.cached_factor(C) isa Cholesky{T, Matrix{T}}
         @test cholesky(C) === BayesBase.cached_factor(C) && C.inverse === nothing
 
         for M in (T[1 2; 2 1], T[1 1; 1 1], T[-2 0; 0 -1])
@@ -93,13 +93,13 @@ end
             @test transpose(B) * x ≈ transpose(D) * x
 
             for (left, right, dense_left, dense_right) in (
-                (B, x, D, x),
-                (B, X, D, X),
-                (X', B, X', D),
-                (copy(X'), B, copy(X'), D),
-                (B, B, D, D),
-                (A, B, S, D),
-            )
+                    (B, x, D, x),
+                    (B, X, D, X),
+                    (X', B, X', D),
+                    (copy(X'), B, copy(X'), D),
+                    (B, B, D, D),
+                    (A, B, S, D),
+                )
                 expected = dense_left * dense_right
                 result = fill(T(NaN), size(expected))
                 @test mul!(result, left, right) === result
@@ -142,7 +142,7 @@ end
 
     S = [2.0 1.0; 1.0 3.0]
     # Use the internal constructor to wrap the instrumented storage without reading it.
-    A = MatrixWithCachedInverse{Float64,MulOnlyMatrix{Float64}}(
+    A = MatrixWithCachedInverse{Float64, MulOnlyMatrix{Float64}}(
         MulOnlyMatrix(S), ReentrantLock()
     )
     x = [1.0, 2.0]
@@ -170,7 +170,7 @@ end
         junk[CartesianIndex(uplo === :U ? (2, 1) : (1, 2))] = T(100) # the ignored triangle holds garbage
         for V in (Symmetric(junk, uplo), Hermitian(junk, uplo))
             A = @inferred MatrixWithCachedInverse(V)
-            @test A isa MatrixWithCachedInverse{T,Matrix{T}}
+            @test A isa MatrixWithCachedInverse{T, Matrix{T}}
             @test Matrix(A) == S
             @test BayesBase.cached_factor(A) === nothing && A.inverse === nothing
             @test inv(A) ≈ inv(S)
@@ -197,13 +197,13 @@ end
         @test inv(A) === B
         @test inv(B) === A
         @test BayesBase.cached_factor(B) === nothing
-        @test BayesBase.cached_factor(A) isa Cholesky{T,Matrix{T}}
+        @test BayesBase.cached_factor(A) isa Cholesky{T, Matrix{T}}
 
         @test A \ b ≈ F \ b
         @test A \ Matrix{T}(I, n, n) ≈ inv(F)
         @test logdet(A) ≈ logdet(F)
         @test logdet(B) ≈ -logdet(F)
-        @test BayesBase.cached_factor(B) isa Cholesky{T,Matrix{T}}
+        @test BayesBase.cached_factor(B) isa Cholesky{T, Matrix{T}}
         @test B \ b ≈ S * b
     end
 end
@@ -282,7 +282,7 @@ end
     for T in (Float32, Float64, BigFloat)
         S = T[2 1; 1 2]
         A = @inferred MatrixWithCachedInverse(S)
-        @test (@inferred BayesBase.cached_cholesky_or_compute(A)) isa Cholesky{T,Matrix{T}}
+        @test (@inferred BayesBase.cached_cholesky_or_compute(A)) isa Cholesky{T, Matrix{T}}
         @test (@inferred BayesBase.cached_cholesky_or_compute(A)) ===
             BayesBase.cached_factor(A)
         B = @inferred inv(A)
@@ -292,13 +292,13 @@ end
         @test convert(AbstractMatrix{T}, A) === A
         @test convert(AbstractArray{T}, A) === A
         C = AbstractMatrix{T}(A)
-        @test C isa MatrixWithCachedInverse{T,Matrix{T}}
+        @test C isa MatrixWithCachedInverse{T, Matrix{T}}
         @test C !== A &&
             C == A &&
             BayesBase.cached_factor(C) === nothing &&
             C.inverse === nothing
         D = convert(AbstractMatrix{Float64}, A)
-        @test D isa MatrixWithCachedInverse{Float64,Matrix{Float64}} && D == S
+        @test D isa MatrixWithCachedInverse{Float64, Matrix{Float64}} && D == S
         @test Matrix{T}(A) isa Matrix{T}
     end
 end

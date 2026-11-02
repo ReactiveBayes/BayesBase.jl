@@ -211,8 +211,8 @@ Alias for `typeof(left) === typeof(right)`, but can be specialized.
 """
 isequal_typeof(left, right) = typeof(left) === typeof(right)
 
-# Returns a wrapper distribution for a `<:Distribution` type, this function uses internals of Julia 
-# It is not ideal, but is fine for now, if Julia changes it internals such that does not work 
+# Returns a wrapper distribution for a `<:Distribution` type, this function uses internals of Julia
+# It is not ideal, but is fine for now, if Julia changes it internals such that does not work
 # We will need to write the `distribution_typewrapper` method for each support member of exponential family
 # e.g. `distribution_typewrapper(::Bernoulli) = Bernoulli`
 @generated function generated_distribution_typewrapper(distribution)
@@ -249,14 +249,14 @@ julia> float(r)
 0.0
 ```
 """
-struct CountingReal{T<:Real}
+struct CountingReal{T <: Real}
     value::T
     infinities::Int
 end
 
-CountingReal(value::T) where {T<:Real} = CountingReal{T}(value, 0)
+CountingReal(value::T) where {T <: Real} = CountingReal{T}(value, 0)
 
-function CountingReal(::Type{T}, infinities::Int) where {T<:Real}
+function CountingReal(::Type{T}, infinities::Int) where {T <: Real}
     return CountingReal{T}(zero(T), infinities)
 end
 
@@ -275,7 +275,7 @@ Base.isnan(a::CountingReal) = isnan(value(a))
 
 Base.eltype(::Type{CountingReal{T}}) where {T} = T
 Base.eltype(::Type{CountingReal}) = Real
-Base.eltype(::T) where {T<:CountingReal} = eltype(T)
+Base.eltype(::T) where {T <: CountingReal} = eltype(T)
 
 Base.:+(a::CountingReal) = CountingReal(+value(a), +infinities(a))
 Base.:-(a::CountingReal) = CountingReal(-value(a), -infinities(a))
@@ -305,22 +305,22 @@ function Base.:-(a::CountingReal, b::CountingReal)
     return CountingReal(value(a) - value(b), infinities(a) - infinities(b))
 end
 
-Base.convert(::Type{CountingReal}, v::T) where {T<:Real} = CountingReal(v)
-Base.convert(::Type{CountingReal{T}}, v::T) where {T<:Real} = CountingReal(v)
-function Base.convert(::Type{CountingReal{T}}, v::R) where {T<:Real,R<:Real}
+Base.convert(::Type{CountingReal}, v::T) where {T <: Real} = CountingReal(v)
+Base.convert(::Type{CountingReal{T}}, v::T) where {T <: Real} = CountingReal(v)
+function Base.convert(::Type{CountingReal{T}}, v::R) where {T <: Real, R <: Real}
     return CountingReal(convert(T, v))
 end
-function Base.convert(::Type{CountingReal{T}}, v::CountingReal{R}) where {T<:Real,R<:Real}
+function Base.convert(::Type{CountingReal{T}}, v::CountingReal{R}) where {T <: Real, R <: Real}
     return CountingReal{T}(convert(T, value(v)), infinities(v))
 end
 
 Base.float(a::CountingReal{T}) where {T} = isfinite(a) ? value(a) : convert(T, Inf)
-Base.zero(::Type{CountingReal{T}}) where {T<:Real} = CountingReal(zero(T))
+Base.zero(::Type{CountingReal{T}}) where {T <: Real} = CountingReal(zero(T))
 
-function Base.promote_rule(::Type{CountingReal{T1}}, ::Type{T2}) where {T1<:Real,T2<:Real}
+function Base.promote_rule(::Type{CountingReal{T1}}, ::Type{T2}) where {T1 <: Real, T2 <: Real}
     return CountingReal{promote_type(T1, T2)}
 end
-Base.promote_rule(::Type{CountingReal}, ::Type{T}) where {T<:Real} = CountingReal{T}
+Base.promote_rule(::Type{CountingReal}, ::Type{T}) where {T <: Real} = CountingReal{T}
 
 function Base.:(==)(left::CountingReal{T}, right::CountingReal{T}) where {T}
     return (value(left) == value(right)) && (infinities(left) == infinities(right))
@@ -334,14 +334,14 @@ Additionally, it allows for passing temporary buffers `tmp1`, `tmp2`, `tmp3`, `t
 Always computes `corrected = true` covariance matrix.
 """
 function mcov!(
-    Z,
-    X::AbstractMatrix,
-    Y::AbstractMatrix;
-    tmp1=zeros(eltype(Z), size(X, 2)),
-    tmp2=zeros(eltype(Z), size(Y, 2)),
-    tmp3=similar(X),
-    tmp4=similar(Y),
-)
+        Z,
+        X::AbstractMatrix,
+        Y::AbstractMatrix;
+        tmp1 = zeros(eltype(Z), size(X, 2)),
+        tmp2 = zeros(eltype(Z), size(Y, 2)),
+        tmp3 = similar(X),
+        tmp4 = similar(Y),
+    )
     mean!(tmp1, X')
     # @. tmp3 = X - tmp1'
     for j in 1:size(X, 2)
@@ -361,7 +361,7 @@ function mcov!(
     # mul!(Z, tmp3', tmp4, 1, 0)
     BLAS.gemm!('T', 'N', true, tmp3, tmp4, false, Z)
 
-    b = 1//(size(tmp3, 1) - 1)
+    b = 1 // (size(tmp3, 1) - 1)
     # @. Z = Z * b
     for j in 1:size(Z, 2)
         for i in 1:size(Z, 1)

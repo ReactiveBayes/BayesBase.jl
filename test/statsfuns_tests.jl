@@ -108,12 +108,12 @@ end
         tmp3 = similar(X)
         tmp4 = similar(Y)
 
-        @inferred(mcov!(Z, X, Y; tmp1=tmp1, tmp2=tmp2, tmp3=tmp3, tmp4=tmp4))
+        @inferred(mcov!(Z, X, Y; tmp1 = tmp1, tmp2 = tmp2, tmp3 = tmp3, tmp4 = tmp4))
 
         @test all(Z .≈ cov(X, Y))
 
-        @report_opt mcov!(Z, X, Y; tmp1=tmp1, tmp2=tmp2, tmp3=tmp3, tmp4=tmp4)
-        @test @allocated(mcov!(Z, X, Y; tmp1=tmp1, tmp2=tmp2, tmp3=tmp3, tmp4=tmp4)) === 0
+        @report_opt mcov!(Z, X, Y; tmp1 = tmp1, tmp2 = tmp2, tmp3 = tmp3, tmp4 = tmp4)
+        @test @allocated(mcov!(Z, X, Y; tmp1 = tmp1, tmp2 = tmp2, tmp3 = tmp3, tmp4 = tmp4)) === 0
     end
 end
 

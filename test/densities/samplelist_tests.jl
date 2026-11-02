@@ -40,7 +40,7 @@ end
         @test collect(get_samples(scalar_samplelist)) == first.(collect(scalar_samplelist))
         @test collect(get_weights(scalar_samplelist)) == fill(one(type) / N, N)
         @test deep_eltype(scalar_samplelist) === type
-        @test eltype(scalar_samplelist) === Tuple{type,type}
+        @test eltype(scalar_samplelist) === Tuple{type, type}
         @test eltype(get_weights(scalar_samplelist)) === type
         @test variate_form(typeof(scalar_samplelist)) === Univariate
         @test is_meta_present(scalar_samplelist) === false
@@ -54,7 +54,7 @@ end
         @test collect(get_samples(scalar_samplelist)) == first.(collect(scalar_samplelist))
         @test collect(get_weights(scalar_samplelist)) == scalar_weights
         @test deep_eltype(scalar_samplelist) === type
-        @test eltype(scalar_samplelist) === Tuple{type,type}
+        @test eltype(scalar_samplelist) === Tuple{type, type}
         @test eltype(get_weights(scalar_samplelist)) === type
         @test variate_form(typeof(scalar_samplelist)) === Univariate
         @test is_meta_present(scalar_samplelist) === false
@@ -65,7 +65,7 @@ end
         @test collect(get_samples(vector_samplelist)) == first.(collect(vector_samplelist))
         @test collect(get_weights(vector_samplelist)) == fill(one(type) / N, N)
         @test deep_eltype(vector_samplelist) === type
-        @test eltype(vector_samplelist) === Tuple{SVector{2,type},type}
+        @test eltype(vector_samplelist) === Tuple{SVector{2, type}, type}
         @test eltype(get_weights(vector_samplelist)) === type
         @test variate_form(typeof(vector_samplelist)) === Multivariate
         @test is_meta_present(vector_samplelist) === false
@@ -78,7 +78,7 @@ end
         @test collect(get_samples(vector_samplelist)) == first.(collect(vector_samplelist))
         @test collect(get_weights(vector_samplelist)) == vector_weights
         @test deep_eltype(vector_samplelist) === type
-        @test eltype(vector_samplelist) === Tuple{SVector{2,type},type}
+        @test eltype(vector_samplelist) === Tuple{SVector{2, type}, type}
         @test eltype(get_weights(vector_samplelist)) === type
         @test variate_form(typeof(vector_samplelist)) === Multivariate
         @test is_meta_present(vector_samplelist) === false
@@ -89,7 +89,7 @@ end
         @test collect(get_samples(matrix_samplelist)) == first.(collect(matrix_samplelist))
         @test collect(get_weights(matrix_samplelist)) == fill(one(type) / N, N)
         @test deep_eltype(matrix_samplelist) === type
-        @test eltype(matrix_samplelist) === Tuple{SMatrix{2,2,type,4},type}
+        @test eltype(matrix_samplelist) === Tuple{SMatrix{2, 2, type, 4}, type}
         @test eltype(get_weights(matrix_samplelist)) === type
         @test variate_form(typeof(matrix_samplelist)) === Matrixvariate
         @test is_meta_present(matrix_samplelist) === false
@@ -102,7 +102,7 @@ end
         @test collect(get_samples(matrix_samplelist)) == first.(collect(matrix_samplelist))
         @test collect(get_weights(matrix_samplelist)) == matrix_weights
         @test deep_eltype(matrix_samplelist) === type
-        @test eltype(matrix_samplelist) === Tuple{SMatrix{2,2,type,4},type}
+        @test eltype(matrix_samplelist) === Tuple{SMatrix{2, 2, type, 4}, type}
         @test eltype(get_weights(matrix_samplelist)) === type
         @test variate_form(typeof(matrix_samplelist)) === Matrixvariate
         @test is_meta_present(matrix_samplelist) === false
@@ -222,21 +222,21 @@ end
 
     # Checking i = 1:2 that cache is not corrupted
     for i in 1:2
-        @test isapprox(mean(uni_sample_list), mean(uni_distribution), atol=0.1)
-        @test isapprox(mean(mv_sample_list), mean(mv_distribution), atol=0.1)
-        @test isapprox(mean(mxv_sample_list), mean(mxv_distribution), atol=1.0)
+        @test isapprox(mean(uni_sample_list), mean(uni_distribution), atol = 0.1)
+        @test isapprox(mean(mv_sample_list), mean(mv_distribution), atol = 0.1)
+        @test isapprox(mean(mxv_sample_list), mean(mxv_distribution), atol = 1.0)
         @test all(
-            isapprox.(mean_var(uni_sample_list2), mean_var(uni_distribution2), atol=0.1)
+            isapprox.(mean_var(uni_sample_list2), mean_var(uni_distribution2), atol = 0.1)
         )
-        @test isapprox(var(uni_sample_list), var(uni_distribution), atol=0.5)
-        @test isapprox(cov(uni_sample_list), var(uni_distribution), atol=0.5)
-        @test isapprox(var(mv_sample_list), var(mv_distribution), atol=0.1)
-        @test isapprox(cov(mv_sample_list), cov(mv_distribution), atol=0.1)
-        @test isapprox(var(mxv_sample_list), var(mxv_distribution), atol=0.1)
-        @test isapprox(cov(mxv_sample_list), cov(mxv_distribution), atol=1.0)
+        @test isapprox(var(uni_sample_list), var(uni_distribution), atol = 0.5)
+        @test isapprox(cov(uni_sample_list), var(uni_distribution), atol = 0.5)
+        @test isapprox(var(mv_sample_list), var(mv_distribution), atol = 0.1)
+        @test isapprox(cov(mv_sample_list), cov(mv_distribution), atol = 0.1)
+        @test isapprox(var(mxv_sample_list), var(mxv_distribution), atol = 0.1)
+        @test isapprox(cov(mxv_sample_list), cov(mxv_distribution), atol = 1.0)
 
-        @test isapprox(std(uni_sample_list), std(uni_distribution), atol=0.2)
-        @test isapprox(std(mv_sample_list), sqrt(cov(mv_distribution)), atol=0.2)
+        @test isapprox(std(uni_sample_list), std(uni_distribution), atol = 0.2)
+        @test isapprox(std(mv_sample_list), sqrt(cov(mv_distribution)), atol = 0.2)
     end
 
     mv_distribution = Dirichlet(rand(rng, 3))
@@ -252,9 +252,9 @@ end
 
     # Checking i = 1:2 that cache is not corrupted
     for i in 1:2
-        @test isapprox(mean(mxv_sample_list), mean(mxv_distribution), atol=1.0)
-        @test isapprox(var(mxv_sample_list), var(mxv_distribution), atol=2.5)
-        @test isapprox(cov(mxv_sample_list), cov(mxv_distribution), atol=5.0)
+        @test isapprox(mean(mxv_sample_list), mean(mxv_distribution), atol = 1.0)
+        @test isapprox(var(mxv_sample_list), var(mxv_distribution), atol = 2.5)
+        @test isapprox(cov(mxv_sample_list), cov(mxv_distribution), atol = 5.0)
     end
 end
 
@@ -270,27 +270,27 @@ end
     @test ndims(vague(SampleList, (3, 4))) === (3, 4)
 
     for nsamples in [10, 100, 1000]
-        @test variate_form(typeof(vague(SampleList; nsamples=nsamples))) === Univariate
-        @test variate_form(typeof(vague(SampleList, 2; nsamples=nsamples))) === Multivariate
-        @test variate_form(typeof(vague(SampleList, 2, 2; nsamples=nsamples))) ===
+        @test variate_form(typeof(vague(SampleList; nsamples = nsamples))) === Univariate
+        @test variate_form(typeof(vague(SampleList, 2; nsamples = nsamples))) === Multivariate
+        @test variate_form(typeof(vague(SampleList, 2, 2; nsamples = nsamples))) ===
             Matrixvariate
-        @test variate_form(typeof(vague(SampleList, (3, 4); nsamples=nsamples))) ===
+        @test variate_form(typeof(vague(SampleList, (3, 4); nsamples = nsamples))) ===
             Matrixvariate
 
-        @test length(vague(SampleList; nsamples=nsamples)) === nsamples
-        @test length(vague(SampleList, 2; nsamples=nsamples)) === nsamples
-        @test length(vague(SampleList, 2, 2; nsamples=nsamples)) === nsamples
-        @test length(vague(SampleList, (3, 4); nsamples=nsamples)) === nsamples
+        @test length(vague(SampleList; nsamples = nsamples)) === nsamples
+        @test length(vague(SampleList, 2; nsamples = nsamples)) === nsamples
+        @test length(vague(SampleList, 2, 2; nsamples = nsamples)) === nsamples
+        @test length(vague(SampleList, (3, 4); nsamples = nsamples)) === nsamples
 
-        @test ndims(vague(SampleList; nsamples=nsamples)) === 1
-        @test ndims(vague(SampleList, 2; nsamples=nsamples)) === 2
-        @test ndims(vague(SampleList, 2, 2; nsamples=nsamples)) === (2, 2)
-        @test ndims(vague(SampleList, (3, 4); nsamples=nsamples)) === (3, 4)
+        @test ndims(vague(SampleList; nsamples = nsamples)) === 1
+        @test ndims(vague(SampleList, 2; nsamples = nsamples)) === 2
+        @test ndims(vague(SampleList, 2, 2; nsamples = nsamples)) === (2, 2)
+        @test ndims(vague(SampleList, (3, 4); nsamples = nsamples)) === (3, 4)
 
-        @test size(vague(SampleList; nsamples=nsamples)) === (nsamples,)
-        @test size(vague(SampleList, 2; nsamples=nsamples)) === (nsamples,)
-        @test size(vague(SampleList, 2, 2; nsamples=nsamples)) === (nsamples,)
-        @test size(vague(SampleList, (3, 4); nsamples=nsamples)) === (nsamples,)
+        @test size(vague(SampleList; nsamples = nsamples)) === (nsamples,)
+        @test size(vague(SampleList, 2; nsamples = nsamples)) === (nsamples,)
+        @test size(vague(SampleList, 2, 2; nsamples = nsamples)) === (nsamples,)
+        @test size(vague(SampleList, (3, 4); nsamples = nsamples)) === (nsamples,)
     end
 end
 
@@ -319,9 +319,9 @@ end
     rng = StableRNG(1234)
 
     for uweights in [rand(rng, 2), rand(rng, 2)],
-        entropy in [-75.6, 234.2],
-        logproposal in [Normal(-3.0, 1.0), Gamma(2.0, 4.0), (x) -> x + 1.0],
-        logintegrand in [Normal(-1.0, 2.0), Beta(3.0, 4.0), (x) -> log(abs(x))]
+            entropy in [-75.6, 234.2],
+            logproposal in [Normal(-3.0, 1.0), Gamma(2.0, 4.0), (x) -> x + 1.0],
+            logintegrand in [Normal(-1.0, 2.0), Beta(3.0, 4.0), (x) -> log(abs(x))]
 
         meta = SampleListMeta(uweights, entropy, logproposal, logintegrand)
         sl = SampleList([0.1, 0.1], [0.5, 0.5], meta)
@@ -393,9 +393,9 @@ end
     f4(e::AbstractMatrix) = diag(e)
 
     # Entity to Matrix
-    f5(e::Number) = @SMatrix [e+1 e; e e+1]
-    f5(e::AbstractVector) = SMatrix{length(e),length(e)}(Diagonal(ones(length(e))))
-    f5(e::AbstractMatrix) = [e[1, 1]+1 e[1, 2]; e[2, 1] e[2, 2]+1]
+    f5(e::Number) = @SMatrix [e + 1 e; e e + 1]
+    f5(e::AbstractVector) = SMatrix{length(e), length(e)}(Diagonal(ones(length(e))))
+    f5(e::AbstractMatrix) = [e[1, 1] + 1 e[1, 2]; e[2, 1] e[2, 2] + 1]
 
     for N in (500, 1000, 5_000)
         for distribution in (uni_distribution, mv_distribution, mvx_distribution)
@@ -473,39 +473,39 @@ end
     sizes = [10_000, 20_000, 30_000]
     inputs = [
         (
-            x=Normal(3.0, inv(7.0)),
-            y=Normal(-4.0, sqrt(6.0)),
-            mean_tol=[1e-2, 1e-2, 1e-2],
-            cov_tol=[1e-2, 1e-2, 1e-2],
-            entropy_tol=[1e-2, 1e-2, 1e-2],
+            x = Normal(3.0, inv(7.0)),
+            y = Normal(-4.0, sqrt(6.0)),
+            mean_tol = [1.0e-2, 1.0e-2, 1.0e-2],
+            cov_tol = [1.0e-2, 1.0e-2, 1.0e-2],
+            entropy_tol = [1.0e-2, 1.0e-2, 1.0e-2],
         ),
         (
-            x=Normal(3.0, sqrt(7.0)),
-            y=Normal(inv(6.0) * 4.0, sqrt(inv(6.0))),
-            mean_tol=[5e-2, 5e-2, 5e-2],
-            cov_tol=[1e-2, 1e-2, 1e-2],
-            entropy_tol=[5e-2, 5e-2, 5e-2],
+            x = Normal(3.0, sqrt(7.0)),
+            y = Normal(inv(6.0) * 4.0, sqrt(inv(6.0))),
+            mean_tol = [5.0e-2, 5.0e-2, 5.0e-2],
+            cov_tol = [1.0e-2, 1.0e-2, 1.0e-2],
+            entropy_tol = [5.0e-2, 5.0e-2, 5.0e-2],
         ),
         (
-            x=Gamma(3.0, 1.0 / 7.0),
-            y=Gamma(4.0, 6.0),
-            mean_tol=[1e-2, 1e-2, 1e-2],
-            cov_tol=[1e-2, 1e-2, 1e-2],
-            entropy_tol=[3e-2, 3e-2, 3e-2],
+            x = Gamma(3.0, 1.0 / 7.0),
+            y = Gamma(4.0, 6.0),
+            mean_tol = [1.0e-2, 1.0e-2, 1.0e-2],
+            cov_tol = [1.0e-2, 1.0e-2, 1.0e-2],
+            entropy_tol = [3.0e-2, 3.0e-2, 3.0e-2],
         ),
         (
-            x=MvNormal(10rand(rng, 4), posdefm(rng, 4)),
-            y=MvNormal(10rand(rng, 4), posdefm(rng, 4)),
-            mean_tol=[3e-1, 3e-1, 3e-1],
-            cov_tol=[6e-1, 6e-1, 6e-1],
-            entropy_tol=[4e-2, 4e-2, 4e-2],
+            x = MvNormal(10rand(rng, 4), posdefm(rng, 4)),
+            y = MvNormal(10rand(rng, 4), posdefm(rng, 4)),
+            mean_tol = [3.0e-1, 3.0e-1, 3.0e-1],
+            cov_tol = [6.0e-1, 6.0e-1, 6.0e-1],
+            entropy_tol = [4.0e-2, 4.0e-2, 4.0e-2],
         ),
         (
-            x=InverseWishart(10.0, posdefm(rng, 2)),
-            y=InverseWishart(5.0, posdefm(rng, 2)),
-            mean_tol=[7e-2, 7e-2, 7e-2],
-            cov_tol=[5e-2, 5e-2, 5e-2],
-            entropy_tol=[2.0, 2.0, 2.0], # this tol is quite high
+            x = InverseWishart(10.0, posdefm(rng, 2)),
+            y = InverseWishart(5.0, posdefm(rng, 2)),
+            mean_tol = [7.0e-2, 7.0e-2, 7.0e-2],
+            cov_tol = [5.0e-2, 5.0e-2, 5.0e-2],
+            entropy_tol = [2.0, 2.0, 2.0], # this tol is quite high
         ),
     ]
 
@@ -533,8 +533,8 @@ end
     end
 
     function Base.prod(
-        ::AnalyticalProdForTesting, left::InverseWishart, right::InverseWishart
-    )
+            ::AnalyticalProdForTesting, left::InverseWishart, right::InverseWishart
+        )
         d = size(left, 1)
         ldf, lS = params(left)
         rdf, rS = params(right)
@@ -547,10 +547,10 @@ end
         d = size(dist, 1)
         ν, S = params(dist)
         d * (d - 1) / 4 * log(π) +
-        mapreduce(i -> loggamma((ν + 1.0 - i) / 2), +, 1:d) +
-        ν / 2 * d +
-        (d + 1) / 2 * (logdet(S) - log(2)) -
-        (ν + d + 1) / 2 * mapreduce(i -> digamma((ν - d + i) / 2), +, 1:d)
+            mapreduce(i -> loggamma((ν + 1.0 - i) / 2), +, 1:d) +
+            ν / 2 * d +
+            (d + 1) / 2 * (logdet(S) - log(2)) -
+            (ν + d + 1) / 2 * mapreduce(i -> digamma((ν - d + i) / 2), +, 1:d)
     end
 
     for (i, N) in enumerate(sizes)

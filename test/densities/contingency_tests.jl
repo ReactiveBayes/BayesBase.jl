@@ -1,4 +1,3 @@
-
 @testitem "Contingency: components" begin
     @test components(Contingency(ones(3, 3))) == ones(3, 3) ./ 9
     @test components(Contingency(ones(3, 3), Val(true))) == ones(3, 3) ./ 9
@@ -31,17 +30,19 @@ end
     @test entropy(Contingency(10.0 * [0.7 0.1; 0.1 0.1])) ≈ 0.9404479886553263
     @test entropy(Contingency([0.07 0.41; 0.31 0.21])) ≈ 1.242506182893139
     @test entropy(Contingency(10.0 * [0.07 0.41; 0.31 0.21])) ≈ 1.242506182893139
-    @test entropy(Contingency([0.09 0.00; 0.00 0.91])) ≈ 0.30253782309749805
-    @test entropy(Contingency(10.0 * [0.09 0.00; 0.00 0.91])) ≈ 0.30253782309749805
+    @test entropy(Contingency([0.09 0.0; 0.0 0.91])) ≈ 0.30253782309749805
+    @test entropy(Contingency(10.0 * [0.09 0.0; 0.0 0.91])) ≈ 0.30253782309749805
     @test !isnan(entropy(Contingency([0.0 1.0; 1.0 0.0])))
     @test !isinf(entropy(Contingency([0.0 1.0; 1.0 0.0])))
 
     @test entropy(
         Contingency(
-            stack([
-                0.3 * [0.2 0.1 0.7; 0.4 0.3 0.3; 0.1 0.6 0.3],
-                0.7 * [0.2 0.1 0.7; 0.4 0.3 0.3; 0.1 0.6 0.3],
-            ],),
+            stack(
+                [
+                    0.3 * [0.2 0.1 0.7; 0.4 0.3 0.3; 0.1 0.6 0.3],
+                    0.7 * [0.2 0.1 0.7; 0.4 0.3 0.3; 0.1 0.6 0.3],
+                ],
+            ),
         ),
     ) ≈ 2.6390313416381166
 
