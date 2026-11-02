@@ -407,7 +407,7 @@ julia> using Distributions, BayesBase
 
 julia> d = Beta(2, 3);
 
-julia> inplace = BayesBase.InplaceLogpdf((out, sample) -> logpdf!(out, d, sample));
+julia> inplace = BayesBase.InplaceLogpdf((out, sample) -> out .= logpdf.(d, sample));
 
 julia> out = zeros(9);
 

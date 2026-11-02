@@ -1,4 +1,4 @@
-@testitem "Real-based PointMass" begin
+@testitem "Real-based PointMass" tags = [:densities] begin
     using SpecialFunctions: loggamma
     using TinyHugeNumbers
 
@@ -48,7 +48,7 @@
     end
 end
 
-@testitem "Vector-based PointMass" begin
+@testitem "Vector-based PointMass" tags = [:densities] begin
     using SpecialFunctions: loggamma
     using TinyHugeNumbers
     using BayesBase
@@ -107,7 +107,7 @@ end
     end
 end
 
-@testitem "Matrix-based PointMass" begin
+@testitem "Matrix-based PointMass" tags = [:densities] begin
     using SpecialFunctions: loggamma
     using TinyHugeNumbers
 
@@ -173,7 +173,7 @@ end
     end
 end
 
-@testitem "Tensor-based PointMass" begin
+@testitem "Tensor-based PointMass" tags = [:densities] begin
     using SpecialFunctions: loggamma
     using TinyHugeNumbers
     using Distributions
@@ -236,7 +236,7 @@ end
     end
 end
 
-@testitem "UniformScaling-based PointMass" begin
+@testitem "UniformScaling-based PointMass" tags = [:densities] begin
     using LinearAlgebra, TinyHugeNumbers
 
     for T in (Float16, Float32, Float64, BigFloat)
@@ -277,7 +277,7 @@ end
     end
 end
 
-@testitem "The mean and mode of any PointMass are its point" begin
+@testitem "The mean and mode of any PointMass are its point" tags = [:densities] begin
     using BayesBase, LinearAlgebra
 
     # A point that no specialised method matches recursed until the stack overflowed: `mean(fn, d)` is
@@ -296,7 +296,7 @@ end
     @test mean(sum, PointMass([1.0 + 2.0im, 3.0])) == 4.0 + 2.0im
 end
 
-@testitem "Base.length for PointMass" begin
+@testitem "Base.length for PointMass" tags = [:densities] begin
     using LinearAlgebra, SpecialFunctions, TinyHugeNumbers, Distributions, BayesBase
 
     # Scalar PointMass

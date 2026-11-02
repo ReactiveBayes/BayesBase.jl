@@ -1,4 +1,4 @@
-@testitem "Contingency: components" begin
+@testitem "Contingency: components" tags = [:densities] begin
     @test components(Contingency(ones(3, 3))) == ones(3, 3) ./ 9
     @test components(Contingency(ones(3, 3), Val(true))) == ones(3, 3) ./ 9
     @test components(Contingency(ones(3, 3), Val(false))) == ones(3, 3) # Matrix is wrong, but just to test that `false` is working
@@ -7,7 +7,7 @@
     @test components(Contingency(ones(4, 4), Val(false))) == ones(4, 4)
 end
 
-@testitem "Contingency: vague" begin
+@testitem "Contingency: vague" tags = [:densities] begin
     @test_throws MethodError vague(Contingency)
 
     d1 = vague(Contingency, 3)
@@ -25,7 +25,7 @@ end
     @test components(d3) ≈ ones(5, 5, 5) ./ 125
 end
 
-@testitem "Contingency: entropy" begin
+@testitem "Contingency: entropy" tags = [:densities] begin
     @test entropy(Contingency([0.7 0.1; 0.1 0.1])) ≈ 0.9404479886553263
     @test entropy(Contingency(10.0 * [0.7 0.1; 0.1 0.1])) ≈ 0.9404479886553263
     @test entropy(Contingency([0.07 0.41; 0.31 0.21])) ≈ 1.242506182893139
@@ -49,7 +49,7 @@ end
     @test entropy(Contingency(ones(2, 2, 2))) == 2.0794415416798357
 end
 
-@testitem "Contingency: isapprox" begin
+@testitem "Contingency: isapprox" tags = [:densities] begin
     for n in 2:5
         A = rand(n, n)
         @test Contingency(A) ≈ Contingency(A)

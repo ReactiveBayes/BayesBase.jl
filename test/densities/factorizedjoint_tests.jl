@@ -1,4 +1,4 @@
-@testitem "FactorizedJoint" begin
+@testitem "FactorizedJoint" tags = [:densities] begin
     using Distributions
 
     vmultipliers = [

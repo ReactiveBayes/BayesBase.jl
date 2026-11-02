@@ -1,4 +1,4 @@
-@testitem "mirrorlog" begin
+@testitem "mirrorlog" tags = [:statsfuns] begin
     for T in (Float32, Float64, BigFloat)
         foreach(rand(T, 10)) do number
             @test mirrorlog(number) ≈ log(one(number) - number)
@@ -6,7 +6,7 @@
     end
 end
 
-@testitem "xtlog" begin
+@testitem "xtlog" tags = [:statsfuns] begin
     for T in (Float32, Float64, BigFloat)
         foreach(rand(T, 10)) do number
             @test xtlog(number) ≈ number * log(number)
@@ -14,7 +14,7 @@ end
     end
 end
 
-@testitem "clamplog" begin
+@testitem "clamplog" tags = [:statsfuns] begin
     using TinyHugeNumbers
 
     for T in (Float32, Float64, BigFloat)
@@ -26,7 +26,7 @@ end
     end
 end
 
-@testitem "dtanh" begin
+@testitem "dtanh" tags = [:statsfuns] begin
     for T in (Float32, Float64, BigFloat)
         foreach(rand(T, 10)) do number
             @test dtanh(number) ≈ 1 - tanh(number)^2
@@ -34,7 +34,7 @@ end
     end
 end
 
-@testitem "UnspecifiedDomain" begin
+@testitem "UnspecifiedDomain" tags = [:statsfuns] begin
     using DomainSets
 
     @test 1 ∈ UnspecifiedDomain()
@@ -46,7 +46,7 @@ end
     @test fuse_supports(UnspecifiedDomain(), FullSpace()) === FullSpace()
 end
 
-@testitem "UnspecifiedDimension" begin
+@testitem "UnspecifiedDimension" tags = [:statsfuns] begin
     using DomainSets
 
     @test UnspecifiedDimension() == 1
@@ -55,7 +55,7 @@ end
     @test UnspecifiedDimension() != 2
 end
 
-@testitem "isequal_typeof" begin
+@testitem "isequal_typeof" tags = [:statsfuns] begin
     @test !isequal_typeof(1, 1.0)
     @test isequal_typeof(1.0, 1.0)
     @test !isequal_typeof([1.0], 1.0)
@@ -63,7 +63,7 @@ end
     @test isequal_typeof([1.0], [1.0])
 end
 
-@testitem "CountingReal" begin
+@testitem "CountingReal" tags = [:statsfuns] begin
     import BayesBase: Infinity, MinusInfinity
 
     for T in (Float32, Float64, BigFloat)
@@ -90,7 +90,7 @@ end
     end
 end
 
-@testitem "mcov!" begin
+@testitem "mcov!" tags = [:statsfuns] begin
     using StatsFuns, BayesBase, JET
     import BayesBase: mcov!
 
@@ -117,7 +117,7 @@ end
     end
 end
 
-@testitem "InplaceLogpdf" begin
+@testitem "InplaceLogpdf" tags = [:statsfuns] begin
     import BayesBase: InplaceLogpdf
     using Distributions, LinearAlgebra, StableRNGs
 

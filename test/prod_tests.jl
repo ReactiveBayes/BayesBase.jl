@@ -1,6 +1,4 @@
-@testitem "UnspecifiedProd" begin
-    include("./prod_setuptests.jl")
-
+@testitem "UnspecifiedProd" tags = [:prod] setup = [ProdSetup] begin
     @testset "`default_prod_rule` should return `UnspecifiedProd` for two unknown objects" begin
         @test default_prod_rule(SomeUnknownObject, SomeUnknownObject) === UnspecifiedProd()
     end
@@ -12,9 +10,7 @@
     end
 end
 
-@testitem "ClosedProd" begin
-    include("./prod_setuptests.jl")
-
+@testitem "ClosedProd" tags = [:prod] setup = [ProdSetup] begin
     @testset "`missing` should be ignored with the `ClosedProd`" begin
         struct SomeObject end
         @test prod(ClosedProd(), missing, SomeUnknownObject()) === SomeUnknownObject()
@@ -28,9 +24,7 @@ end
     end
 end
 
-@testitem "PreserveTypeProd" begin
-    include("./prod_setuptests.jl")
-
+@testitem "PreserveTypeProd" tags = [:prod] setup = [ProdSetup] begin
     @testset "`missing` should be ignored with the `PreserveTypeProd`" begin
         # Can convert the result of the prod to the desired type
         @test prod(PreserveTypeProd(SomeUnknownObject), missing, SomeUnknownObject()) isa
@@ -132,9 +126,7 @@ end
     end
 end
 
-@testitem "GenericProd" begin
-    include("./prod_setuptests.jl")
-
+@testitem "GenericProd" tags = [:prod] setup = [ProdSetup] begin
     × = (x, y) -> prod(GenericProd(), x, y)
 
     @testset "GenericProd should use `default_prod_rule` where possible" begin
@@ -229,9 +221,7 @@ end
     end
 end
 
-@testitem "TerminalProdArgument" begin
-    include("./prod_setuptests.jl")
-
+@testitem "TerminalProdArgument" tags = [:prod] setup = [ProdSetup] begin
     @test 1 ≈ TerminalProdArgument(1)
     @test TerminalProdArgument(1) ≈ 1
     @test 1.0 ≈ TerminalProdArgument(1.0)
@@ -268,7 +258,7 @@ end
     )
 end
 
-@testitem "resolve_prod_strategy" begin
+@testitem "resolve_prod_strategy" tags = [:prod] begin
     for strategy in (
             ClosedProd(),
             PreserveTypeProd(Int),
@@ -293,7 +283,7 @@ end
     )
 end
 
-@testitem "`ProductOf` should support distributions that do not have explicitly defined `support`" begin
+@testitem "`ProductOf` should support distributions that do not have explicitly defined `support`" tags = [:prod] begin
     struct SomeComplexDistribution end
 
     BayesBase.support(::SomeComplexDistribution) = error("not defined")
@@ -309,7 +299,7 @@ end
     @test logpdf(prod, 2) === 4
 end
 
-@testitem "`LinearizedProductOf` should support distributions that do not have explicitly defined `support`" begin
+@testitem "`LinearizedProductOf` should support distributions that do not have explicitly defined `support`" tags = [:prod] begin
     struct SomeComplexDistribution end
 
     BayesBase.support(::SomeComplexDistribution) = error("not defined")
@@ -325,7 +315,7 @@ end
     @test logpdf(prod, 2) === 4
 end
 
-@testitem "There should be no ambiguity in `prod` for `ProductOf`" begin
+@testitem "There should be no ambiguity in `prod` for `ProductOf`" tags = [:prod] begin
     struct SomeArbitraryDistribution end
 
     @test prod(

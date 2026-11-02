@@ -1,4 +1,4 @@
-@testitem "SampleList: Internal functions" begin
+@testitem "SampleList: Internal functions" tags = [:densities] begin
     import BayesBase: sample_list_zero_element
 
     @test sample_list_zero_element(SampleList([1.0, 1.0])) === 0.0
@@ -11,7 +11,7 @@
     @test sample_list_zero_element(SampleList([[1.0; 1.0], [1.0; 1.0]])) == [0.0; 0.0]
 end
 
-@testitem "SampleList: Constructor" begin
+@testitem "SampleList: Constructor" tags = [:densities] begin
     using StableRNGs, StaticArrays
 
     import BayesBase:
@@ -121,7 +121,7 @@ end
     @test_throws AssertionError SampleList([rand(5, 5) for _ in 1:5], [-1 for _ in 1:5])
 end
 
-@testitem "SampleList: Statistics" begin
+@testitem "SampleList: Statistics" tags = [:densities] begin
     using StableRNGs, StaticArrays, Distributions, LinearAlgebra
 
     import BayesBase:
@@ -258,7 +258,7 @@ end
     end
 end
 
-@testitem "SampleList: vague" begin
+@testitem "SampleList: vague" tags = [:densities] begin
     @test variate_form(typeof(vague(SampleList))) === Univariate
     @test variate_form(typeof(vague(SampleList, 2))) === Multivariate
     @test variate_form(typeof(vague(SampleList, 2, 2))) === Matrixvariate
@@ -294,7 +294,7 @@ end
     end
 end
 
-@testitem "SampleListMeta" begin
+@testitem "SampleListMeta" tags = [:densities] begin
     using StableRNGs, StaticArrays, Distributions, LinearAlgebra
 
     import BayesBase:
@@ -345,7 +345,7 @@ end
     end
 end
 
-@testitem "Iteration utilities" begin
+@testitem "Iteration utilities" tags = [:densities] begin
     using StableRNGs, StaticArrays, Distributions, LinearAlgebra
 
     import BayesBase:
@@ -442,7 +442,7 @@ end
     end
 end
 
-@testitem "prod approximations" begin
+@testitem "prod approximations" tags = [:densities] begin
     using StableRNGs, StaticArrays, Distributions, LinearAlgebra
     using SpecialFunctions: loggamma, digamma
 
