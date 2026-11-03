@@ -313,6 +313,12 @@ function Base.prod(::GenericProd, something, _, left, right::ProductOf)
     return ProductOf(prod(something, left, getleft(right)), getright(right))
 end
 
+# Case (L × R) × (L' × R'): both sides are trees, so neither case above is more specific. The right
+# tree joins the left one side at a time, each fused where a closed form exists
+function Base.prod(::GenericProd, left::ProductOf, right::ProductOf)
+    return prod(GenericProd(), prod(GenericProd(), left, getleft(right)), getright(right))
+end
+
 """
     LinearizedProductOf
 

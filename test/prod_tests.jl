@@ -176,6 +176,10 @@ end
         @test d3 × (d1 × d3) == (d1 × d3)
         @test d2 × (d2 × d1) == (d2 × d1)
         @test d3 × (d3 × d1) == (d3 × d1)
+
+        # Two trees: the right one joins the left a side at a time
+        @test (d1 × d2) × ProductOf(d3, d3) == d1 × d2
+        @test ProductOf(d3, d1) × ProductOf(d3, d1) == ProductOf(d3, LinearizedProductOf([d1, d1], 2))
     end
 
     @testset "ProdGeneric should create a product tree if closed form product is not available" begin
@@ -317,6 +321,10 @@ end
 
 @testitem "There should be no ambiguity in `prod` for `ProductOf`" tags = [:prod] begin
     struct SomeArbitraryDistribution end
+
+    # Two trees, neither side a leaf
+    d = SomeArbitraryDistribution()
+    @test prod(GenericProd(), ProductOf(d, d), ProductOf(d, d)) == LinearizedProductOf([d, d, d, d], 4)
 
     @test prod(
         GenericProd(),
