@@ -126,4 +126,5 @@ BayesBase.ExpectationFirstOf
 BayesBase.ExpectationDynamicRouter
 BayesBase.ExpectationBackendRegistry
 BayesBase.register_expectation_backend!
+BayesBase.expectation_backend_priority
 ```

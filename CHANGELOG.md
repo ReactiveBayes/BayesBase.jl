@@ -6,6 +6,11 @@ All notable changes to BayesBase.jl are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- `expectation_backend_priority(backend; registry)`, the priority a backend was registered with,
+  `nothing` when it is not; a negative one marks a last resort.
+
 ### Fixed
 
 - `prod(GenericProd(), ::ProductOf, ::ProductOf)` is no longer ambiguous: the right tree joins

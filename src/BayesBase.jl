@@ -105,7 +105,7 @@ include("algebra/matrixwithcahcedinverse.jl")
 @compat public ExpectationLabel, ExpectationExact, ExpectationStochastic, combine_expectation_label
 @compat public has_expectation_label, is_expectation_exact, is_expectation_stochastic
 @compat public ExpectationPointSet, ExpectationProductPointSet, ExpectationFirstOf
-@compat public ExpectationDynamicRouter, ExpectationBackendRegistry, register_expectation_backend!
+@compat public ExpectationDynamicRouter, ExpectationBackendRegistry, register_expectation_backend!, expectation_backend_priority
 
 include("expectations/protocol.jl")
 include("expectations/labels.jl")

@@ -7,6 +7,9 @@
     # registering again replaces the priority instead of adding a duplicate
     P.register_expectation_backend!(ToyGrid(); registry, priority = 1)
     @test length(registry) == 2
+    @test P.expectation_backend_priority(ToyGrid(); registry) == 1
+    @test P.expectation_backend_priority(ToyExact(); registry) == 3
+    @test P.expectation_backend_priority(ToyExact(); registry = P.ExpectationBackendRegistry()) === nothing
 end
 
 @testitem "ExpectationDynamicRouter: exact first, then not stochastic, then priority, then name" tags = [:expectations] setup = [ExpectationToys] begin

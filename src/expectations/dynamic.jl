@@ -35,6 +35,19 @@ function register_expectation_backend!(
 end
 
 """
+    expectation_backend_priority(backend; registry = the global registry) -> Union{Int, Nothing}
+
+The priority `backend` was registered with, `nothing` when it is not registered. A negative
+priority marks a last resort, a backend chosen only where no other applies; a report of an
+inference may say where one was. A frozen [`ExpectationFirstOf`](@ref) keeps the order the
+priorities gave, not the priorities, so this asks the registry.
+"""
+function expectation_backend_priority(backend; registry::ExpectationBackendRegistry = EXPECTATION_BACKEND_REGISTRY)
+    i = findfirst(isequal(backend), registry.backends)
+    return isnothing(i) ? nothing : registry.priorities[i]
+end
+
+"""
     ExpectationDynamicRouter(registry = the global registry)
 
 A router that chooses among registered backends at run time. Ranking: exact for the pair

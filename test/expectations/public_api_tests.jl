@@ -21,6 +21,7 @@
         :ExpectationDynamicRouter,
         :ExpectationBackendRegistry,
         :register_expectation_backend!,
+        :expectation_backend_priority,
     ]
 
     for name in PROTOCOL
