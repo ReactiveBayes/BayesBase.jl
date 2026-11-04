@@ -1,0 +1,5 @@
+# Commits that only reformat code, skipped by `git blame` locally with
+# `git config blame.ignoreRevsFile .git-blame-ignore-revs` and by GitHub's blame view.
+
+# Format the code with Runic
+d8f6124b65bdd31f74b290c6d9ce2d8ac0bcbe0f

@@ -15,16 +15,16 @@ This implementation solves:
 * [ReactiveMP.jl Issue 253](https://github.com/reactivebayes/ReactiveMP.jl/issues/253)
 
 """
-struct MixtureDistribution{C,CT<:Real}
+struct MixtureDistribution{C, CT <: Real}
     components::Vector{C}
     weights::Vector{CT}
 
-    function MixtureDistribution(cs::Vector{C}, w::Vector{CT}) where {C,CT}
+    function MixtureDistribution(cs::Vector{C}, w::Vector{CT}) where {C, CT}
         length(cs) == length(w) ||
             error("The number of components does not match the length of prior.")
         @assert all(>=(0), w) "weight vector contains negative entries."
         @assert sum(w) ≈ 1 "weight vector is not normalized."
-        return new{C,CT}(cs, w)
+        return new{C, CT}(cs, w)
     end
 end
 
@@ -35,7 +35,7 @@ BayesBase.weights(mixture::MixtureDistribution) = mixture.weights
 function BayesBase.mean(mixture::MixtureDistribution)
     component_means = mean.(BayesBase.components(mixture))
     component_weights = BayesBase.weights(mixture)
-    return mapreduce((m, w) -> w*m, +, component_means, component_weights)
+    return mapreduce((m, w) -> w * m, +, component_means, component_weights)
 end
 
 function BayesBase.cov(mixture::MixtureDistribution)
@@ -44,8 +44,8 @@ function BayesBase.cov(mixture::MixtureDistribution)
     component_weights = BayesBase.weights(mixture)
     mixture_mean = mean(mixture)
     return mapreduce(
-        (v, m, w) -> w*(v + m*m'), +, component_cov, component_means, component_weights
-    ) - mixture_mean*mixture_mean'
+        (v, m, w) -> w * (v + m * m'), +, component_cov, component_means, component_weights
+    ) - mixture_mean * mixture_mean'
 end
 
 BayesBase.precision(mixture::MixtureDistribution) = inv(cov(mixture))
@@ -56,7 +56,7 @@ function BayesBase.var(mixture::MixtureDistribution)
     component_weights = BayesBase.weights(mixture)
     mixture_mean = mean(mixture)
     return mapreduce(
-        (v, m, w) -> w*(v + m .^ 2), +, component_vars, component_means, component_weights
+        (v, m, w) -> w * (v + m .^ 2), +, component_vars, component_means, component_weights
     ) - mixture_mean .^ 2
 end
 
@@ -75,8 +75,8 @@ function BayesBase.default_prod_rule(::Type{<:MixtureDistribution}, ::Type{T}) w
 end
 
 function Base.prod(
-    ::PreserveTypeProd{MixtureDistribution}, left::MixtureDistribution, right::Any
-)
+        ::PreserveTypeProd{MixtureDistribution}, left::MixtureDistribution, right::Any
+    )
 
     # get weights and components
     w = weights(left)
@@ -98,8 +98,8 @@ function Base.prod(
 end
 
 function BayesBase.compute_logscale(
-    new_dist::MixtureDistribution, left::MixtureDistribution, right::Any
-)
+        new_dist::MixtureDistribution, left::MixtureDistribution, right::Any
+    )
 
     # get weights and components
     w = weights(left)
@@ -120,7 +120,7 @@ function BayesBase.compute_logscale(
 end
 
 function BayesBase.compute_logscale(
-    new_dist::MixtureDistribution, left_dist::Any, right_dist::MixtureDistribution
-)
+        new_dist::MixtureDistribution, left_dist::Any, right_dist::MixtureDistribution
+    )
     return compute_logscale(new_dist, right_dist, left_dist)
 end

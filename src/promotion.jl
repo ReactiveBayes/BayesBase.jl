@@ -15,11 +15,11 @@ export deep_eltype,
 # because type `T` is inside lambda function
 # https://github.com/JuliaLang/julia/issues/15276
 # https://github.com/JuliaLang/julia/issues/47760
-struct PromoteTypeConverter{T,C}
+struct PromoteTypeConverter{T, C}
     convert::C
 end
 
-PromoteTypeConverter(::Type{T}, convert::C) where {T,C} = PromoteTypeConverter{T,C}(convert)
+PromoteTypeConverter(::Type{T}, convert::C) where {T, C} = PromoteTypeConverter{T, C}(convert)
 
 (converter::PromoteTypeConverter{T})(something) where {T} = converter.convert(T, something)
 
@@ -44,8 +44,8 @@ Float64
 function deep_eltype end
 
 deep_eltype(::Type{T}) where {T} = T
-deep_eltype(::Type{T}) where {T<:AbstractArray} = deep_eltype(eltype(T))
-deep_eltype(::Type{I}) where {I<:UniformScaling} = deep_eltype(eltype(I))
+deep_eltype(::Type{T}) where {T <: AbstractArray} = deep_eltype(eltype(T))
+deep_eltype(::Type{I}) where {I <: UniformScaling} = deep_eltype(eltype(I))
 deep_eltype(any) = deep_eltype(typeof(any))
 
 """
@@ -60,13 +60,18 @@ function promote_variate_type end
 
 Promotes (if possible) a `distribution_type` to be of the same variate form as `D`.
 """
-function promote_variate_type(::Type{D}, T) where {D<:Distribution}
+function promote_variate_type(::Type{D}, T) where {D <: Distribution}
     return promote_variate_type(variate_form(D), T)
 end
 
 promote_variate_type(::Type{<:Number}, T) = promote_variate_type(Univariate, T)
 promote_variate_type(::Type{<:AbstractVector}, T) = promote_variate_type(Multivariate, T)
 promote_variate_type(::Type{<:AbstractMatrix}, T) = promote_variate_type(Matrixvariate, T)
+
+# Packages add methods for the pairs they support; any other pair is an error that says which
+function promote_variate_type(::Type{F}, T) where {F <: VariateForm}
+    throw(ArgumentError("cannot promote `$(T)` to the variate form `$(F)`: no method of `promote_variate_type` for this pair"))
+end
 
 """
     paramfloattype(distribution)
@@ -119,9 +124,9 @@ function convert_paramfloattype(::Type{T}) where {T}
 end
 
 # We attempt to automatically construct a new distribution with a desired paramfloattype
-# This function assumes that the constructor `D(...)` accepts the same order of parameters as 
+# This function assumes that the constructor `D(...)` accepts the same order of parameters as
 # returned from the `params` function. It is the case for distributions from `Distributions.jl`
-automatic_convert_paramfloattype(::Type{D}, params) where {D<:Distribution} = D(params...)
+automatic_convert_paramfloattype(::Type{D}, params) where {D <: Distribution} = D(params...)
 function automatic_convert_paramfloattype(::Type{D}, params) where {D}
     return error(
         "Cannot automatically construct a distribution of type `$D` with params = $(params)"
@@ -138,7 +143,7 @@ function convert_paramfloattype(::Type{T}, container::AbstractArray) where {T}
 end
 convert_paramfloattype(::Type{T}, number::Number) where {T} = convert(T, number)
 function convert_paramfloattype(::Type{T}, scaling::UniformScaling) where {T}
-    return convert(T, scaling.λ)*I
+    return convert(T, scaling.λ) * I
 end
 convert_paramfloattype(::Type, ::Nothing) = nothing
 
