@@ -393,9 +393,9 @@ end
     f4(e::AbstractMatrix) = diag(e)
 
     # Entity to Matrix
-    f5(e::Number) = @SMatrix [e+1 e; e e+1]
+    f5(e::Number) = @SMatrix [e + 1 e; e e + 1]
     f5(e::AbstractVector) = SMatrix{length(e),length(e)}(Diagonal(ones(length(e))))
-    f5(e::AbstractMatrix) = [e[1, 1]+1 e[1, 2]; e[2, 1] e[2, 2]+1]
+    f5(e::AbstractMatrix) = [e[1, 1] + 1 e[1, 2]; e[2, 1] e[2, 2] + 1]
 
     for N in (500, 1000, 5_000)
         for distribution in (uni_distribution, mv_distribution, mvx_distribution)

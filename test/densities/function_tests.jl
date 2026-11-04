@@ -152,19 +152,19 @@ end
 @testitem "DiscreteUnivariateLogPdf: pdf/logpdf" begin
     import DomainSets: Interval
 
-    d1 = DiscreteUnivariateLogPdf(Interval(1, 10), (x) -> 1/x)
+    d1 = DiscreteUnivariateLogPdf(Interval(1, 10), (x) -> 1 / x)
 
     int8_points1 = range(Int8(1), Int8(10))
     int32_points1 = range(Int32(1), Int32(10))
     int64_points1 = range(Int64(1), Int64(10))
     points1 = vcat(int8_points1, int32_points1, int64_points1)
 
-    @test all(map(p -> 1/p == d1(p), points1))
-    @test all(map(p -> 1/p == logpdf(d1, p), points1))
-    @test all(map(p -> exp(1/p) == pdf(d1, p), points1))
-    @test all(map(p -> 1/p == d1([p]), points1))
-    @test all(map(p -> 1/p == logpdf(d1, [p]), points1))
-    @test all(map(p -> exp(1/p) == pdf(d1, [p]), points1))
+    @test all(map(p -> 1 / p == d1(p), points1))
+    @test all(map(p -> 1 / p == logpdf(d1, p), points1))
+    @test all(map(p -> exp(1 / p) == pdf(d1, p), points1))
+    @test all(map(p -> 1 / p == d1([p]), points1))
+    @test all(map(p -> 1 / p == logpdf(d1, [p]), points1))
+    @test all(map(p -> exp(1 / p) == pdf(d1, [p]), points1))
 
     @test_throws AssertionError d1(-1)
     @test_throws AssertionError logpdf(d1, -1)
@@ -188,7 +188,7 @@ end
 @testitem "DiscreteUnivariateLogPdf: test domain in logpdf" begin
     import DomainSets: Integers, ClosedInterval
 
-    d1 = ContinuousUnivariateLogPdf(Integers(), (x) -> 1/abs(x))
+    d1 = ContinuousUnivariateLogPdf(Integers(), (x) -> 1 / abs(x))
     d2 = ContinuousUnivariateLogPdf(ClosedInterval(1:10), (x) -> log(x))
 
     @test_throws AssertionError logpdf(d1, [1.0, 2.0])
