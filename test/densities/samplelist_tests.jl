@@ -616,3 +616,18 @@ end
     @test_throws ArgumentError mean(mirrorlog, SampleList([rand(rng, 2) ./ 2 for _ in 1:10]))
     @test_throws ArgumentError mean(mirrorlog, SampleList([rand(rng, 2, 2) ./ 2 for _ in 1:10]))
 end
+
+@testitem "SampleList: a product that resamples keeps the new weights" tags = [:densities] begin
+    using StableRNGs, Distributions
+    import BayesBase: approximate_prod_with_sample_list, BootstrapImportanceSampling, get_weights
+
+    # Samples spread over [0, 100) and a narrow density at 50: few samples keep a weight, the
+    # effective number falls below a tenth, and the product resamples by its new weights
+    rng = StableRNG(42)
+    n = 5000
+    list = SampleList(100 .* rand(rng, n))
+    product = approximate_prod_with_sample_list(StableRNG(1), BootstrapImportanceSampling(), Normal(50.0, 0.5), list, n)
+    @test all(isequal(1 / n), get_weights(product))
+    @test mean(product) ≈ 50.0 atol = 0.1
+    @test std(product) < 1.0
+end

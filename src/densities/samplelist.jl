@@ -486,7 +486,7 @@ function approximate_prod_with_sample_list(
 
     # Resample and readjust entropy approximation if required
     if neff < nsamples / 10
-        sample!(rng, samples, Weights(weights), rsamples)
+        sample!(rng, samples, Weights(rweights), rsamples)
         fillv = one(eltype(rweights)) / nsamples
         fill!(rweights, fillv)
         # Readjust H_x after resampling

@@ -15,6 +15,9 @@ All notable changes to BayesBase.jl are documented here. The format is based on
 
 - `prod(GenericProd(), ::ProductOf, ::ProductOf)` is no longer ambiguous: the right tree joins
   the left one side at a time, each fused where a closed form exists.
+- The product of a density and a `SampleList` that resamples, when its effective number of
+  samples falls below a tenth, resamples by the new weights, not the list's old ones; before,
+  it returned the list unweighted.
 
 ## [1.7.0] - 2026-11-02
 
