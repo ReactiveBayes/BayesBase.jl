@@ -35,7 +35,7 @@ BayesBase.weights(mixture::MixtureDistribution) = mixture.weights
 function BayesBase.mean(mixture::MixtureDistribution)
     component_means = mean.(BayesBase.components(mixture))
     component_weights = BayesBase.weights(mixture)
-    return mapreduce((m, w) -> w*m, +, component_means, component_weights)
+    return mapreduce((m, w) -> w * m, +, component_means, component_weights)
 end
 
 function BayesBase.cov(mixture::MixtureDistribution)
@@ -44,8 +44,8 @@ function BayesBase.cov(mixture::MixtureDistribution)
     component_weights = BayesBase.weights(mixture)
     mixture_mean = mean(mixture)
     return mapreduce(
-        (v, m, w) -> w*(v + m*m'), +, component_cov, component_means, component_weights
-    ) - mixture_mean*mixture_mean'
+        (v, m, w) -> w * (v + m * m'), +, component_cov, component_means, component_weights
+    ) - mixture_mean * mixture_mean'
 end
 
 BayesBase.precision(mixture::MixtureDistribution) = inv(cov(mixture))
@@ -56,7 +56,7 @@ function BayesBase.var(mixture::MixtureDistribution)
     component_weights = BayesBase.weights(mixture)
     mixture_mean = mean(mixture)
     return mapreduce(
-        (v, m, w) -> w*(v + m .^ 2), +, component_vars, component_means, component_weights
+        (v, m, w) -> w * (v + m .^ 2), +, component_vars, component_means, component_weights
     ) - mixture_mean .^ 2
 end
 

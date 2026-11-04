@@ -60,7 +60,8 @@ function ArrowheadMatrix(a::T, z::Z, d::D) where {T,Z,D}
 end
 
 function Base.getindex(A::ArrowheadMatrix, i::Int, j::Int)
-    @warn "getindex was called on ArrowheadMatrix. This may lead to suboptimal performance. Consider using specialized methods if available." maxlog=1
+    @warn "getindex was called on ArrowheadMatrix. This may lead to suboptimal performance. Consider using specialized methods if available." maxlog =
+        1
 
     n = length(A.D) + 1
     if i < 1 || i > n || j < 1 || j > n
