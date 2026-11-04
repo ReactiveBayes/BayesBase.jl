@@ -285,7 +285,7 @@ end
     for point in (
         1.0 + 2.0im,
         [1.0 + 2.0im, 3.0],
-        [1.0+1.0im 0.0; 0.0 1.0],
+        [1.0 + 1.0im 0.0; 0.0 1.0],
         2.0im * I,
         "text",
         :symbol,
@@ -314,7 +314,7 @@ end
     M = 3
     matrix = rand(Float64, M, M)
     dist_matrix = PointMass(matrix)
-    @test length(dist_matrix) == M*M
+    @test length(dist_matrix) == M * M
 
     # Tensor PointMass
     D = 3

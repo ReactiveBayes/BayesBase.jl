@@ -156,9 +156,6 @@ end
 function Base.show(io::IO, dist::DiscreteUnivariateLogPdf)
     return print(io, "DiscreteUnivariateLogPdf(", getdomain(dist), ")")
 end
-function Base.show(io::IO, ::Type{<:DiscreteUnivariateLogPdf{D}}) where {D}
-    return print(io, "DiscreteUnivariateLogPdf{", D, "}")
-end
 
 function BayesBase.support(dist::DiscreteUnivariateLogPdf)
     return getdomain(dist)

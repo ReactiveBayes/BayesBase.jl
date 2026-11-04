@@ -16,7 +16,7 @@ end
         D = randn(n)
         A = ArrowheadMatrix(α, z, D)
 
-        x = randn(n+1)
+        x = randn(n + 1)
         y = A * x
 
         dense_A = [Diagonal(D) z; z' α]
@@ -36,7 +36,7 @@ end
         D = randn(n) .^ 2 .+ 1
         A = ArrowheadMatrix(α, z, D)
 
-        x = randn(n+1)
+        x = randn(n + 1)
         y = A \ x
 
         dense_A = convert(Matrix, A)
@@ -111,7 +111,7 @@ end
         D = rand(n) .^ 2 .+ 1.0  # Ensure D elements are not too close to zero
         A = ArrowheadMatrix(α, z, D)
 
-        b = randn(n+1)
+        b = randn(n + 1)
         x1 = A \ b
 
         x2 = similar(b)
@@ -140,7 +140,7 @@ end
         # Create equivalent dense matrix
         A_dense = [Diagonal(D) z; z' α]
 
-        b = randn(rng, n+1)
+        b = randn(rng, n + 1)
 
         benchmark_arrow = @benchmark $A_arrow \ $b
         benchmark_dense = @benchmark $A_dense \ $b
@@ -152,7 +152,8 @@ end
         # ratio once dropped to 1.4× (55× on an idle machine), which is noise, not a regression.
         k = 5
 
-        n >= 100 && @test minimum(benchmark_arrow.times) < minimum(benchmark_dense.times)/k
+        n >= 100 &&
+            @test minimum(benchmark_arrow.times) < minimum(benchmark_dense.times) / k
         @test benchmark_arrow.allocs < benchmark_dense.allocs
 
         x_arrow = A_arrow \ b
@@ -178,7 +179,7 @@ end
         # Create equivalent dense matrix
         A_dense = [Diagonal(D) z; z' α]
 
-        b = randn(rng, n+1)
+        b = randn(rng, n + 1)
 
         benchmark_arrow = @benchmark cholinv($A_arrow) * $b
         benchmark_dense = @benchmark cholinv($A_dense) * $b
@@ -190,7 +191,8 @@ end
         # ratio once dropped to 1.4× (55× on an idle machine), which is noise, not a regression.
         k = 5
 
-        n >= 100 && @test minimum(benchmark_arrow.times) < minimum(benchmark_dense.times)/k
+        n >= 100 &&
+            @test minimum(benchmark_arrow.times) < minimum(benchmark_dense.times) / k
         @test benchmark_arrow.allocs < benchmark_dense.allocs
 
         x_arrow = A_arrow \ b
@@ -269,24 +271,24 @@ end
         A_dense = [Diagonal(D) z; z' α]
 
         # Test invalid dimension for multiplication
-        invalid_vector = randn(n+2)
+        invalid_vector = randn(n + 2)
         test_error_consistency(A_arrow, A_dense, A -> A * invalid_vector)
 
         # Test multiplication with matrix of incorrect size
-        invalid_matrix = randn(n+2, n)
+        invalid_matrix = randn(n + 2, n)
         test_error_consistency(A_arrow, A_dense, A -> A * invalid_matrix)
 
         # Test singularity in linear solve
         singular_α = 0.0
         singular_z = zeros(n)
-        singular_D = vcat(0.0, ones(n-1))
+        singular_D = vcat(0.0, ones(n - 1))
         A_arrow_singular = ArrowheadMatrix(singular_α, singular_z, singular_D)
         A_dense_singular = [Diagonal(singular_D) singular_z; singular_z' singular_α]
-        b = randn(n+1)
+        b = randn(n + 1)
         test_error_consistency(A_arrow_singular, A_dense_singular, A -> A \ b)
 
         # Test linear solve with vector of incorrect size
-        invalid_b = randn(n+2)
+        invalid_b = randn(n + 2)
         test_error_consistency(A_arrow, A_dense, A -> A \ invalid_b)
 
         # Test BoundsError consistency
@@ -296,15 +298,15 @@ end
         test_error_consistency(A_arrow, A_dense, A -> A[-1, -1])
 
         #Test ≈ error
-        test_error_consistency(A_arrow, A_dense, A -> A ≈ zeros(n+1, n+1))
+        test_error_consistency(A_arrow, A_dense, A -> A ≈ zeros(n + 1, n + 1))
 
         #Test matmul error 
-        test_error_consistency(A_arrow, A_dense, A -> A * zeros(n+1, n+1))
-        test_error_consistency(A_arrow, A_dense, A -> zeros(n+1, n+1) * A)
+        test_error_consistency(A_arrow, A_dense, A -> A * zeros(n + 1, n + 1))
+        test_error_consistency(A_arrow, A_dense, A -> zeros(n + 1, n + 1) * A)
 
         #Test dot (x, inv(A), y)
-        test_error_consistency(A_arrow, A_dense, A -> dot(zeros(n+1), inv(A), zeros(n)))
-        test_error_consistency(A_arrow, A_dense, A -> dot(zeros(n), inv(A), zeros(n+1)))
+        test_error_consistency(A_arrow, A_dense, A -> dot(zeros(n + 1), inv(A), zeros(n)))
+        test_error_consistency(A_arrow, A_dense, A -> dot(zeros(n), inv(A), zeros(n + 1)))
     end
 end
 
@@ -318,7 +320,7 @@ end
             D = randn(n)
             A = ArrowheadMatrix(α, z, D)
 
-            B = randn(n+1, n+1)
+            B = randn(n + 1, n + 1)
 
             C_right = A * B
             C_right_dense = convert(Matrix, A) * B
@@ -340,7 +342,7 @@ end
             z = randn(n)
             D = randn(n)
             A = ArrowheadMatrix(α, z, D)
-            B = ArrowheadMatrix(α+1, z, D)
+            B = ArrowheadMatrix(α + 1, z, D)
             dense_A = convert(Matrix, A)
             @test A ≈ dense_A
             @test !(A ≈ B)
