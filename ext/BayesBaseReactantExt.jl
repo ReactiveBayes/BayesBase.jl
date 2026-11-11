@@ -3,7 +3,7 @@ module BayesBaseReactantExt
 using BayesBase, Reactant, LinearAlgebra
 using Reactant: TracedRArray, AnyTracedRArray
 
-const Traced = MatrixWithCachedInverse{<:Any,<:TracedRArray}
+const Traced = MatrixWithCachedInverse{<:Any, <:TracedRArray}
 
 # Symmetry cannot be decided on traced data.
 BayesBase._checksymmetric(::AnyTracedRArray) = nothing
@@ -11,8 +11,8 @@ BayesBase._checksymmetric(::AnyTracedRArray) = nothing
 # Reactant's post-trace walk (`NoStopTracedTrack`) has no visited-object guard, and the reciprocal
 # pair is a cycle; stop at wrappers already seen in that mode (every other mode already does).
 function Reactant.make_tracer(
-    seen, prev::MatrixWithCachedInverse, @nospecialize(path), mode; kwargs...
-)
+        seen, prev::MatrixWithCachedInverse, @nospecialize(path), mode; kwargs...
+    )
     mode == Reactant.NoStopTracedTrack && haskey(seen, prev) && return seen[prev]
     return Reactant.make_tracer_unknown(seen, prev, path, mode; kwargs...)
 end
@@ -22,14 +22,14 @@ end
 # Host-populated caches are used as program inputs; the `factorize`/`invert` recipes are ignored
 # because only Reactant's own `cholesky` lowers to the program.
 function BayesBase.cached_cholesky_or_compute(::Any, A::Traced)
-    @something(BayesBase.cached_factor(A), cholesky(parent(A)))
+    return @something(BayesBase.cached_factor(A), cholesky(parent(A)))
 end
 
 function BayesBase.cached_inverse_or_compute(::Any, A::Traced)
     A.inverse === nothing || return A.inverse
     T = Reactant.unwrapped_eltype(A)
-    Ainv = A \ Reactant.promote_to(TracedRArray{T,2}, I(size(A, 1)))
-    B = MatrixWithCachedInverse{eltype(Ainv),typeof(Ainv)}(Ainv, A.guard)
+    Ainv = A \ Reactant.promote_to(TracedRArray{T, 2}, I(size(A, 1)))
+    B = MatrixWithCachedInverse{eltype(Ainv), typeof(Ainv)}(Ainv, A.guard)
     B.inverse = A
     return B
 end

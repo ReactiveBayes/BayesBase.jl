@@ -1,4 +1,4 @@
-@testitem "Real-based PointMass" begin
+@testitem "Real-based PointMass" tags = [:densities] begin
     using SpecialFunctions: loggamma
     using TinyHugeNumbers
 
@@ -48,7 +48,7 @@
     end
 end
 
-@testitem "Vector-based PointMass" begin
+@testitem "Vector-based PointMass" tags = [:densities] begin
     using SpecialFunctions: loggamma
     using TinyHugeNumbers
     using BayesBase
@@ -107,7 +107,7 @@ end
     end
 end
 
-@testitem "Matrix-based PointMass" begin
+@testitem "Matrix-based PointMass" tags = [:densities] begin
     using SpecialFunctions: loggamma
     using TinyHugeNumbers
 
@@ -121,7 +121,7 @@ end
         @test dist[3, 3] === matrix[3, 3]
         @test size(dist, 1) === size(matrix, 1)
         @test size(dist, 2) === size(matrix, 2)
-        @test_throws BoundsError dist[N ^ 3]
+        @test_throws BoundsError dist[N^3]
         @test_throws BoundsError dist[N + 1, N + 1]
 
         @test insupport(dist, matrix)
@@ -149,7 +149,7 @@ end
         @test @inferred(AbstractMatrix{T}, mode(dist)) == matrix
         @test @inferred(AbstractMatrix{T}, var(dist)) == zeros(N, N)
         @test @inferred(AbstractMatrix{T}, std(dist)) == zeros(N, N)
-        @test @inferred(Tuple{Int,Int}, ndims(dist)) == (N, N)
+        @test @inferred(Tuple{Int, Int}, ndims(dist)) == (N, N)
         @test @inferred(Type{T}, eltype(dist)) == T
 
         @test_throws ErrorException cov(dist)
@@ -173,7 +173,7 @@ end
     end
 end
 
-@testitem "Tensor-based PointMass" begin
+@testitem "Tensor-based PointMass" tags = [:densities] begin
     using SpecialFunctions: loggamma
     using TinyHugeNumbers
     using Distributions
@@ -190,7 +190,7 @@ end
             for i in 1:D
                 @test size(dist, i) === size(tensor, i)
             end
-            @test_throws BoundsError dist[N ^ (D + 1)]
+            @test_throws BoundsError dist[N^(D + 1)]
             @test_throws BoundsError dist[ntuple(_ -> N + 1, D)...]
 
             @test insupport(dist, tensor)
@@ -213,11 +213,11 @@ end
 
             @test (@inferred entropy(dist)) == BayesBase.MinusInfinity(T)
 
-            @test @inferred(AbstractArray{D,T}, mean(dist)) == tensor
-            @test @inferred(AbstractArray{D,T}, mode(dist)) == tensor
-            @test @inferred(AbstractArray{D,T}, var(dist)) == zeros(ntuple(_ -> N, D)...)
-            @test @inferred(AbstractArray{D,T}, std(dist)) == zeros(ntuple(_ -> N, D)...)
-            @test @inferred(Tuple{Int,Int,Int}, ndims(dist)) == ntuple(_ -> N, D)
+            @test @inferred(AbstractArray{D, T}, mean(dist)) == tensor
+            @test @inferred(AbstractArray{D, T}, mode(dist)) == tensor
+            @test @inferred(AbstractArray{D, T}, var(dist)) == zeros(ntuple(_ -> N, D)...)
+            @test @inferred(AbstractArray{D, T}, std(dist)) == zeros(ntuple(_ -> N, D)...)
+            @test @inferred(Tuple{Int, Int, Int}, ndims(dist)) == ntuple(_ -> N, D)
             @test @inferred(Type{T}, eltype(dist)) == T
 
             @test_throws ErrorException cov(dist)
@@ -225,10 +225,10 @@ end
 
             @test_throws ErrorException probvec(dist)
             @test @inferred(
-                AbstractArray{D,T}, mean(Base.Broadcast.BroadcastFunction(log), dist)
+                AbstractArray{D, T}, mean(Base.Broadcast.BroadcastFunction(log), dist)
             ) == log.(tensor)
             @test @inferred(
-                AbstractArray{D,T}, mean(Base.Broadcast.BroadcastFunction(loggamma), dist)
+                AbstractArray{D, T}, mean(Base.Broadcast.BroadcastFunction(loggamma), dist)
             ) == loggamma.(tensor)
 
             @test_throws MethodError mean(loggamma, dist)
@@ -236,7 +236,7 @@ end
     end
 end
 
-@testitem "UniformScaling-based PointMass" begin
+@testitem "UniformScaling-based PointMass" tags = [:densities] begin
     using LinearAlgebra, TinyHugeNumbers
 
     for T in (Float16, Float32, Float64, BigFloat)
@@ -277,26 +277,26 @@ end
     end
 end
 
-@testitem "The mean and mode of any PointMass are its point" begin
+@testitem "The mean and mode of any PointMass are its point" tags = [:densities] begin
     using BayesBase, LinearAlgebra
 
     # A point that no specialised method matches recursed until the stack overflowed: `mean(fn, d)` is
     # `fn(mean(d))`, and Statistics' `mean(itr)` is `mean(identity, itr)`
     for point in (
-        1.0 + 2.0im,
-        [1.0 + 2.0im, 3.0],
-        [1.0 + 1.0im 0.0; 0.0 1.0],
-        2.0im * I,
-        "text",
-        :symbol,
-    )
+            1.0 + 2.0im,
+            [1.0 + 2.0im, 3.0],
+            [1.0 + 1.0im 0.0; 0.0 1.0],
+            2.0im * I,
+            "text",
+            :symbol,
+        )
         @test mean(PointMass(point)) == point
         @test mode(PointMass(point)) == point
     end
     @test mean(sum, PointMass([1.0 + 2.0im, 3.0])) == 4.0 + 2.0im
 end
 
-@testitem "Base.length for PointMass" begin
+@testitem "Base.length for PointMass" tags = [:densities] begin
     using LinearAlgebra, SpecialFunctions, TinyHugeNumbers, Distributions, BayesBase
 
     # Scalar PointMass
@@ -322,4 +322,10 @@ end
     tensor = rand(Float64, ntuple(_ -> N, D))
     dist_tensor = PointMass(tensor)
     @test length(dist_tensor) == N^D
+end
+
+@testitem "PointMass: ndims of a UniformScaling is not defined, like its cov" tags = [:densities] begin
+    using LinearAlgebra
+
+    @test_throws "ndims(::PointMass{ <: UniformScaling }) is not defined" ndims(PointMass(2.0I))
 end

@@ -1,7 +1,4 @@
-
-@testitem "UnspecifiedProd" begin
-    include("./prod_setuptests.jl")
-
+@testitem "UnspecifiedProd" tags = [:prod] setup = [ProdSetup] begin
     @testset "`default_prod_rule` should return `UnspecifiedProd` for two unknown objects" begin
         @test default_prod_rule(SomeUnknownObject, SomeUnknownObject) === UnspecifiedProd()
     end
@@ -13,9 +10,7 @@
     end
 end
 
-@testitem "ClosedProd" begin
-    include("./prod_setuptests.jl")
-
+@testitem "ClosedProd" tags = [:prod] setup = [ProdSetup] begin
     @testset "`missing` should be ignored with the `ClosedProd`" begin
         struct SomeObject end
         @test prod(ClosedProd(), missing, SomeUnknownObject()) === SomeUnknownObject()
@@ -29,9 +24,7 @@ end
     end
 end
 
-@testitem "PreserveTypeProd" begin
-    include("./prod_setuptests.jl")
-
+@testitem "PreserveTypeProd" tags = [:prod] setup = [ProdSetup] begin
     @testset "`missing` should be ignored with the `PreserveTypeProd`" begin
         # Can convert the result of the prod to the desired type
         @test prod(PreserveTypeProd(SomeUnknownObject), missing, SomeUnknownObject()) isa
@@ -133,20 +126,18 @@ end
     end
 end
 
-@testitem "GenericProd" begin
-    include("./prod_setuptests.jl")
-
+@testitem "GenericProd" tags = [:prod] setup = [ProdSetup] begin
     × = (x, y) -> prod(GenericProd(), x, y)
 
     @testset "GenericProd should use `default_prod_rule` where possible" begin
 
         # `SomeUnknownObject` does not implement any prod rule (see the fixtures above)
         @test SomeUnknownObject() × SomeUnknownObject() isa
-            ProductOf{SomeUnknownObject,SomeUnknownObject}
+            ProductOf{SomeUnknownObject, SomeUnknownObject}
         @test ObjectWithClosedProd1() × SomeUnknownObject() isa
-            ProductOf{ObjectWithClosedProd1,SomeUnknownObject}
+            ProductOf{ObjectWithClosedProd1, SomeUnknownObject}
         @test SomeUnknownObject() × ObjectWithClosedProd1() isa
-            ProductOf{SomeUnknownObject,ObjectWithClosedProd1}
+            ProductOf{SomeUnknownObject, ObjectWithClosedProd1}
 
         @test getleft(ObjectWithClosedProd1() × SomeUnknownObject()) ===
             ObjectWithClosedProd1()
@@ -185,20 +176,24 @@ end
         @test d3 × (d1 × d3) == (d1 × d3)
         @test d2 × (d2 × d1) == (d2 × d1)
         @test d3 × (d3 × d1) == (d3 × d1)
+
+        # Two trees: the right one joins the left a side at a time
+        @test (d1 × d2) × ProductOf(d3, d3) == d1 × d2
+        @test ProductOf(d3, d1) × ProductOf(d3, d1) == ProductOf(d3, LinearizedProductOf([d1, d1], 2))
     end
 
     @testset "ProdGeneric should create a product tree if closed form product is not available" begin
         d1 = SomeUnknownObject()
 
-        @test 1.0 × 1 × d1 isa ProductOf{ProductOf{Float64,Int},SomeUnknownObject}
-        @test 1 × 1.0 × d1 isa ProductOf{ProductOf{Int,Float64},SomeUnknownObject}
+        @test 1.0 × 1 × d1 isa ProductOf{ProductOf{Float64, Int}, SomeUnknownObject}
+        @test 1 × 1.0 × d1 isa ProductOf{ProductOf{Int, Float64}, SomeUnknownObject}
     end
 
     @testset "ProdGeneric should create a linearised product tree if closed form product is not available, but objects are of the same type" begin
         d1 = SomeUnknownObject()
         d2 = ObjectWithClosedProd1()
 
-        @test d1 × d1 isa ProductOf{SomeUnknownObject,SomeUnknownObject}
+        @test d1 × d1 isa ProductOf{SomeUnknownObject, SomeUnknownObject}
 
         @testset let product = d1 × d1 × d1
             @test product isa LinearizedProductOf{SomeUnknownObject}
@@ -219,9 +214,9 @@ end
         end
 
         @test d2 × d1 × d1 × d1 isa
-            ProductOf{ObjectWithClosedProd1,LinearizedProductOf{SomeUnknownObject}}
+            ProductOf{ObjectWithClosedProd1, LinearizedProductOf{SomeUnknownObject}}
         @test d2 × d1 × d1 × d1 × d1 isa
-            ProductOf{ObjectWithClosedProd1,LinearizedProductOf{SomeUnknownObject}}
+            ProductOf{ObjectWithClosedProd1, LinearizedProductOf{SomeUnknownObject}}
 
         # d2 × (...) × d2 should fold if closed prod is available
         @test d2 × d1 × d1 × d1 × d1 × d2 == (d2 × d2) × d1 × d1 × d1 × d1
@@ -230,29 +225,27 @@ end
     end
 end
 
-@testitem "TerminalProdArgument" begin
-    include("./prod_setuptests.jl")
-
+@testitem "TerminalProdArgument" tags = [:prod] setup = [ProdSetup] begin
     @test 1 ≈ TerminalProdArgument(1)
     @test TerminalProdArgument(1) ≈ 1
     @test 1.0 ≈ TerminalProdArgument(1.0)
     @test TerminalProdArgument(1.0) ≈ 1.0
-    @test 1.0 ≈ TerminalProdArgument(1.0) atol = 1e-1
-    @test TerminalProdArgument(1.0) ≈ 1.0 atol = 1e-1
+    @test 1.0 ≈ TerminalProdArgument(1.0) atol = 1.0e-1
+    @test TerminalProdArgument(1.0) ≈ 1.0 atol = 1.0e-1
 
     @test 1 ≉ TerminalProdArgument(2)
     @test TerminalProdArgument(1) ≉ 2
     @test 1.0 ≉ TerminalProdArgument(2.0)
     @test TerminalProdArgument(1.0) ≉ 2.0
-    @test 1.0 ≉ TerminalProdArgument(2.0) atol = 1e-1
-    @test TerminalProdArgument(1.0) ≉ 2.0 atol = 1e-1
+    @test 1.0 ≉ TerminalProdArgument(2.0) atol = 1.0e-1
+    @test TerminalProdArgument(1.0) ≉ 2.0 atol = 1.0e-1
 
     @test TerminalProdArgument(1) ≉ TerminalProdArgument(2)
     @test TerminalProdArgument(1.0) ≉ TerminalProdArgument(2.0)
-    @test TerminalProdArgument(1.0) ≉ TerminalProdArgument(2.0) atol = 1e-1
+    @test TerminalProdArgument(1.0) ≉ TerminalProdArgument(2.0) atol = 1.0e-1
     @test TerminalProdArgument(1) ≈ TerminalProdArgument(1)
     @test TerminalProdArgument(1.0) ≈ TerminalProdArgument(1.0)
-    @test TerminalProdArgument(1.0) ≈ TerminalProdArgument(1.0) atol = 1e-1
+    @test TerminalProdArgument(1.0) ≈ TerminalProdArgument(1.0) atol = 1.0e-1
 
     d1 = SomeUnknownObject()
     d2 = ObjectWithClosedProd1()
@@ -269,14 +262,14 @@ end
     )
 end
 
-@testitem "resolve_prod_strategy" begin
+@testitem "resolve_prod_strategy" tags = [:prod] begin
     for strategy in (
-        ClosedProd(),
-        PreserveTypeProd(Int),
-        PreserveTypeLeftProd(),
-        PreserveTypeRightProd(),
-        GenericProd(),
-    )
+            ClosedProd(),
+            PreserveTypeProd(Int),
+            PreserveTypeLeftProd(),
+            PreserveTypeRightProd(),
+            GenericProd(),
+        )
         @test resolve_prod_strategy(strategy, strategy) === strategy
         @test resolve_prod_strategy(strategy, GenericProd()) === strategy
         @test resolve_prod_strategy(GenericProd(), strategy) === strategy
@@ -294,7 +287,7 @@ end
     )
 end
 
-@testitem "`ProductOf` should support distributions that do not have explicitly defined `support`" begin
+@testitem "`ProductOf` should support distributions that do not have explicitly defined `support`" tags = [:prod] begin
     struct SomeComplexDistribution end
 
     BayesBase.support(::SomeComplexDistribution) = error("not defined")
@@ -310,7 +303,7 @@ end
     @test logpdf(prod, 2) === 4
 end
 
-@testitem "`LinearizedProductOf` should support distributions that do not have explicitly defined `support`" begin
+@testitem "`LinearizedProductOf` should support distributions that do not have explicitly defined `support`" tags = [:prod] begin
     struct SomeComplexDistribution end
 
     BayesBase.support(::SomeComplexDistribution) = error("not defined")
@@ -326,8 +319,12 @@ end
     @test logpdf(prod, 2) === 4
 end
 
-@testitem "There should be no ambiguity in `prod` for `ProductOf`" begin
+@testitem "There should be no ambiguity in `prod` for `ProductOf`" tags = [:prod] begin
     struct SomeArbitraryDistribution end
+
+    # Two trees, neither side a leaf
+    d = SomeArbitraryDistribution()
+    @test prod(GenericProd(), ProductOf(d, d), ProductOf(d, d)) == LinearizedProductOf([d, d, d, d], 4)
 
     @test prod(
         GenericProd(),

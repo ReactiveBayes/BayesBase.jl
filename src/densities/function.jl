@@ -9,13 +9,13 @@ abstract type AbstractContinuousGenericLogPdf end
 abstract type AbstractDiscreteGenericLogPdf end
 
 function getdomain(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}
+    )
     return dist.domain
 end
 function getlogpdf(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}
+    )
     return dist.logpdf
 end
 
@@ -24,91 +24,91 @@ BayesBase.value_support(::Type{<:AbstractDiscreteGenericLogPdf}) = Discrete
 # We throw an error on purpose, since we do not want to use `AbstractContinuousGenericLogPdf` much without approximations
 # We want to encourage a user to use approximate generic log-pdfs as much as possible instead
 function __error_genericlogpdf_not_defined(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}, f::Symbol
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}, f::Symbol
+    )
     return error(
         "`$f` is not defined for `$(dist)`. Use functional form constraints to approximate the resulting generic log-pdf object and to use it in the inference procedure.",
     )
 end
 
 function BayesBase.mean(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}
+    )
     return __error_genericlogpdf_not_defined(dist, :mean)
 end
 function BayesBase.median(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}
+    )
     return __error_genericlogpdf_not_defined(dist, :median)
 end
 function BayesBase.mode(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}
+    )
     return __error_genericlogpdf_not_defined(dist, :mode)
 end
 function BayesBase.var(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}
+    )
     return __error_genericlogpdf_not_defined(dist, :var)
 end
 function BayesBase.std(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}
+    )
     return __error_genericlogpdf_not_defined(dist, :std)
 end
 function BayesBase.cov(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}
+    )
     return __error_genericlogpdf_not_defined(dist, :cov)
 end
 function BayesBase.invcov(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}
+    )
     return __error_genericlogpdf_not_defined(dist, :invcov)
 end
 function BayesBase.entropy(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}
+    )
     return __error_genericlogpdf_not_defined(dist, :entropy)
 end
 
 function Base.precision(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}
+    )
     return __error_genericlogpdf_not_defined(dist, :precision)
 end
 
 function Base.eltype(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}
+    )
     return eltype(getdomain(dist))
 end
 
 function BayesBase.paramfloattype(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}
+    )
     return deep_eltype(eltype(dist))
 end
 function BayesBase.samplefloattype(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}
+    )
     return paramfloattype(dist)
 end
 
-function (dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})(
-    x::Real
-)
+function (dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf})(
+        x::Real
+    )
     return logpdf(dist, x)
 end
-function (dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf})(
-    x::AbstractVector{<:Real}
-)
+function (dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf})(
+        x::AbstractVector{<:Real}
+    )
     return logpdf(dist, x)
 end
 
 function BayesBase.logpdf(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}, x
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}, x
+    )
     @assert x ∈ getdomain(dist) "x = $(x) does not belong to the domain ($(getdomain(dist))) of $dist"
     lpdf = getlogpdf(dist)
     return lpdf(x)
@@ -116,8 +116,8 @@ end
 
 # We don't expect neither `pdf` nor `logpdf` to be normalised
 function BayesBase.pdf(
-    dist::Union{AbstractContinuousGenericLogPdf,AbstractDiscreteGenericLogPdf}, x
-)
+        dist::Union{AbstractContinuousGenericLogPdf, AbstractDiscreteGenericLogPdf}, x
+    )
     return exp(logpdf(dist, x))
 end
 
@@ -131,13 +131,13 @@ known analytical distribution available.
 - `domain`: domain specificatiom from `DomainSets.jl` package, by default the `domain` is set to `DomainSets.Integers()`. Use `BayesBase.UnspecifiedDomain()` to bypass domain checks.
 - `logpdf`: callable object that represents the logdensity. Can be un-normalised.
 """
-struct DiscreteUnivariateLogPdf{D<:DomainSets.Domain,F} <: AbstractDiscreteGenericLogPdf
+struct DiscreteUnivariateLogPdf{D <: DomainSets.Domain, F} <: AbstractDiscreteGenericLogPdf
     domain::D
     logpdf::F
 
-    function DiscreteUnivariateLogPdf(domain::D, logpdf::F) where {D,F}
+    function DiscreteUnivariateLogPdf(domain::D, logpdf::F) where {D, F}
         @assert dimension(domain) == 1 "Cannot create DiscreteUnivariateLogPdf. Dimension of domain = $(domain) is not equal to 1."
-        return new{D,F}(domain, logpdf)
+        return new{D, F}(domain, logpdf)
     end
 end
 
@@ -148,8 +148,8 @@ end
 BayesBase.variate_form(::Type{<:DiscreteUnivariateLogPdf}) = Univariate
 
 function BayesBase.promote_variate_type(
-    ::Type{Univariate}, ::Type{AbstractDiscreteGenericLogPdf}
-)
+        ::Type{Univariate}, ::Type{AbstractDiscreteGenericLogPdf}
+    )
     return DiscreteUnivariateLogPdf
 end
 
@@ -170,14 +170,14 @@ function BayesBase.logpdf(dist::DiscreteUnivariateLogPdf, x::AbstractVector{<:In
 end
 
 function Base.convert(
-    ::Type{<:DiscreteUnivariateLogPdf}, domain::D, logpdf::F
-) where {D<:DomainSets.Domain,F}
+        ::Type{<:DiscreteUnivariateLogPdf}, domain::D, logpdf::F
+    ) where {D <: DomainSets.Domain, F}
     return DiscreteUnivariateLogPdf(domain, logpdf)
 end
 
 function BayesBase.convert_paramfloattype(
-    ::Type{T}, dist::DiscreteUnivariateLogPdf
-) where {T<:Int}
+        ::Type{T}, dist::DiscreteUnivariateLogPdf
+    ) where {T <: Int}
     return convert(
         DiscreteUnivariateLogPdf,
         dist.domain,
@@ -191,11 +191,11 @@ end
 
 # We do not check typeof of a different functions because in most of the cases lambdas have different types, but they can still be the same
 function BayesBase.isequal_typeof(
-    ::DiscreteUnivariateLogPdf{D,F1}, ::DiscreteUnivariateLogPdf{D,F2}
-) where {D,F1<:Function,F2<:Function}
+        ::DiscreteUnivariateLogPdf{D, F1}, ::DiscreteUnivariateLogPdf{D, F2}
+    ) where {D, F1 <: Function, F2 <: Function}
     return true
 end
-## 
+##
 
 """
     ContinuousUnivariateLogPdf{ D <: DomainSets.Domain, F } <: AbstractContinuousGenericLogPdf
@@ -207,13 +207,13 @@ known analytical distribution available.
 - `domain`: domain specificatiom from `DomainSets.jl` package, by default the `domain` is set to `DomainSets.FullSpace()`. Use `BayesBase.UnspecifiedDomain()` to bypass domain checks.
 - `logpdf`: callable object that represents the logdensity. Can be un-normalised.
 """
-struct ContinuousUnivariateLogPdf{D<:DomainSets.Domain,F} <: AbstractContinuousGenericLogPdf
+struct ContinuousUnivariateLogPdf{D <: DomainSets.Domain, F} <: AbstractContinuousGenericLogPdf
     domain::D
     logpdf::F
 
-    function ContinuousUnivariateLogPdf(domain::D, logpdf::F) where {D,F}
+    function ContinuousUnivariateLogPdf(domain::D, logpdf::F) where {D, F}
         @assert dimension(domain) == 1 "Cannot create ContinuousUnivariateLogPdf. Dimension of domain = $(domain) is not equal to 1."
-        return new{D,F}(domain, logpdf)
+        return new{D, F}(domain, logpdf)
     end
 end
 
@@ -224,8 +224,8 @@ end
 BayesBase.variate_form(::Type{<:ContinuousUnivariateLogPdf}) = Univariate
 
 function BayesBase.promote_variate_type(
-    ::Type{Univariate}, ::Type{AbstractContinuousGenericLogPdf}
-)
+        ::Type{Univariate}, ::Type{AbstractContinuousGenericLogPdf}
+    )
     return ContinuousUnivariateLogPdf
 end
 
@@ -246,14 +246,14 @@ function BayesBase.logpdf(dist::ContinuousUnivariateLogPdf, x::AbstractVector{<:
 end
 
 function Base.convert(
-    ::Type{<:ContinuousUnivariateLogPdf}, domain::D, logpdf::F
-) where {D<:DomainSets.Domain,F}
+        ::Type{<:ContinuousUnivariateLogPdf}, domain::D, logpdf::F
+    ) where {D <: DomainSets.Domain, F}
     return ContinuousUnivariateLogPdf(domain, logpdf)
 end
 
 function BayesBase.convert_paramfloattype(
-    ::Type{T}, dist::ContinuousUnivariateLogPdf
-) where {T<:Real}
+        ::Type{T}, dist::ContinuousUnivariateLogPdf
+    ) where {T <: Real}
     return convert(
         ContinuousUnivariateLogPdf,
         dist.domain,
@@ -267,12 +267,12 @@ end
 
 # We do not check typeof of a different functions because in most of the cases lambdas have different types, but they can still be the same
 function BayesBase.isequal_typeof(
-    ::ContinuousUnivariateLogPdf{D,F1}, ::ContinuousUnivariateLogPdf{D,F2}
-) where {D,F1<:Function,F2<:Function}
+        ::ContinuousUnivariateLogPdf{D, F1}, ::ContinuousUnivariateLogPdf{D, F2}
+    ) where {D, F1 <: Function, F2 <: Function}
     return true
 end
 
-## 
+##
 
 """
     ContinuousMultivariateLogPdf{ D <: DomainSets.Domain, F } <: AbstractContinuousGenericLogPdf
@@ -284,24 +284,24 @@ known analytical distribution available.
 - `domain`: multidimensional domain specification from `DomainSets.jl` package. Use `BayesBase.UnspecifiedDomain()` to bypass domain checks.
 - `logpdf`: callable object that accepts an `AbstractVector` as an input and represents the logdensity. Can be un-normalised.
 """
-struct ContinuousMultivariateLogPdf{D<:DomainSets.Domain,F} <:
-       AbstractContinuousGenericLogPdf
+struct ContinuousMultivariateLogPdf{D <: DomainSets.Domain, F} <:
+    AbstractContinuousGenericLogPdf
     domain::D
     logpdf::F
 
     function ContinuousMultivariateLogPdf(
-        domain::D, logpdf::F
-    ) where {D<:DomainSets.Domain,F}
+            domain::D, logpdf::F
+        ) where {D <: DomainSets.Domain, F}
         @assert DomainSets.dimension(domain) !== 1 "Cannot create ContinuousMultivariateLogPdf. Dimension of domain = $(domain) should not be equal to 1. Use, for example, `DomainSets.FullSpace() ^ 2` to create 2-dimensional full space domain."
-        return new{D,F}(domain, logpdf)
+        return new{D, F}(domain, logpdf)
     end
 end
 
 BayesBase.variate_form(::Type{<:ContinuousMultivariateLogPdf}) = Multivariate
 
 function BayesBase.promote_variate_type(
-    ::Type{Multivariate}, ::Type{AbstractContinuousGenericLogPdf}
-)
+        ::Type{Multivariate}, ::Type{AbstractContinuousGenericLogPdf}
+    )
     return ContinuousMultivariateLogPdf
 end
 
@@ -317,14 +317,14 @@ BayesBase.support(dist::ContinuousMultivariateLogPdf) = getdomain(dist)
 BayesBase.insupport(dist::ContinuousMultivariateLogPdf, x) = x ∈ getdomain(dist)
 
 function Base.convert(
-    ::Type{<:ContinuousMultivariateLogPdf}, domain::D, logpdf::F
-) where {D<:DomainSets.Domain,F}
+        ::Type{<:ContinuousMultivariateLogPdf}, domain::D, logpdf::F
+    ) where {D <: DomainSets.Domain, F}
     return ContinuousMultivariateLogPdf(domain, logpdf)
 end
 
 function BayesBase.convert_paramfloattype(
-    ::Type{T}, dist::ContinuousMultivariateLogPdf
-) where {T<:Real}
+        ::Type{T}, dist::ContinuousMultivariateLogPdf
+    ) where {T <: Real}
     return convert(
         ContinuousMultivariateLogPdf,
         dist.domain,
@@ -338,7 +338,7 @@ end
 
 # We do not check typeof of a different functions because in most of the cases lambdas have different types, but they can still be the same
 function BayesBase.isequal_typeof(
-    ::ContinuousMultivariateLogPdf{D,F1}, ::ContinuousMultivariateLogPdf{D,F2}
-) where {D,F1<:Function,F2<:Function}
+        ::ContinuousMultivariateLogPdf{D, F1}, ::ContinuousMultivariateLogPdf{D, F2}
+    ) where {D, F1 <: Function, F2 <: Function}
     return true
 end

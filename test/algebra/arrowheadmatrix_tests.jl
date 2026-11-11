@@ -1,6 +1,4 @@
-
-@testitem "ArrowheadMatrix: Construction and Properties" begin
-    include("algebrasetup_setuptests.jl")
+@testitem "ArrowheadMatrix: Construction and Properties" tags = [:algebra] setup = [AlgebraSetup] begin
     α = 2.0
     z = [1.0, 2.0, 3.0]
     D = [4.0, 5.0, 6.0]
@@ -8,8 +6,7 @@
     @test size(A) == (4, 4)
 end
 
-@testitem "ArrowheadMatrix: Multiplication with Vector" begin
-    include("algebrasetup_setuptests.jl")
+@testitem "ArrowheadMatrix: Multiplication with Vector" tags = [:algebra] setup = [AlgebraSetup] begin
     for n in 2:20
         α = randn()
         z = randn(n)
@@ -28,8 +25,7 @@ end
     end
 end
 
-@testitem "ArrowheadMatrix: Solving Linear System" begin
-    include("algebrasetup_setuptests.jl")
+@testitem "ArrowheadMatrix: Solving Linear System" tags = [:algebra] setup = [AlgebraSetup] begin
     for n in 2:20
         α = randn()^2 .+ 1
         z = randn(n)
@@ -46,9 +42,7 @@ end
     end
 end
 
-@testitem "InvArrowheadMatrix: Construction and Properties" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "InvArrowheadMatrix: Construction and Properties" tags = [:algebra] setup = [AlgebraSetup] begin
     α = 2.0
     z = [1.0, 2.0, 3.0]
     D = [4.0, 5.0, 6.0]
@@ -57,7 +51,7 @@ end
     @test size(A_inv) == (4, 4)
 end
 
-@testitem "InvArrowheadMatrix: Multiplication with Vector" begin
+@testitem "InvArrowheadMatrix: Multiplication with Vector" tags = [:algebra] begin
     α = 2.0
     z = [1.0, 2.0, 3.0]
     D = [4.0, 5.0, 6.0]
@@ -71,7 +65,7 @@ end
     @test x ≈ x_expected
 end
 
-@testitem "InvArrowheadMatrix: Division with Vector" begin
+@testitem "InvArrowheadMatrix: Division with Vector" tags = [:algebra] begin
     α = 2.0
     z = [1.0, 2.0, 3.0]
     D = [4.0, 5.0, 6.0]
@@ -84,9 +78,7 @@ end
     @test y == y_expected
 end
 
-@testitem "InvArrowheadMatrix: Conversion to Dense Matrix" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "InvArrowheadMatrix: Conversion to Dense Matrix" tags = [:algebra] setup = [AlgebraSetup] begin
     α = 2.0
     z = [1.0, 2.0, 3.0]
     D = [4.0, 5.0, 6.0]
@@ -102,9 +94,7 @@ end
     @test I_approx ≈ I_n
 end
 
-@testitem "ArrowheadMatrix: division vs ldiv!" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "ArrowheadMatrix: division vs ldiv!" tags = [:algebra] setup = [AlgebraSetup] begin
     for n in [10, 20]
         α = rand()^2 + 1.0  # Ensure α is not too close to zero
         z = randn(n)
@@ -123,12 +113,9 @@ end
     end
 end
 
-@testitem "ArrowheadMatrix: Performance comparison with dense matrix" begin
+@testitem "ArrowheadMatrix: Performance comparison with dense matrix" tags = [:algebra, :slow] setup = [AlgebraSetup] begin
     using BenchmarkTools
     using StableRNGs
-
-    include("algebrasetup_setuptests.jl")
-
     rng = StableRNG(1234)
 
     for n in [10, 100, 1000]
@@ -152,8 +139,7 @@ end
         # ratio once dropped to 1.4× (55× on an idle machine), which is noise, not a regression.
         k = 5
 
-        n >= 100 &&
-            @test minimum(benchmark_arrow.times) < minimum(benchmark_dense.times) / k
+        n >= 100 && @test minimum(benchmark_arrow.times) < minimum(benchmark_dense.times) / k
         @test benchmark_arrow.allocs < benchmark_dense.allocs
 
         x_arrow = A_arrow \ b
@@ -162,13 +148,10 @@ end
     end
 end
 
-@testitem "ArrowheadMatrix: Performance comparison with cholinv" begin
+@testitem "ArrowheadMatrix: Performance comparison with cholinv" tags = [:algebra, :slow] setup = [AlgebraSetup] begin
     using BenchmarkTools
     using FastCholesky
     using StableRNGs
-
-    include("algebrasetup_setuptests.jl")
-
     rng = StableRNG(1234)
     for n in [10, 100, 1000]
         α = rand(rng)^2 + 1.0  # Ensure α is not too close to zero
@@ -191,8 +174,7 @@ end
         # ratio once dropped to 1.4× (55× on an idle machine), which is noise, not a regression.
         k = 5
 
-        n >= 100 &&
-            @test minimum(benchmark_arrow.times) < minimum(benchmark_dense.times) / k
+        n >= 100 && @test minimum(benchmark_arrow.times) < minimum(benchmark_dense.times) / k
         @test benchmark_arrow.allocs < benchmark_dense.allocs
 
         x_arrow = A_arrow \ b
@@ -201,10 +183,8 @@ end
     end
 end
 
-@testitem "ArrowheadMatrix: Memory allocation comparison with dense matrix" begin
+@testitem "ArrowheadMatrix: Memory allocation comparison with dense matrix" tags = [:algebra, :alloc] setup = [AlgebraSetup] begin
     using Test
-    include("algebrasetup_setuptests.jl")
-
     function memory_size(x)
         return Base.summarysize(x)
     end
@@ -231,13 +211,11 @@ end
     for i in 2:length(sizes)
         ratio_growth = mem_ratio[i] / mem_ratio[i - 1]
         size_growth = sizes[i] / sizes[i - 1]
-        @test isapprox(ratio_growth, size_growth, rtol=0.5)
+        @test isapprox(ratio_growth, size_growth, rtol = 0.5)
     end
 end
 
-@testitem "ArrowheadMatrix: Error handling comparison with dense matrix" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "ArrowheadMatrix: Error handling comparison with dense matrix" tags = [:algebra] setup = [AlgebraSetup] begin
     function test_error_consistency(A_arrow, A_dense, operation)
         arrow_error = nothing
         dense_error = nothing
@@ -300,7 +278,7 @@ end
         #Test ≈ error
         test_error_consistency(A_arrow, A_dense, A -> A ≈ zeros(n + 1, n + 1))
 
-        #Test matmul error 
+        #Test matmul error
         test_error_consistency(A_arrow, A_dense, A -> A * zeros(n + 1, n + 1))
         test_error_consistency(A_arrow, A_dense, A -> zeros(n + 1, n + 1) * A)
 
@@ -310,9 +288,7 @@ end
     end
 end
 
-@testitem "ArrowheadMatrix getindex based methods: matmul and ≈" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "ArrowheadMatrix getindex based methods: matmul and ≈" tags = [:algebra] setup = [AlgebraSetup] begin
     @testset "ArrowheadMatrix: matmul" begin
         for n in [3, 5, 10]
             α = randn()
@@ -352,9 +328,7 @@ end
     end
 end
 
-@testitem "ArrowheadMatrix: getindex with Warning" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "ArrowheadMatrix: getindex with Warning" tags = [:algebra] setup = [AlgebraSetup] begin
     α = 2.0
     z = [1.0, 2.0, 3.0]
     D = [4.0, 5.0, 6.0]
@@ -372,10 +346,8 @@ end
     end
 end
 
-@testitem "InvArrowheadMatrix: dot(x, A, y) comparison with dense matrix" begin
+@testitem "InvArrowheadMatrix: dot(x, A, y) comparison with dense matrix" tags = [:algebra] setup = [AlgebraSetup] begin
     using LinearAlgebra
-    include("algebrasetup_setuptests.jl")
-
     for n in [3, 5, 10]
         α = rand() + n
         z = randn(n)
@@ -392,6 +364,6 @@ end
         A_inv_dense = inv(A_dense)
         result_dense = dot(x, A_inv_dense * y)
 
-        @test isapprox(result_arrowhead, result_dense, rtol=1e-5)
+        @test isapprox(result_arrowhead, result_dense, rtol = 1.0e-5)
     end
 end

@@ -1,9 +1,9 @@
-@testitem "TypeConverter" begin
+@testitem "TypeConverter" tags = [:promotion] begin
     import BayesBase: PromoteTypeConverter
 
     for original_T in (Float16, Float32, Float64),
-        target_T in (Float16, Float32, Float64),
-        n in (1, 2, 3)
+            target_T in (Float16, Float32, Float64),
+            n in (1, 2, 3)
 
         converter = PromoteTypeConverter(target_T, convert)
 
@@ -11,9 +11,7 @@
     end
 end
 
-@testitem "convert_paramfloattype" begin
-    include("./promotion_setuptests.jl")
-
+@testitem "convert_paramfloattype" tags = [:promotion] setup = [PromotionSetup] begin
     for T in (Float32, Float64, BigFloat)
         for athing in ([1.0, 1.0], [1.0 1.0; 1.0 1.0], 1.0, I)
             @test @inferred(eltype(convert_paramfloattype(T, athing))) === T
@@ -29,18 +27,14 @@ end
     end
 end
 
-@testitem "sampletype" begin
-    include("./promotion_setuptests.jl")
-
+@testitem "sampletype" tags = [:promotion] setup = [PromotionSetup] begin
     for distribution in generate_random_distributions()
         sample = rand(distribution)
         @test @inferred(sampletype(distribution)) === typeof(sample)
     end
 end
 
-@testitem "promote_sampletype" begin
-    include("./promotion_setuptests.jl")
-
+@testitem "promote_sampletype" tags = [:promotion] setup = [PromotionSetup] begin
     combinations = [
         Iterators.product(
             generate_random_distributions(Univariate),
@@ -69,9 +63,7 @@ end
     end
 end
 
-@testitem "deep_eltype" begin
-    include("./promotion_setuptests.jl")
-
+@testitem "deep_eltype" tags = [:promotion] setup = [PromotionSetup] begin
     for type in [Float32, Float64, Complex{Float64}, BigFloat]
         @test deep_eltype(type) === type
         @test deep_eltype(zero(type)) === type
@@ -99,18 +91,14 @@ end
     end
 end
 
-@testitem "samplefloattype" begin
-    include("./promotion_setuptests.jl")
-
+@testitem "samplefloattype" tags = [:promotion] setup = [PromotionSetup] begin
     for distribution in generate_random_distributions()
         sample = rand(distribution)
         @test @inferred(samplefloattype(distribution)) === deep_eltype(typeof(sample))
     end
 end
 
-@testitem "promote_samplefloattype" begin
-    include("./promotion_setuptests.jl")
-
+@testitem "promote_samplefloattype" tags = [:promotion] setup = [PromotionSetup] begin
     combinations = [
         Iterators.product(
             generate_random_distributions(Univariate),
@@ -151,4 +139,13 @@ end
             end
         end
     end
+end
+
+@testitem "promote_variate_type: an unsupported promotion says so" tags = [:promotion] begin
+    using Distributions
+
+    # no package defines a matrix-variate version of a Beta distribution
+    @test_throws ArgumentError promote_variate_type(Matrix{Float64}, Beta)
+    @test_throws ArgumentError promote_variate_type(Matrixvariate, Beta)
+    @test_throws "Matrixvariate" promote_variate_type(Matrixvariate, Beta)
 end

@@ -1,5 +1,4 @@
-
-@testitem "ContinuousUnivariateLogPdf: Constructor" begin
+@testitem "ContinuousUnivariateLogPdf: Constructor" tags = [:densities] begin
     import DomainSets: FullSpace
 
     f = (x) -> -x^2
@@ -17,7 +16,7 @@
     @test_throws AssertionError ContinuousUnivariateLogPdf(FullSpace()^2, f)
 end
 
-@testitem "DiscreteUnivariateLogPdf: Constructor" begin
+@testitem "DiscreteUnivariateLogPdf: Constructor" tags = [:densities] begin
     import DomainSets: FullSpace, Integers
 
     f = (x) -> -x^2
@@ -35,7 +34,7 @@ end
     @test_throws AssertionError DiscreteUnivariateLogPdf(FullSpace()^2, f)
 end
 
-@testitem "ContinuousUnivariateLogPdf: Intentional errors" begin
+@testitem "ContinuousUnivariateLogPdf: Intentional errors" tags = [:densities] begin
     dist = ContinuousUnivariateLogPdf((x) -> x)
     @test_throws ErrorException mean(dist)
     @test_throws ErrorException median(dist)
@@ -48,7 +47,7 @@ end
     @test_throws ErrorException precision(dist)
 end
 
-@testitem "DiscreteUnivariateLogPdf: Intentional errors" begin
+@testitem "DiscreteUnivariateLogPdf: Intentional errors" tags = [:densities] begin
     dist = DiscreteUnivariateLogPdf((x) -> x)
     @test_throws ErrorException mean(dist)
     @test_throws ErrorException median(dist)
@@ -60,14 +59,14 @@ end
     @test_throws ErrorException entropy(dist)
     @test_throws ErrorException precision(dist)
 end
-@testitem "ContinuousUnivariateLogPdf: pdf/logpdf" begin
+@testitem "ContinuousUnivariateLogPdf: pdf/logpdf" tags = [:densities] begin
     import DomainSets: FullSpace, HalfLine
 
     d1 = ContinuousUnivariateLogPdf(FullSpace(), (x) -> -x^2)
 
-    f32_points1 = range(Float32(-10.0), Float32(10.0); length=50)
-    f64_points1 = range(-10.0, 10.0; length=50)
-    bf_points1 = range(BigFloat(-10.0), BigFloat(10.0); length=50)
+    f32_points1 = range(Float32(-10.0), Float32(10.0); length = 50)
+    f64_points1 = range(-10.0, 10.0; length = 50)
+    bf_points1 = range(BigFloat(-10.0), BigFloat(10.0); length = 50)
     points1 = vcat(f32_points1, f64_points1, bf_points1)
 
     @test all(map(p -> -p^2 == d1(p), points1))
@@ -79,9 +78,9 @@ end
 
     d2 = ContinuousUnivariateLogPdf(HalfLine(), (x) -> -x^4)
 
-    f32_points2 = range(Float32(0.0), Float32(10.0); length=50)
-    f64_points2 = range(0.0, 10.0; length=50)
-    bf_points2 = range(BigFloat(0.0), BigFloat(10.0); length=50)
+    f32_points2 = range(Float32(0.0), Float32(10.0); length = 50)
+    f64_points2 = range(0.0, 10.0; length = 50)
+    bf_points2 = range(BigFloat(0.0), BigFloat(10.0); length = 50)
     points2 = vcat(f32_points2, f64_points2, bf_points2)
 
     @test all(map(p -> -p^4 == d2(p), points2))
@@ -149,7 +148,7 @@ end
     @test all(map(p -> exp(-p^2) == pdf(d6, [p]), points2))
 end
 
-@testitem "DiscreteUnivariateLogPdf: pdf/logpdf" begin
+@testitem "DiscreteUnivariateLogPdf: pdf/logpdf" tags = [:densities] begin
     import DomainSets: Interval
 
     d1 = DiscreteUnivariateLogPdf(Interval(1, 10), (x) -> 1 / x)
@@ -174,7 +173,7 @@ end
     @test_throws AssertionError pdf(d1, [-1])
 end
 
-@testitem "ContinuousUnivariateLogPdf: test domain in logpdf" begin
+@testitem "ContinuousUnivariateLogPdf: test domain in logpdf" tags = [:densities] begin
     import DomainSets: FullSpace, HalfLine
 
     d1 = ContinuousUnivariateLogPdf(FullSpace(), (x) -> -x^2)
@@ -185,7 +184,7 @@ end
     @test_throws AssertionError logpdf(d2, [1.0, 1.0])
 end
 
-@testitem "DiscreteUnivariateLogPdf: test domain in logpdf" begin
+@testitem "DiscreteUnivariateLogPdf: test domain in logpdf" tags = [:densities] begin
     import DomainSets: Integers, ClosedInterval
 
     d1 = ContinuousUnivariateLogPdf(Integers(), (x) -> 1 / abs(x))
@@ -197,7 +196,7 @@ end
     @test_throws AssertionError logpdf(d2, [5, 1.0])
 end
 
-@testitem "ContinuousUnivariateLogPdf: support" begin
+@testitem "ContinuousUnivariateLogPdf: support" tags = [:densities] begin
     import DomainSets: FullSpace, HalfLine
 
     d1 = ContinuousUnivariateLogPdf(FullSpace(), (x) -> 1.0)
@@ -209,7 +208,7 @@ end
     @test -1.0 ∉ support(d2)
 end
 
-@testitem "DiscreteUnivariateLogPdf: support" begin
+@testitem "DiscreteUnivariateLogPdf: support" tags = [:densities] begin
     import DomainSets: Integers, ClosedInterval
 
     d1 = DiscreteUnivariateLogPdf(Integers(), (x) -> 1.0)
@@ -223,21 +222,21 @@ end
     @test 4.3 ∉ support(d1)
 end
 
-@testitem "ContinuousUnivariateLogPdf: vague" begin
+@testitem "ContinuousUnivariateLogPdf: vague" tags = [:densities] begin
     d = vague(ContinuousUnivariateLogPdf)
 
     @test typeof(d) <: ContinuousUnivariateLogPdf
     @test d(rand()) ≈ 0
 end
 
-@testitem "DiscreteUnivariateLogPdf: vague" begin
+@testitem "DiscreteUnivariateLogPdf: vague" tags = [:densities] begin
     d = vague(DiscreteUnivariateLogPdf)
 
     @test typeof(d) <: DiscreteUnivariateLogPdf
     @test d(rand(Int)) ≈ 0
 end
 
-@testitem "ContinuousUnivariateLogPdf: prod" begin
+@testitem "ContinuousUnivariateLogPdf: prod" tags = [:densities] begin
     import DomainSets: FullSpace, HalfLine
 
     dist = ContinuousUnivariateLogPdf(FullSpace(), (x) -> 2.0 * -x^2)
@@ -283,7 +282,7 @@ end
     @test_throws AssertionError logpdf(prod(GenericProd(), d5, d6), -1.0) # supports are different
 end
 
-@testitem "DiscreteUnivariateLogPdf: prod" begin
+@testitem "DiscreteUnivariateLogPdf: prod" tags = [:densities] begin
     import DomainSets: Integers, ClosedInterval
 
     dist = DiscreteUnivariateLogPdf(Integers(), (x) -> 2.0 * -x^2)
@@ -334,7 +333,7 @@ end
     @test_throws AssertionError logpdf(prod(GenericProd(), d5, d6), -1.2) # supports are different
 end
 
-@testitem "ContinuousUnivariateLogPdf: vectorised-prod" begin
+@testitem "ContinuousUnivariateLogPdf: vectorised-prod" tags = [:densities] begin
     import DomainSets: FullSpace
 
     f = (x) -> 2.0 * -x^2
@@ -368,7 +367,7 @@ end
     end
 end
 
-@testitem "DiscreteUnivariateLogPdf: vectorised-prod" begin
+@testitem "DiscreteUnivariateLogPdf: vectorised-prod" tags = [:densities] begin
     import DomainSets: Integers
 
     f = (x) -> 2.0 * -x^2
@@ -402,7 +401,7 @@ end
     end
 end
 
-@testitem "ContinuousUnivariateLogPdf: convert" begin
+@testitem "ContinuousUnivariateLogPdf: convert" tags = [:densities] begin
     import DomainSets: FullSpace
 
     d = FullSpace()
@@ -415,7 +414,7 @@ end
     @test typeof(c2) <: ContinuousUnivariateLogPdf
 end
 
-@testitem "DiscreteUnivariateLogPdf: convert" begin
+@testitem "DiscreteUnivariateLogPdf: convert" tags = [:densities] begin
     import DomainSets: Integers
 
     d = Integers()
@@ -428,7 +427,7 @@ end
     @test typeof(c2) <: DiscreteUnivariateLogPdf
 end
 
-@testitem "ContinuousMultivariateLogPdf: Constructor" begin
+@testitem "ContinuousMultivariateLogPdf: Constructor" tags = [:densities] begin
     import DomainSets: FullSpace
 
     f = (x) -> -x'x
@@ -445,7 +444,7 @@ end
     @test_throws MethodError ContinuousMultivariateLogPdf(f)
 end
 
-@testitem "ContinuousMultivariateLogPdf: Intentional errors" begin
+@testitem "ContinuousMultivariateLogPdf: Intentional errors" tags = [:densities] begin
     dist = ContinuousMultivariateLogPdf(2, (x) -> -x'x)
     @test_throws ErrorException mean(dist)
     @test_throws ErrorException median(dist)
@@ -458,14 +457,14 @@ end
     @test_throws ErrorException precision(dist)
 end
 
-@testitem "ContinuousMultivariateLogPdf: pdf/logpdf" begin
+@testitem "ContinuousMultivariateLogPdf: pdf/logpdf" tags = [:densities] begin
     import DomainSets: FullSpace, HalfLine
 
     dist = ContinuousMultivariateLogPdf(FullSpace()^2, (x) -> -x'x)
 
-    f32_points1 = range(Float32(-10.0), Float32(10.0); length=5)
-    f64_points1 = range(-10.0, 10.0; length=5)
-    bf_points1 = range(BigFloat(-10.0), BigFloat(10.0); length=5)
+    f32_points1 = range(Float32(-10.0), Float32(10.0); length = 5)
+    f64_points1 = range(-10.0, 10.0; length = 5)
+    bf_points1 = range(BigFloat(-10.0), BigFloat(10.0); length = 5)
 
     points1 = vcat(
         vec(map(collect, Iterators.product(f32_points1, f32_points1))),
@@ -479,9 +478,9 @@ end
 
     d2 = ContinuousMultivariateLogPdf(HalfLine()^2, (x) -> -x'x / 4)
 
-    f32_points2 = range(Float32(0.0), Float32(10.0); length=5)
-    f64_points2 = range(0.0, 10.0; length=5)
-    bf_points2 = range(BigFloat(0.0), BigFloat(10.0); length=5)
+    f32_points2 = range(Float32(0.0), Float32(10.0); length = 5)
+    f64_points2 = range(0.0, 10.0; length = 5)
+    bf_points2 = range(BigFloat(0.0), BigFloat(10.0); length = 5)
 
     points2 = vcat(
         vec(map(collect, Iterators.product(f32_points2, f32_points2))),
@@ -494,7 +493,7 @@ end
     @test all(map(p -> exp(-p'p / 4) == pdf(d2, p), points2))
 end
 
-@testitem "ContinuousMultivariateLogPdf: test domain in logpdf" begin
+@testitem "ContinuousMultivariateLogPdf: test domain in logpdf" tags = [:densities] begin
     import DomainSets: FullSpace, HalfLine
 
     for dim in (2, 3, 4)
@@ -511,7 +510,7 @@ end
     end
 end
 
-@testitem "ContinuousMultivariateLogPdf: vague" begin
+@testitem "ContinuousMultivariateLogPdf: vague" tags = [:densities] begin
     for k in 2:5
         d = vague(ContinuousMultivariateLogPdf, k)
 
@@ -520,7 +519,7 @@ end
     end
 end
 
-@testitem "ContinuousMultivariateLogPdf: prod" begin
+@testitem "ContinuousMultivariateLogPdf: prod" tags = [:densities] begin
     import DomainSets: FullSpace, HalfLine
 
     dist = ContinuousMultivariateLogPdf(FullSpace()^2, (x) -> 2.0 * -x'x)
@@ -568,7 +567,7 @@ end
     @test_throws AssertionError logpdf(prod(GenericProd(), d5, d6), [1.0, -1.0]) # domains are incompatible
 end
 
-@testitem "ContinuousMultivariateLogPdf: vectorised-prod" begin
+@testitem "ContinuousMultivariateLogPdf: vectorised-prod" tags = [:densities] begin
     import DomainSets: FullSpace, HalfLine
 
     f = (x) -> 2.0 * -x'x
@@ -602,7 +601,7 @@ end
     end
 end
 
-@testitem "ContinuousMultivariateLogPdf: convert" begin
+@testitem "ContinuousMultivariateLogPdf: convert" tags = [:densities] begin
     import DomainSets: FullSpace, HalfLine
 
     for k in 2:5
