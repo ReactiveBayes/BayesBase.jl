@@ -49,19 +49,18 @@ dense_A = convert(Matrix, A)
 - The matrix is singular if α - dot(z ./ D, z) = 0 or if any element of D is zero.
 - For best performance, use `ldiv!` for solving linear systems when possible.
 """
-struct ArrowheadMatrix{O,T,Z,P} <: AbstractMatrix{O}
+struct ArrowheadMatrix{O, T, Z, P} <: AbstractMatrix{O}
     α::T
     z::Z
     D::P
 end
-function ArrowheadMatrix(a::T, z::Z, d::D) where {T,Z,D}
+function ArrowheadMatrix(a::T, z::Z, d::D) where {T, Z, D}
     O = promote_type(typeof(a), eltype(z), eltype(d))
-    return ArrowheadMatrix{O,T,Z,D}(a, z, d)
+    return ArrowheadMatrix{O, T, Z, D}(a, z, d)
 end
 
 function Base.getindex(A::ArrowheadMatrix, i::Int, j::Int)
-    @warn "getindex was called on ArrowheadMatrix. This may lead to suboptimal performance. Consider using specialized methods if available." maxlog =
-        1
+    @warn "getindex was called on ArrowheadMatrix. This may lead to suboptimal performance. Consider using specialized methods if available." maxlog = 1
 
     n = length(A.D) + 1
     if i < 1 || i > n || j < 1 || j > n
@@ -134,8 +133,8 @@ function LinearAlgebra.mul!(y, A::ArrowheadMatrix{T}, x::AbstractVector{T}) wher
 end
 
 function linsolve!(
-    y::AbstractVector{T2}, A::ArrowheadMatrix{T}, b::AbstractVector{T2}
-) where {T,T2}
+        y::AbstractVector{T2}, A::ArrowheadMatrix{T}, b::AbstractVector{T2}
+    ) where {T, T2}
     n = length(A.z)
 
     if length(b) != n + 1
@@ -189,8 +188,8 @@ function Base.:\(A::ArrowheadMatrix, b::AbstractVector{T}) where {T}
 end
 
 function LinearAlgebra.ldiv!(
-    x::AbstractVector{T}, A::ArrowheadMatrix, b::AbstractVector{T}
-) where {T}
+        x::AbstractVector{T}, A::ArrowheadMatrix, b::AbstractVector{T}
+    ) where {T}
     return linsolve!(x, A, b)
 end
 
@@ -248,8 +247,8 @@ dense_inv_A = convert(Matrix, A_inv)
 # See Also
 - [`ArrowheadMatrix`](@ref): The original arrowhead matrix structure.
 """
-struct InvArrowheadMatrix{O,T,Z,P} <: AbstractMatrix{O}
-    A::ArrowheadMatrix{O,T,Z,P}
+struct InvArrowheadMatrix{O, T, Z, P} <: AbstractMatrix{O}
+    A::ArrowheadMatrix{O, T, Z, P}
 end
 
 function show(io::IO, ::MIME"text/plain", A_inv::InvArrowheadMatrix)
@@ -317,12 +316,12 @@ function LinearAlgebra.dot(x::AbstractVector, A_inv::InvArrowheadMatrix, y::Abst
 end
 
 function Base.isapprox(
-    A::InvArrowheadMatrix,
-    B::InvArrowheadMatrix;
-    rtol::Real=sqrt(eps()),
-    atol::Real=0,
-    nans::Bool=false,
-    norm::Function=LinearAlgebra.norm,
-)
-    return isapprox(A.A, B.A; rtol=rtol, atol=atol, nans=nans, norm=norm)
+        A::InvArrowheadMatrix,
+        B::InvArrowheadMatrix;
+        rtol::Real = sqrt(eps()),
+        atol::Real = 0,
+        nans::Bool = false,
+        norm::Function = LinearAlgebra.norm,
+    )
+    return isapprox(A.A, B.A; rtol = rtol, atol = atol, nans = nans, norm = norm)
 end

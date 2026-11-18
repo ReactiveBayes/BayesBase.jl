@@ -74,14 +74,14 @@ f_arith(W, b) = (W + W) * b .- (2 .* W) * b
     end
 
     @testset "construction inside compiled code and the call boundary" begin
-        h(M, b) = (W=MatrixWithCachedInverse(M); inv(W) * b + W \ b + logdet(W) * (W * b))
+        h(M, b) = (W = MatrixWithCachedInverse(M); inv(W) * b + W \ b + logdet(W) * (W * b))
         href(S, b) = inv(S) * b + S \ b + logdet(S) * (S * b)
         for T in (Float32, Float64)
             S, S2 = spd(T, 4, 1), spd(T, 4, 2.5)
             b = T.(1:4)
             rS, rS2, rb = Reactant.to_rarray(S),
-            Reactant.to_rarray(S2),
-            Reactant.to_rarray(b)
+                Reactant.to_rarray(S2),
+                Reactant.to_rarray(b)
             ch = @compile h(rS, rb)
             @test Array(ch(rS, rb)) ≈ href(S, b)
             @test Array(ch(rS2, rb)) ≈ href(S2, b)
@@ -91,7 +91,7 @@ f_arith(W, b) = (W + W) * b .- (2 .* W) * b
         b = Float64.(1:4)
         rb = Reactant.to_rarray(b)
         Re, Rp = Reactant.to_rarray(wrapper(S, :empty)),
-        Reactant.to_rarray(wrapper(S, :pair))
+            Reactant.to_rarray(wrapper(S, :pair))
         # compiled on an empty cache: extra host cache entries are ignored
         ce = @compile f_inv(Re, rb)
         @test Array(ce(Rp, rb)) ≈ inv(S) * b

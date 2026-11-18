@@ -52,21 +52,21 @@ code `inv`, `\\`, `logdet`, `*` and broadcasting are supported with the followin
   `inv` returns a new wrapper whose `inverse` holds the input values but is not `===` the input.
 - Symmetry and positive definiteness are not checked on traced input.
 """
-mutable struct MatrixWithCachedInverse{T,M<:AbstractMatrix{T}} <: AbstractMatrix{T}
+mutable struct MatrixWithCachedInverse{T, M <: AbstractMatrix{T}} <: AbstractMatrix{T}
     const storage::M
     const guard::ReentrantLock
     # The cached Cholesky factor is kept as its `factors` matrix and `uplo`, not as a `Cholesky`:
     # Reactant traces a `Union{Nothing,Cholesky{T,M}}` field into a value that violates the field
     # type, which crashes type inference on Julia 1.10. See `cached_factor`.
-    factors::Union{Nothing,M}
+    factors::Union{Nothing, M}
     uplo::Char
-    inverse::Union{Nothing,MatrixWithCachedInverse{T,M}}
+    inverse::Union{Nothing, MatrixWithCachedInverse{T, M}}
 
     # Internal: wraps an already owned matrix without copying it, with empty caches.
-    function MatrixWithCachedInverse{T,M}(
-        m::M, guard::ReentrantLock
-    ) where {T,M<:AbstractMatrix{T}}
-        return new{T,M}(m, guard, nothing, 'U', nothing)
+    function MatrixWithCachedInverse{T, M}(
+            m::M, guard::ReentrantLock
+        ) where {T, M <: AbstractMatrix{T}}
+        return new{T, M}(m, guard, nothing, 'U', nothing)
     end
 end
 
@@ -80,18 +80,18 @@ function MatrixWithCachedInverse(m::AbstractMatrix{T}) where {T}
     LinearAlgebra.checksquare(m)
     _checksymmetric(m)
     c = _materialize(m)
-    return MatrixWithCachedInverse{T,typeof(c)}(c, ReentrantLock())
+    return MatrixWithCachedInverse{T, typeof(c)}(c, ReentrantLock())
 end
 
 # The owned storage: a plain copy, or both triangles of a `Symmetric`/`Hermitian` view
 # written into a dense matrix of the parent's type.
 _materialize(m) = copy(m)
 _materialize(m::MatrixWithCachedInverse) = copy(parent(m))
-_materialize(m::Union{Symmetric,Hermitian}) = copyto!(similar(parent(m)), m)
+_materialize(m::Union{Symmetric, Hermitian}) = copyto!(similar(parent(m)), m)
 
 function _checksymmetric(m)
     return issymmetric(m) ||
-           throw(ArgumentError("MatrixWithCachedInverse requires a symmetric matrix"))
+        throw(ArgumentError("MatrixWithCachedInverse requires a symmetric matrix"))
 end
 
 Base.parent(A::MatrixWithCachedInverse) = A.storage
@@ -99,9 +99,9 @@ Base.size(A::MatrixWithCachedInverse) = size(A.storage)
 Base.@propagate_inbounds Base.getindex(A::MatrixWithCachedInverse, i::Int, j::Int) =
     A.storage[i, j]
 Base.Matrix(A::MatrixWithCachedInverse) = Matrix(parent(A))
-function Base.copy(A::MatrixWithCachedInverse{T,M}) where {T,M}
+function Base.copy(A::MatrixWithCachedInverse{T, M}) where {T, M}
     Base.@lock A.guard begin
-        B = MatrixWithCachedInverse{T,M}(copy(parent(A)), ReentrantLock())
+        B = MatrixWithCachedInverse{T, M}(copy(parent(A)), ReentrantLock())
         # The cached factor is never mutated by the wrapper.
         B.factors, B.uplo = A.factors, A.uplo
         # The inverse must be recomputed so its reciprocal link points to B, not A.
@@ -116,55 +116,55 @@ Base.broadcastable(A::MatrixWithCachedInverse) = parent(A) # `A + B`, `2 .* A`, 
 
 # Keep products on the parent's optimized multiplication paths in either operand position.
 function LinearAlgebra.mul!(
-    y::AbstractVector, A::MatrixWithCachedInverse, x::AbstractVector
-)
+        y::AbstractVector, A::MatrixWithCachedInverse, x::AbstractVector
+    )
     return mul!(y, parent(A), x)
 end
 function LinearAlgebra.mul!(
-    C::AbstractMatrix, A::MatrixWithCachedInverse, B::AbstractMatrix
-)
+        C::AbstractMatrix, A::MatrixWithCachedInverse, B::AbstractMatrix
+    )
     return mul!(C, parent(A), B)
 end
 function LinearAlgebra.mul!(
-    C::AbstractMatrix, A::AbstractMatrix, B::MatrixWithCachedInverse
-)
+        C::AbstractMatrix, A::AbstractMatrix, B::MatrixWithCachedInverse
+    )
     return mul!(C, A, parent(B))
 end
 function LinearAlgebra.mul!(
-    C::AbstractMatrix, A::MatrixWithCachedInverse, B::MatrixWithCachedInverse
-)
+        C::AbstractMatrix, A::MatrixWithCachedInverse, B::MatrixWithCachedInverse
+    )
     return mul!(C, parent(A), parent(B))
 end
 
 function LinearAlgebra.mul!(
-    y::AbstractVector, A::MatrixWithCachedInverse, x::AbstractVector, α::Number, β::Number
-)
+        y::AbstractVector, A::MatrixWithCachedInverse, x::AbstractVector, α::Number, β::Number
+    )
     return mul!(y, parent(A), x, α, β)
 end
 function LinearAlgebra.mul!(
-    C::AbstractMatrix, A::MatrixWithCachedInverse, B::AbstractMatrix, α::Number, β::Number
-)
+        C::AbstractMatrix, A::MatrixWithCachedInverse, B::AbstractMatrix, α::Number, β::Number
+    )
     return mul!(C, parent(A), B, α, β)
 end
 function LinearAlgebra.mul!(
-    C::AbstractMatrix, A::AbstractMatrix, B::MatrixWithCachedInverse, α::Number, β::Number
-)
+        C::AbstractMatrix, A::AbstractMatrix, B::MatrixWithCachedInverse, α::Number, β::Number
+    )
     return mul!(C, A, parent(B), α, β)
 end
 function LinearAlgebra.mul!(
-    C::AbstractMatrix,
-    A::MatrixWithCachedInverse,
-    B::MatrixWithCachedInverse,
-    α::Number,
-    β::Number,
-)
+        C::AbstractMatrix,
+        A::MatrixWithCachedInverse,
+        B::MatrixWithCachedInverse,
+        α::Number,
+        β::Number,
+    )
     return mul!(C, parent(A), parent(B), α, β)
 end
 
 # An independent snapshot with empty caches (same-type `convert` returns `A` itself).
 function Base.AbstractMatrix{T}(A::MatrixWithCachedInverse) where {T}
     c = AbstractMatrix{T}(parent(A))
-    return MatrixWithCachedInverse{T,typeof(c)}(c, ReentrantLock())
+    return MatrixWithCachedInverse{T, typeof(c)}(c, ReentrantLock())
 end
 
 # Returns the cached factor when it is already set; otherwise computes it as
@@ -172,12 +172,12 @@ end
 # never mutates `storage`, only a successful result is published, and the whole step runs under
 # `A.guard` so concurrent first requests share one result.
 function cached_cholesky_or_compute(
-    factorize::F, A::MatrixWithCachedInverse{T,M}
-) where {F,T,M}
-    Base.@lock A.guard begin
+        factorize::F, A::MatrixWithCachedInverse{T, M}
+    ) where {F, T, M}
+    return Base.@lock A.guard begin
         C = cached_factor(A)
         if C === nothing
-            C = factorize(parent(A))::Cholesky{T,M}
+            C = factorize(parent(A))::Cholesky{T, M}
             A.factors, A.uplo = C.factors, C.uplo
         end
         C
@@ -190,11 +190,11 @@ end
 # Returns `A.inverse` when it is already set; otherwise computes the dense `invert(A)`, wraps it
 # in a new `MatrixWithCachedInverse` sharing `A.guard`, links the pair both ways and returns the
 # wrapper. The reverse link is set before the wrapper is published, under `A.guard`.
-function cached_inverse_or_compute(invert::F, A::MatrixWithCachedInverse{T,M}) where {F,T,M}
-    Base.@lock A.guard begin
+function cached_inverse_or_compute(invert::F, A::MatrixWithCachedInverse{T, M}) where {F, T, M}
+    return Base.@lock A.guard begin
         B = A.inverse
         if B === nothing
-            B = MatrixWithCachedInverse{T,M}(invert(A)::M, A.guard)
+            B = MatrixWithCachedInverse{T, M}(invert(A)::M, A.guard)
             B.inverse = A # the reverse link is set before `B` is published
             A.inverse = B
         end

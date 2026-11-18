@@ -1,52 +1,39 @@
-using Aqua, Hwloc, ReTestItems, BayesBase
+using TestItemRunner, Test, BayesBase
 
-if get(ENV, "RUN_AQUA", "true") == "true"
-    # `ambiguities = false` - there are quite some ambiguities, but these should be normal and should not be encountered under normal circumstances
-    # `piracy = false` - we extend/add some of the methods to the objects defined in the Distributions.jl
-    Aqua.test_all(
-        BayesBase;
-        ambiguities=false,
-        piracies=false,
-        deps_compat=(; check_extras=false, check_weakdeps=true),
-    )
-end
+# `make test test_args="..."` selects test items: `tag:<tag>` by tag, `name:<text>` by name, and
+# anything else by file path (`densities` for `test/densities/*_tests.jl`). Kinds combine with
+# "and", entries of one kind with "or". Items tagged `:slow` run only with `TEST_ALL=true`.
 
-nthreads, ncores = Hwloc.num_virtual_cores(), Hwloc.num_physical_cores()
-nthreads, ncores = max(nthreads, 1), max(ncores, 1)
-nworker_threads = Int(nthreads / ncores)
-memory_threshold = 1.0
+const TEST_ALL = get(ENV, "TEST_ALL", "false") == "true"
 
-pkg_root = dirname(dirname(pathof(BayesBase)))
-test_root = joinpath(pkg_root, "test")
+const SELECTED_PATHS = String[]
+const SELECTED_NAMES = String[]
+const SELECTED_TAGS = Symbol[]
 
-if isempty(ARGS)
-    runtests(
-        BayesBase;
-        nworkers=ncores,
-        nworker_threads=nworker_threads,
-        memory_threshold=memory_threshold,
-    )
-else
-    for arg in ARGS
-        # Translate colon syntax (e.g., rules:normal_mean_variance → rules/normal_mean_variance)
-        candidate = join(split(arg, ":"), "/")
-
-        # Build possible test paths relative to the package test directory
-        paths = [joinpath(test_root, candidate), joinpath(test_root, candidate * ".jl")]
-
-        path = findfirst(ispath, paths)
-
-        if path !== nothing
-            selected_path = paths[path]
-            @info "Running selective tests from $selected_path"
-            runtests(
-                selected_path;
-                nworkers=ncores,
-                nworker_threads=nworker_threads,
-                memory_threshold=memory_threshold,
-            )
-        else
-            @warn "Test target not found: $arg"
-        end
+for arg in ARGS
+    if startswith(arg, "tag:")
+        push!(SELECTED_TAGS, Symbol(arg[(length("tag:") + 1):end]))
+    elseif startswith(arg, "name:")
+        push!(SELECTED_NAMES, arg[(length("name:") + 1):end])
+    else
+        push!(SELECTED_PATHS, join(split(arg, ":"), "/"))
     end
 end
+
+function is_selected(ti)
+    isempty(SELECTED_PATHS) ||
+        any(p -> occursin(p, ti.filename), SELECTED_PATHS) ||
+        return false
+    isempty(SELECTED_NAMES) ||
+        any(n -> occursin(n, ti.name), SELECTED_NAMES) ||
+        return false
+    isempty(SELECTED_TAGS) ||
+        any(t -> t in ti.tags, SELECTED_TAGS) ||
+        return false
+    if !TEST_ALL && (:slow in ti.tags) && !(:slow in SELECTED_TAGS)
+        return false
+    end
+    return true
+end
+
+@run_package_tests(filter = is_selected, verbose = true)
