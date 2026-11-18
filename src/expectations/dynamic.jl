@@ -1,7 +1,7 @@
 """
     ExpectationBackendRegistry()
 
-Backends registered for automatic choice by an [`ExpectationDynamicRouter`](@ref), with priorities.
+The backends, each with a priority, among which an [`ExpectationDynamicRouter`](@ref) chooses.
 """
 struct ExpectationBackendRegistry
     backends::Vector{Any}
@@ -37,10 +37,11 @@ end
 """
     expectation_backend_priority(backend; registry = the global registry) -> Union{Int, Nothing}
 
-The priority `backend` was registered with, `nothing` when it is not registered. A negative
-priority marks a last resort, a backend chosen only where no other applies; a report of an
-inference may say where one was. A frozen [`ExpectationFirstOf`](@ref) keeps the order the
-priorities gave, not the priorities, so this asks the registry.
+The priority `backend` was registered with, or `nothing` if it is not registered. A negative
+priority marks a last resort: a backend meant for the cases where no other applies. An
+inference report can use it to say where such a backend was used. An [`ExpectationFirstOf`](@ref)
+frozen from a dynamic router keeps the order that the priorities gave but not the priorities
+themselves, so this function looks them up in the registry.
 """
 function expectation_backend_priority(backend; registry::ExpectationBackendRegistry = EXPECTATION_BACKEND_REGISTRY)
     i = findfirst(isequal(backend), registry.backends)
@@ -50,13 +51,15 @@ end
 """
     ExpectationDynamicRouter(registry = the global registry)
 
-A router that chooses among registered backends at run time. Ranking: exact for the pair
-first, then not stochastic, then higher priority, then the name of the backend's type. Never
-the order of registration, so the result does not depend on which package was loaded first.
+A router that chooses among the registered backends at run time. Among the backends that
+support the pair, it prefers one that is exact for the pair, then one that is not stochastic,
+then one with a higher priority, and finally orders by the name of the backend's type. The order of
+registration is not used, so the choice does not depend on the order in which packages were
+loaded.
 
-Type-unstable by design, and opt-in: never a default and never used inside library code.
-`ExpectationFirstOf(ExpectationDynamicRouter())` freezes the current choice into a type-stable
-router.
+The router is type-unstable. It is opt-in: it is never a default, and library code does not use
+it. `ExpectationFirstOf(ExpectationDynamicRouter())` freezes the current choice into a
+type-stable router.
 """
 struct ExpectationDynamicRouter{R}
     registry::R
@@ -99,8 +102,9 @@ prepare_expectation(router::ExpectationDynamicRouter, q) = prepare_expectation(E
 """
     ExpectationFirstOf(router::ExpectationDynamicRouter; prefer = ExpectationExact(), exclude = ())
 
-Freeze the backends registered now into a type-stable [`ExpectationFirstOf`](@ref): ordered by not
-stochastic first, then priority, then name, and preferring exact backends pair by pair.
+Freeze the backends registered now into a type-stable [`ExpectationFirstOf`](@ref). The backends
+are ordered with the non-stochastic ones first, then by decreasing priority, then by name. With
+the default `prefer`, an exact backend is chosen for a pair when there is one.
 """
 function ExpectationFirstOf(router::ExpectationDynamicRouter; prefer = ExpectationExact(), exclude = ())
     registry = router.registry

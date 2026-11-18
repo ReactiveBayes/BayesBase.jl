@@ -25,9 +25,9 @@ struct ExpectationStochastic <: ExpectationLabel end
     has_expectation_label(backend, F::Type, Q::Type, label)
     has_expectation_label(backend, f, q, label)
 
-Whether `backend` has `label`: for every pair it supports (the first form, `false` by
-default), or for one pair. The pair forms default to the first one; the instance form is
-`false` when the pair is not supported.
+Whether `backend` has `label`. The first form asks about every pair the backend supports and is
+`false` by default. The other two forms ask about one pair. The type form falls back to the
+first form, and the instance form is also `false` when the backend does not support the pair.
 """
 has_expectation_label(backend, ::ExpectationLabel) = false
 function has_expectation_label(backend, ::Type{F}, ::Type{Q}, label::ExpectationLabel) where {F, Q}
@@ -48,9 +48,9 @@ is_expectation_stochastic(backend, f, q) = has_expectation_label(backend, f, q, 
     combine_expectation_label(label, a::Bool, b::Bool)
 
 Whether a computation made of two parts has `label`, given whether each part has it.
-`ExpectationExact` needs both parts to be exact, stochastic either part to be stochastic. A label
-defined elsewhere is combined conservatively, like `ExpectationExact`, unless its owner adds a
-method.
+The computation is exact if both parts are exact, and stochastic if either part is stochastic. A
+label defined in another package is combined like `ExpectationExact`, which is the conservative
+choice, unless that package adds a method.
 """
 combine_expectation_label(::ExpectationLabel, a::Bool, b::Bool) = a & b
 combine_expectation_label(::ExpectationStochastic, a::Bool, b::Bool) = a | b

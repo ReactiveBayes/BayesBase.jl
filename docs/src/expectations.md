@@ -1,13 +1,23 @@
 # [Expectations](@id expectations)
 
-BayesBase defines a protocol for one question that inference algorithms ask over and over:
-what is the expectation ``\mathbb{E}_q[f]`` of a function `f` under a distribution `q`?
-Backends answer it, and they are defined in other packages: exact closed forms, quadrature,
-cubature, sampling. Algorithms only ever call the protocol, so a new backend improves every
-algorithm that uses it.
+Inference algorithms often need the expectation ``\mathbb{E}_q[f]`` of a function `f` under a
+distribution `q`. BayesBase defines a protocol for computing it,
+[`BayesBase.expectation`](@ref)`(backend, f, q)`, where the `backend` argument selects the
+method: a closed form, a quadrature rule or a sampler, for example. Backends are defined in
+other packages, such as
+[ExpectationApproximations.jl](https://github.com/ReactiveBayes/ExpectationApproximations.jl).
+An algorithm written against the protocol works with every backend that supports its
+distributions, and the user of the algorithm chooses the method.
 
-None of these names is exported. They are public and used qualified, as
-`BayesBase.expectation`, so they never clash with names exported by other packages.
+The design is similar to
+[DifferentiationInterface.jl](https://github.com/JuliaDiff/DifferentiationInterface.jl), which
+has a `backend` argument that selects the differentiation package and `prepare_*` functions
+whose result is reused by later calls. Here, [`BayesBase.prepare_expectation`](@ref)`(backend, q)`
+does the work that depends only on `q`, such as computing quadrature nodes and weights, and its
+result is reused for many integrands.
+
+The names of the protocol are public but not exported. Call them qualified, as
+`BayesBase.expectation`.
 
 ```julia
 using BayesBase, Distributions
@@ -21,17 +31,21 @@ BayesBase.expectation(prepared, x -> x^2)             # many integrands, nodes c
 
 ## Computing expectations
 
-A backend implements one of two things for the distributions it supports.
+`expectation(backend, f, q)` returns the expectation, or throws a
+[`BayesBase.UnsupportedExpectationError`](@ref) when `backend` cannot compute it. For several
+integrands under the same `q`, call `prepare_expectation(backend, q)` once and then
+`expectation(prepared, f)` for each integrand.
 
-- **A closed form**: a method of [`BayesBase.expectation`](@ref) for specific types of `f`
-  and `q`, such as `expectation(::MyBackend, ::typeof(log), q::Gamma)`.
-- **A preparation**: a method of [`BayesBase.prepare_expectation`](@ref) for specific types
-  of `q`. It returns an object with its own `expectation(prepared, f)`, which works for any
-  integrand, including integrands whose values are dual numbers. Numerical backends return a
-  [`BayesBase.ExpectationPointSet`](@ref), a weighted sum over points.
+A backend implements one of two things for the distributions it supports. A closed form is a
+method of `expectation` for specific types of `f` and `q`, such as
+`expectation(::MyBackend, ::typeof(log), q::Gamma)`. A preparation is a method of
+`prepare_expectation` for specific types of `q`. It returns an object with its own method
+`expectation(prepared, f)`, which works for any integrand, including integrands whose values are
+dual numbers. Most numerical backends return a [`BayesBase.ExpectationPointSet`](@ref), a
+weighted sum over points.
 
-Backends define methods for specific families of distributions only, never for all `q`.
-Products of distributions and the routers below rely on that.
+Backends define these methods for specific families of distributions, not for all `q`.
+Products of distributions and routers rely on this.
 
 ```@docs
 BayesBase.expectation
@@ -40,23 +54,25 @@ BayesBase.PreparedExpectation
 BayesBase.UnsupportedExpectationError
 ```
 
-A closed form of `E_q[log p(x)]`, the expectation of a log-density, is found by dispatch on the
-integrand `Base.Fix1(logpdf, p)`, Julia's own callable for `x -> logpdf(p, x)`:
-
-```julia
-BayesBase.supports_expectation(::MyClosedForms, ::Type{<:Base.Fix1{typeof(logpdf), <:Normal}}, ::Type{<:Normal}) = true
-BayesBase.expectation(::MyClosedForms, f::Base.Fix1{typeof(logpdf), <:Normal}, q::Normal) = …
-```
-
 ## What a backend supports
 
-[`BayesBase.supports_expectation`](@ref) answers on types, so that the answer is known to the
-compiler. Backend owners add methods for the type-level form. The integrand type `Any` means "every
-integrand", which is what a numerical method declares:
+A backend declares the pairs it supports with methods of
+[`BayesBase.supports_expectation`](@ref). These methods take the types of `f` and `q`, so the
+compiler knows the answer. The integrand type `Any` means every integrand, which is what a
+numerical method declares:
 
 ```julia
 BayesBase.supports_expectation(::MyQuadrature, ::Type, ::Type{<:Normal}) = true        # any f
 BayesBase.supports_expectation(::MyClosedForms, ::Type{typeof(log)}, ::Type{<:Gamma}) = true
+```
+
+For the expectation of a log-density, `E_q[log p(x)]`, the integrand is
+`Base.Fix1(logpdf, p)`, which is Julia's callable for `x -> logpdf(p, x)`. A backend with a
+closed form declares and implements it by dispatch on that type:
+
+```julia
+BayesBase.supports_expectation(::MyClosedForms, ::Type{<:Base.Fix1{typeof(logpdf), <:Normal}}, ::Type{<:Normal}) = true
+BayesBase.expectation(::MyClosedForms, f::Base.Fix1{typeof(logpdf), <:Normal}, q::Normal) = …
 ```
 
 ```@docs
@@ -66,9 +82,11 @@ BayesBase.which_expectation_backend
 
 ## Labels
 
-A label is a property of a computation that a caller can rely on. A backend declares a label
-for every pair it supports, or for some pairs only. Labels are conservative: a label is
-declared only where it is guaranteed.
+A label is a property of a computation that a caller can rely on, such as
+[`BayesBase.ExpectationExact`](@ref) for a result that is exact up to rounding. A backend
+declares a label for all the pairs it supports or for some of them, and only where the property
+is guaranteed. Below, every closed form is exact, and the quadrature rule is exact for
+categorical distributions:
 
 ```julia
 BayesBase.has_expectation_label(::MyClosedForms, ::BayesBase.ExpectationExact) = true
@@ -87,10 +105,10 @@ BayesBase.combine_expectation_label
 
 ## Random number generators
 
-A stochastic backend holds its random number generator. The caller never passes one to
-`expectation`. Instead, whoever configures the computation, such as an inference engine,
-fills it in from above with [`BayesBase.with_expectation_rng`](@ref), and an RNG set by the user is
-never overwritten.
+A stochastic backend stores its own random number generator, and `expectation` does not take
+one. The code that sets up the computation, such as an inference engine, gives the backend a
+generator with [`BayesBase.with_expectation_rng`](@ref). A generator that the user has already
+set is never replaced.
 
 ```@docs
 BayesBase.with_expectation_rng
@@ -99,13 +117,13 @@ BayesBase.get_expectation_rng
 
 ## Products of distributions
 
-The expectation over several independent variables of different kinds, such as a categorical,
-a multivariate Gaussian and a point mass, is an expectation under a
-[`FactorizedJoint`](@ref). The integrand receives a tuple with one value per component.
-A backend supports a product when it supports every component for any integrand. The product
-is computed as a product rule over the point sets of the components, and labels are combined
-with [`BayesBase.combine_expectation_label`](@ref): exact only if every part is exact, stochastic if
-any part is stochastic.
+An expectation over several independent variables, which can be of different kinds (for
+example a categorical, a multivariate Gaussian and a point mass), is an expectation under a
+[`FactorizedJoint`](@ref). The integrand receives a tuple with one value per component. A
+backend supports a product when it supports every component for any integrand. The expectation
+is computed with a product rule over the point sets of the components. Labels are combined with
+[`BayesBase.combine_expectation_label`](@ref): the product is exact only if every component is
+exact, and stochastic if any component is stochastic.
 
 ```@docs
 BayesBase.ExpectationPointSet
@@ -114,12 +132,12 @@ BayesBase.ExpectationProductPointSet
 
 ## Routers
 
-A router is itself a backend that passes each expectation on to one of several backends.
-[`BayesBase.ExpectationFirstOf`](@ref) decides on types alone, so the compiler makes the choice and
-nothing is decided at run time. [`BayesBase.ExpectationDynamicRouter`](@ref) chooses at run time
-among the backends that packages have registered, and is meant for interactive use.
-`ExpectationFirstOf(ExpectationDynamicRouter())` freezes its current choice into an
-`ExpectationFirstOf`.
+A router is a backend that passes each expectation on to one of several other backends.
+[`BayesBase.ExpectationFirstOf`](@ref) chooses from the types of `f` and `q` alone, so the
+choice is made at compile time. [`BayesBase.ExpectationDynamicRouter`](@ref) chooses at run
+time among the backends that packages have registered, and is meant for interactive use.
+`ExpectationFirstOf(ExpectationDynamicRouter())` turns the current choice of the dynamic router
+into an `ExpectationFirstOf`.
 
 ```@docs
 BayesBase.ExpectationFirstOf

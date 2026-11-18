@@ -1,10 +1,11 @@
 """
     ExpectationFirstOf(backends...; prefer = (), exclude = ())
 
-A router, itself a backend: each expectation goes to the first of `backends` that supports the
-pair `(f, q)` and has none of the labels in `exclude`. With `prefer`, the first backend that
-also has all the labels in `prefer` wins, when there is one. The choice depends on types only,
-so inference makes it and nothing is decided at run time.
+A router: a backend that passes each expectation to the first of `backends` that supports the
+pair `(f, q)` and has none of the labels in `exclude`. If `prefer` is given, the first such
+backend that also has all the labels in `prefer` is chosen, and if there is none, the first such
+backend. `prefer` and `exclude` are a label or a tuple of labels. The choice depends only on the
+types of `f` and `q`, so type inference makes it and nothing is decided at run time.
 
 A product of distributions ([`FactorizedJoint`](@ref)) is routed
 component by component.

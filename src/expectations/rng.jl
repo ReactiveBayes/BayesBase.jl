@@ -1,9 +1,9 @@
 """
     with_expectation_rng(backend, rng)
 
-`backend` with `rng` filled in wherever it has no random number generator yet. A backend that
-already has one keeps it, so an RNG set by the user is never overwritten from above. Composite
-backends fill their parts. The default returns `backend` unchanged.
+`backend` with `rng` as its random number generator if it has none yet. A backend that already
+has a generator keeps it, so a generator set by the user is never replaced. Composite backends,
+such as routers, pass `rng` on to their parts. The default returns `backend` unchanged.
 """
 with_expectation_rng(backend, rng) = backend
 

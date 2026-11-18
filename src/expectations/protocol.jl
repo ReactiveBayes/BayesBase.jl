@@ -10,10 +10,11 @@
 
 The expectation `E_q[f]` of the integrand `f` under the distribution `q`, computed by `backend`.
 
-A backend implements either a closed form, a method of `expectation` for specific types of
-`f` and `q`, or a preparation, a method of [`prepare_expectation`](@ref) for specific types of
-`q` that returns an object with its own `expectation(prepared, f)`. The fallback goes through
-the preparation.
+A backend with a closed form adds a method for the specific types of `f` and `q` it covers.
+A numerical backend adds a method of [`prepare_expectation`](@ref) for the types of `q` it
+supports instead, and the fallback method computes
+`expectation(prepare_expectation(backend, q), f)`.
+When the backend has neither, the fallback throws an [`UnsupportedExpectationError`](@ref).
 
     expectation(prepared, f)
 
@@ -24,9 +25,9 @@ function expectation end
 """
     prepare_expectation(backend, q)
 
-Prepare the expectations of many integrands under `q`: nodes, weights and other work that does
-not depend on the integrand are done once. The result is used as `expectation(prepared, f)`,
-for any `f`, including integrands whose values are dual numbers.
+Do the work for expectations under `q` that does not depend on the integrand, such as
+computing nodes and weights, and return an object `prepared`. Then `expectation(prepared, f)`
+computes the expectation of any `f`, including integrands whose values are dual numbers.
 
 The default returns a [`PreparedExpectation`](@ref), which forwards every call to the backend.
 """
@@ -83,8 +84,8 @@ end
     supports_expectation(backend, f, q)
 
 Whether `backend` computes expectations of integrands of type `F` under distributions of type
-`Q`. Backend owners add methods for the type-level form; it is `false` by default. `F = Any`
-asks whether every integrand is supported, which is what a numerical method declares with
+`Q`. Backends add methods to the type form, which is `false` by default. `F = Any` asks whether
+every integrand is supported. A numerical method supports every integrand and declares it with
 `supports_expectation(::MyBackend, ::Type, ::Type{<:MyFamily}) = true`.
 """
 supports_expectation(backend, ::Type, ::Type) = false
@@ -94,8 +95,9 @@ supports_expectation(backend, f, q) = supports_expectation(backend, typeof(f), t
     which_expectation_backend(backend, F::Type, Q::Type)
     which_expectation_backend(backend, f, q)
 
-The backend that computes the expectation, or `nothing`. A router returns its choice, any
-other backend itself when it supports the pair.
+The backend that computes the expectation, or `nothing` if there is none. A router returns the
+backend it chooses, or itself for a product of distributions. Any other backend returns itself
+if it supports the pair.
 """
 function which_expectation_backend(backend, ::Type{F}, ::Type{Q}) where {F, Q}
     return supports_expectation(backend, F, Q) ? backend : nothing

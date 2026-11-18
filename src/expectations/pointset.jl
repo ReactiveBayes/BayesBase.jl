@@ -1,13 +1,13 @@
 """
     ExpectationPointSet(points, weights)
 
-A prepared expectation that is a weighted sum, `Σᵢ wᵢ f(xᵢ)`: quadrature, cubature, sigma
-points, exact sums over a finite support, or samples with equal weights. `points` and `weights`
-are anything indexable from one, tuples included. Point sets are the parts of which product
-rules over a [`FactorizedJoint`](@ref) are made.
+A prepared expectation that is a weighted sum, `Σᵢ wᵢ f(xᵢ)`. Quadrature and cubature rules,
+sigma points, exact sums over a finite support and samples with equal weights all have this
+form. `points` and `weights` can be any collections indexed from one, including tuples. Product
+rules over a [`FactorizedJoint`](@ref) are built from the point sets of the components.
 
-The sum starts from its first term, so its type follows the integrand: dual numbers pass
-through without the point set knowing about them.
+The sum starts from its first term, so its type follows the values of the integrand. For
+example, an integrand that returns dual numbers needs no special handling.
 """
 struct ExpectationPointSet{P, W}
     points::P
