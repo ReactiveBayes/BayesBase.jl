@@ -314,7 +314,13 @@ function Base.convert(::Type{CountingReal{T}}, v::CountingReal{R}) where {T<:Rea
     return CountingReal{T}(convert(T, value(v)), infinities(v))
 end
 
-Base.float(a::CountingReal{T}) where {T} = isfinite(a) ? value(a) : convert(T, Inf)
+function Base.float(a::CountingReal{T}) where {T}
+    n = infinities(a)
+    # With no counted infinities the value itself (possibly `±Inf` or `NaN`) is the answer,
+    # otherwise the sign of the infinities counter determines the sign of the result
+    iszero(n) && return value(a)
+    return n > 0 ? convert(T, Inf) : -convert(T, Inf)
+end
 Base.zero(::Type{CountingReal{T}}) where {T<:Real} = CountingReal(zero(T))
 
 function Base.promote_rule(::Type{CountingReal{T1}}, ::Type{T2}) where {T1<:Real,T2<:Real}
