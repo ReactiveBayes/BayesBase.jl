@@ -106,6 +106,8 @@ include("algebra/matrixwithcahcedinverse.jl")
 @compat public has_expectation_label, is_expectation_exact, is_expectation_stochastic
 @compat public ExpectationPointSet, ExpectationProductPointSet, ExpectationFirstOf
 @compat public ExpectationDynamicRouter, ExpectationBackendRegistry, register_expectation_backend!, expectation_backend_priority
+@compat public expectation_gradient, supports_expectation_gradient, ExpectationScoreProduct, expectation_score
+@compat public @supports_expectation, @supports_expectation_gradient
 
 include("expectations/protocol.jl")
 include("expectations/labels.jl")
@@ -114,5 +116,7 @@ include("expectations/pointset.jl")
 include("expectations/products.jl")
 include("expectations/firstof.jl")
 include("expectations/dynamic.jl")
+include("expectations/gradient.jl")
+include("expectations/macros.jl")
 
 end

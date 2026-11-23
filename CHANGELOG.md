@@ -23,6 +23,14 @@ To be released as 1.7.0.
   "Expectations" page of the documentation.
 - `expectation_backend_priority(backend; registry)` returns the priority a backend was registered
   with, or `nothing` if it is not registered. A negative priority marks a last resort.
+- Gradients of expectations with respect to the parameters of the distribution,
+  `expectation_gradient(backend, f, q)`, with `supports_expectation_gradient`. A gradient is the
+  expectation of the integrand `ExpectationScoreProduct(f, q)`, `f` times the score
+  `expectation_score(q, x)`, so routers, labels, preparations and products serve gradients too.
+  BayesBase has the scores of `Normal`, `LogNormal`, `Gamma`, `Exponential`, `Beta` and products of
+  them.
+- `@supports_expectation` and `@supports_expectation_gradient` define a closed form and declare
+  its support in one step. They are public and not exported.
 - Compat.jl is a new dependency, for declaring public names on Julia 1.10.
 
 ### Fixed

@@ -75,9 +75,78 @@ BayesBase.supports_expectation(::MyClosedForms, ::Type{<:Base.Fix1{typeof(logpdf
 BayesBase.expectation(::MyClosedForms, f::Base.Fix1{typeof(logpdf), <:Normal}, q::Normal) = …
 ```
 
+A backend with many closed forms writes each one together with its declaration through
+[`BayesBase.@supports_expectation`](@ref). The macro defines the method and the method of
+`supports_expectation` for the same argument types, so a closed form cannot be added without
+being declared:
+
+```julia
+import BayesBase: @supports_expectation
+
+@supports_expectation function BayesBase.expectation(::MyClosedForms, ::typeof(log), q::Gamma)
+    α, θ = params(q)
+    return digamma(α) + log(θ)
+end
+```
+
+Support that depends on more than the types of one method is still declared with a method of
+`supports_expectation`, written out.
+
 ```@docs
 BayesBase.supports_expectation
 BayesBase.which_expectation_backend
+BayesBase.@supports_expectation
+```
+
+## Gradients of expectations
+
+[`BayesBase.expectation_gradient`](@ref)`(backend, f, q)` is the gradient of
+``\mathbb{E}_{q_\theta}[f]`` with respect to the parameters ``\theta`` of `q`. Natural-gradient
+and score-function methods, for example, need it. The parametrization is the one the type of `q`
+defines: `params(q)` for a distribution of Distributions.jl, so `(μ, σ)` for a `Normal`, and the
+natural parameters for an `ExponentialFamilyDistribution` of ExponentialFamily.jl.
+
+The gradient is itself an expectation. When `f` and the support of `q` do not depend on
+``\theta``,
+
+```math
+\nabla_\theta \mathbb{E}_{q_\theta}[f] = \mathbb{E}_{q}\left[f \, \nabla_\theta \log q\right],
+```
+
+so `expectation_gradient(backend, f, q)` computes the expectation of the integrand
+[`BayesBase.ExpectationScoreProduct`](@ref)`(f, q)`, which is `x -> f(x) * expectation_score(q, x)`.
+Everything above therefore applies to gradients unchanged:
+
+- A backend with a closed form for a gradient defines a method of `expectation` for the type of
+  that integrand, most simply with [`BayesBase.@supports_expectation_gradient`](@ref), and declares
+  its support the same way.
+- A numerical backend that supports every integrand under `q` computes the gradient as the sum
+  of `f(x) * expectation_score(q, x)` over its points. It needs
+  [`BayesBase.expectation_score`](@ref) for the type of `q`, and the call throws an
+  `ArgumentError` without it. BayesBase has the score of the common univariate families.
+- A router chooses a closed form for the gradient when one of its backends has it, and a
+  numerical backend otherwise. Labels, preparations and products work as for expectations, and
+  with a preparation for `q` the gradient is `expectation(prepared, ExpectationScoreProduct(f, q))`.
+
+```julia
+import BayesBase: @supports_expectation_gradient
+
+@supports_expectation_gradient function BayesBase.expectation_gradient(::MyClosedForms, ::typeof(log), q::Gamma)
+    α, θ = params(q)
+    return [trigamma(α), 1 / θ]  # with respect to the shape α and the scale θ
+end
+
+router = BayesBase.ExpectationFirstOf(MyClosedForms(), MyQuadrature())
+BayesBase.expectation_gradient(router, log, Gamma(2.0, 1.0))      # the closed form
+BayesBase.expectation_gradient(router, x -> x^2, Gamma(2.0, 1.0)) # quadrature of x² times the score
+```
+
+```@docs
+BayesBase.expectation_gradient
+BayesBase.supports_expectation_gradient
+BayesBase.ExpectationScoreProduct
+BayesBase.expectation_score
+BayesBase.@supports_expectation_gradient
 ```
 
 ## Labels

@@ -22,6 +22,12 @@
         :ExpectationBackendRegistry,
         :register_expectation_backend!,
         :expectation_backend_priority,
+        :expectation_gradient,
+        :supports_expectation_gradient,
+        :ExpectationScoreProduct,
+        :expectation_score,
+        Symbol("@supports_expectation"),
+        Symbol("@supports_expectation_gradient"),
     ]
 
     for name in PROTOCOL

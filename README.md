@@ -10,7 +10,8 @@
 `BayesBase` is a package that serves as an umbrella, defining, exporting, and re-exporting methods essential for Bayesian statistics specifically for the [`RxInfer` ecosystem](https://github.com/reactivebayes/RxInfer.jl). 
 
 It also defines a protocol for computing expectations `E_q[f]`,
-`BayesBase.expectation(backend, f, q)`. The backends are defined in other packages, such as the
+`BayesBase.expectation(backend, f, q)`, and their gradients with respect to the parameters of
+`q`, `BayesBase.expectation_gradient(backend, f, q)`. The backends are defined in other packages, such as the
 quadrature rules in
 [`ExpectationApproximations`](https://github.com/reactivebayes/ExpectationApproximations.jl). See
 the [Expectations](https://reactivebayes.github.io/BayesBase.jl/dev/expectations/) page of the
