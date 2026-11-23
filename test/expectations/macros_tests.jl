@@ -57,7 +57,12 @@ end
     "The closed form of `E[sin(x)]` under a centred Normal."
     P.@supports_expectation P.expectation(::MacroDocumented, ::typeof(sin), q::Normal) = 0.0
 
-    @test occursin("E[sin(x)]", string(@doc P.expectation))
+    # The docstrings of `expectation` defined in this module, read from the registry because what
+    # `@doc` returns for a function with several docstrings differs between Julia versions
+    documented = Base.Docs.meta(@__MODULE__)[Base.Docs.Binding(P, :expectation)]
+    signature = Tuple{MacroDocumented, typeof(sin), Normal}
+    @test haskey(documented.docs, signature)
+    @test occursin("E[sin(x)]", only(documented.docs[signature].text))
 end
 
 @testitem "the macros work where only they are imported" tags = [:expectations] begin
