@@ -19,7 +19,9 @@ with the types and the `where` parameters of the definition. An argument without
 `Any`. An integrand without a type therefore declares every integrand, as a numerical backend
 does, see [`BayesBase.supports_expectation`](@ref). The definition can be in long or short form,
 and a docstring placed before the macro documents the method. Only methods of `expectation` with
-three positional arguments are accepted. Keyword arguments and default values are not.
+three positional arguments are accepted. Keyword arguments and default values are not. The method
+always extends BayesBase's function: a bare `expectation` is read as `BayesBase.expectation`, even
+where the name is not imported, and a function of another module is rejected.
 
 Support that depends on more than the types of one method, such as "wherever another backend has
 a closed form", is declared with a method of `supports_expectation` written out instead.
@@ -48,9 +50,9 @@ julia> BayesBase.expectation(Moments(), identity, Gamma(2.0, 3.0))
 ```
 """
 macro supports_expectation(definition)
-    method = split_expectation_definition(definition, :expectation, "@supports_expectation")
-    support = expectation_support_definition(method, method.F)
-    return esc(Expr(:block, documented(definition, __source__), support, nothing))
+    method = split_expectation_definition(definition, :expectation, "@supports_expectation", __module__)
+    support = expectation_support_definition(method, method.F, __source__)
+    return esc(Expr(:block, documented(method.definition, __source__), support, nothing))
 end
 
 """
@@ -99,7 +101,7 @@ julia> BayesBase.expectation_gradient(router, identity, Gamma(2.0, 3.0))
 ```
 """
 macro supports_expectation_gradient(definition)
-    method = split_expectation_definition(definition, :expectation_gradient, "@supports_expectation_gradient")
+    method = split_expectation_definition(definition, :expectation_gradient, "@supports_expectation_gradient", __module__)
     product = Expr(:curly, ExpectationScoreProduct, Expr(:<:, method.F), Expr(:<:, method.Q))
     backend, integrand, distribution = gensym(:backend), gensym(:product), gensym(:q)
     signature = Expr(
@@ -112,18 +114,24 @@ macro supports_expectation_gradient(definition)
     forward = Expr(
         :(=),
         with_where(signature, method.parameters),
-        Expr(:call, qualified(:expectation_gradient), backend, Expr(:., integrand, QuoteNode(:f)), distribution),
+        Expr(
+            :block,
+            __source__,
+            Expr(:call, qualified(:expectation_gradient), backend, Expr(:., integrand, QuoteNode(:f)), distribution),
+        ),
     )
-    support = expectation_support_definition(method, product)
-    return esc(Expr(:block, documented(definition, __source__), forward, support, nothing))
+    support = expectation_support_definition(method, product, __source__)
+    return esc(Expr(:block, documented(method.definition, __source__), forward, support, nothing))
 end
 
-# The parts of a method definition that the macros need: the types of the three arguments and
-# the `where` parameters that they use
-function split_expectation_definition(definition, name::Symbol, macroname::String)
-    fail(reason) = throw(ArgumentError("$macroname expects a method definition of `$name`: $reason"))
+# The parts of a method definition that the macros need: the definition, with its function
+# rewritten to `BayesBase.name` so that it always extends BayesBase's function, the types of the
+# three arguments and the `where` parameters that they use
+function split_expectation_definition(definition, name::Symbol, macroname::String, mod::Module)
+    fail(reason) = throw(ArgumentError("$macroname expects a method definition of `BayesBase.$name`: $reason"))
     (Meta.isexpr(definition, :function) || Meta.isexpr(definition, :(=))) && length(definition.args) == 2 ||
         fail("got `$definition`")
+    definition = copy(definition) # copies the expressions inside, whose function is rewritten below
     parameters = Any[]
     signature = peel_where!(parameters, definition.args[1])
     # A return type, `f(…)::T`. In the short form, `f(…)::T where {T} = …` attaches the `where` to
@@ -131,13 +139,35 @@ function split_expectation_definition(definition, name::Symbol, macroname::Strin
     # return type are written `(f(…)::T) where {T} = …`
     Meta.isexpr(signature, :(::)) && length(signature.args) == 2 && (signature = signature.args[1])
     Meta.isexpr(signature, :call) || fail("got `$definition`")
-    function_name(signature.args[1]) === name || fail("the function is `$(signature.args[1])`")
+    callee = signature.args[1]
+    function_name(callee) === name || fail("the function is `$callee`")
+    owner = function_owner(callee, mod)
+    owner === nothing || owner === BayesBase ||
+        fail("the function is `$callee`, not BayesBase's `$name`")
+    signature.args[1] = qualified(name)
     arguments = signature.args[2:end]
     any(argument -> Meta.isexpr(argument, :parameters), arguments) && fail("keyword arguments are not supported")
     length(arguments) == 3 || fail("it must have three positional arguments, the backend, the integrand and the distribution, got $(length(arguments))")
     B, F, Q = map(argument -> argument_type(argument, fail), arguments)
-    used = filter(parameter -> any(type -> mentions(type, parameter_name(parameter)), (B, F, Q)), parameters)
-    return (; B, F, Q, parameters = used)
+    return (; definition, B, F, Q, parameters = used_parameters(parameters, (B, F, Q)))
+end
+
+# The `where` parameters that the argument types mention, directly or through the bound of
+# another parameter that is kept, in their original order
+function used_parameters(parameters, types)
+    kept = Set(parameter_name(p) for p in parameters if any(type -> mentions(type, parameter_name(p)), types))
+    grown = true
+    while grown
+        grown = false
+        for parameter in parameters, other in parameters
+            name = parameter_name(other)
+            if parameter_name(parameter) in kept && !(name in kept) && mentions(parameter, name)
+                push!(kept, name)
+                grown = true
+            end
+        end
+    end
+    return filter(parameter -> parameter_name(parameter) in kept, parameters)
 end
 
 # Collects the parameters of `expression where {…} where {…}`, the outermost first, and returns
@@ -154,6 +184,21 @@ function_name(name::Symbol) = name
 function_name(name::GlobalRef) = name.name
 function_name(name::Expr) = Meta.isexpr(name, :.) && name.args[end] isa QuoteNode ? name.args[end].value : nothing
 function_name(name) = nothing
+
+# The module that a qualified function name refers to, `nothing` for a bare name
+function_owner(::Symbol, mod) = nothing
+function_owner(name::GlobalRef, mod) = name.mod
+function_owner(name::Expr, mod) = resolve_module(name.args[1], mod)
+
+resolve_module(path::Symbol, mod) = isdefined(mod, path) ? getfield(mod, path) : path
+resolve_module(path::Module, mod) = path
+function resolve_module(path::Expr, mod)
+    Meta.isexpr(path, :.) && path.args[end] isa QuoteNode || return path
+    parent = resolve_module(path.args[1], mod)
+    name = path.args[end].value
+    return parent isa Module && isdefined(parent, name) ? getfield(parent, name) : path
+end
+resolve_module(path, mod) = path
 
 argument_type(::Symbol, fail) = :Any
 function argument_type(argument::Expr, fail)
@@ -181,7 +226,7 @@ qualified(name::Symbol) = Expr(:., BayesBase, QuoteNode(name))
 with_where(signature, parameters) = isempty(parameters) ? signature : Expr(:where, signature, parameters...)
 
 # `supports_expectation(::B, ::Type{<:F}, ::Type{<:Q}) where {…} = true`
-function expectation_support_definition(method, F)
+function expectation_support_definition(method, F, source)
     signature = Expr(
         :call,
         qualified(:supports_expectation),
@@ -189,7 +234,7 @@ function expectation_support_definition(method, F)
         Expr(:(::), Expr(:curly, Type, Expr(:<:, F))),
         Expr(:(::), Expr(:curly, Type, Expr(:<:, method.Q))),
     )
-    return Expr(:(=), with_where(signature, method.parameters), true)
+    return Expr(:(=), with_where(signature, method.parameters), Expr(:block, source, true))
 end
 
 # The definition, marked so that a docstring before the macro call documents the method

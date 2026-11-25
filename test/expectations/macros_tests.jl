@@ -82,6 +82,47 @@ end
     @test BayesBase.expectation(MacroUser.Backend(), cos, Normal(0.0, 1.0)) ≈ exp(-1 / 2)
 end
 
+@testitem "the macros always extend BayesBase's functions" tags = [:expectations] begin
+    module OnlyTheMacro
+    using Distributions
+    import BayesBase
+    import BayesBase: @supports_expectation, @supports_expectation_gradient
+
+    struct Backend end
+
+    # `expectation` is not imported here, and the macros still define BayesBase's methods
+    @supports_expectation expectation(::Backend, ::typeof(sin), q::Normal) = 42.0
+    @supports_expectation_gradient expectation_gradient(::Backend, ::typeof(sin), q::Normal) = [1.0, 2.0]
+    end
+
+    using BayesBase, Distributions
+    @test !isdefined(OnlyTheMacro, :expectation)
+    @test BayesBase.expectation(OnlyTheMacro.Backend(), sin, Normal()) == 42.0
+    @test BayesBase.expectation_gradient(OnlyTheMacro.Backend(), sin, Normal()) == [1.0, 2.0]
+    @test BayesBase.supports_expectation(OnlyTheMacro.Backend(), sin, Normal()) === true
+
+    # a function of another module is rejected
+    expand(expression) = macroexpand(@__MODULE__, expression)
+    @test_throws ArgumentError expand(:(BayesBase.@supports_expectation Base.expectation(::B, f, q) = 1))
+    @test_throws ArgumentError expand(:(BayesBase.@supports_expectation Undefined.expectation(::B, f, q) = 1))
+    @test expand(:(BayesBase.@supports_expectation BayesBase.expectation(::B, f, q) = 1)) isa Expr
+end
+
+@testitem "the macros keep a where parameter used only in another one's bound" tags = [:expectations] setup = [ExpectationToys] begin
+    using Distributions
+
+    struct BoundOnly end
+    P.@supports_expectation P.expectation(::BoundOnly, f::S, q::Normal) where {T, S <: Base.Fix1{typeof(logpdf), T}} = 0.0
+    @test P.expectation(BoundOnly(), Base.Fix1(logpdf, Normal()), Normal()) == 0.0
+    @test P.supports_expectation(BoundOnly(), Base.Fix1(logpdf, Normal()), Normal()) === true
+    @test P.supports_expectation(BoundOnly(), sin, Normal()) === false
+
+    # the declaration points to the line of the macro call
+    integrand = typeof(Base.Fix1(logpdf, Normal()))
+    method = which(P.supports_expectation, Tuple{BoundOnly, Type{integrand}, Type{Normal{Float64}}})
+    @test occursin("macros_tests", String(method.file))
+end
+
 @testitem "the macros reject what they cannot read" tags = [:expectations] begin
     using BayesBase
 
