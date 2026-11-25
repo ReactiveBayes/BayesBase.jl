@@ -16,7 +16,8 @@ To be released as 1.7.0.
   of a computation (`ExpectationExact`, `ExpectationStochastic`, `has_expectation_label`,
   `is_expectation_exact`, `is_expectation_stochastic`, `combine_expectation_label`), random number
   generators (`with_expectation_rng`, `get_expectation_rng`), point sets and
-  products over `FactorizedJoint` (`ExpectationPointSet`, `ExpectationProductPointSet`), and
+  products over `FactorizedJoint` (`ExpectationPointSet`, `ExpectationProductPointSet`; a product
+  of components whose preparations are not point sets is computed as nested expectations), and
   routers (`ExpectationFirstOf`, `ExpectationDynamicRouter`, `ExpectationBackendRegistry`,
   `register_expectation_backend!`). The names are public and not exported. A closed form for the
   expectation of a log-density dispatches on the integrand `Base.Fix1(logpdf, p)`. See the new
@@ -28,9 +29,12 @@ To be released as 1.7.0.
   expectation of the integrand `ExpectationScoreProduct(f, q)`, `f` times the score
   `expectation_score(q, x)`, so routers, labels, preparations and products serve gradients too.
   BayesBase has the scores of `Normal`, `LogNormal`, `Gamma`, `Exponential`, `Beta` and products of
-  them.
+  them, and `has_expectation_score` says which types have one. A backend that supports every
+  integrand under a family supports gradients there only if the family has a score, so routers
+  pass over it for the other families.
 - `@supports_expectation` and `@supports_expectation_gradient` define a closed form and declare
-  its support in one step. They are public and not exported.
+  its support in one step. The method always extends BayesBase's function. They are public and
+  not exported.
 - Compat.jl is a new dependency, for declaring public names on Julia 1.10.
 
 ### Fixed

@@ -51,11 +51,59 @@ end
     @test allocations(derivative, prep, 1.0) == 0
 end
 
-@testitem "FactorizedJoint: a component without a point set is an error" tags = [:expectations] setup = [ExpectationToys] begin
+@testitem "FactorizedJoint: preparations that are not point sets give nested expectations" tags = [:expectations] setup = [ExpectationToys] begin
     using Distributions
 
-    # ToyExact prepares a lazy `PreparedExpectation`, which cannot be part of a product rule
-    @test_throws ArgumentError P.prepare_expectation(
-        ToyExact(), FactorizedJoint((Normal(0.0, 1.0),))
-    )
+    # sigma points that are not an `ExpectationPointSet`: exact for E[x] and E[x²] under a Normal
+    struct Sigma end
+    struct SigmaSet{T}
+        m::T
+        s::T
+    end
+    P.supports_expectation(::Sigma, ::Type, ::Type{<:Normal}) = true
+    P.prepare_expectation(::Sigma, q::Normal) = SigmaSet(mean(q), std(q))
+    P.expectation(set::SigmaSet, f::F) where {F} = (f(set.m - set.s) + f(set.m + set.s)) / 2
+
+    joint = FactorizedJoint((Normal(1.0, 1.0), Normal(2.0, 0.5)))
+    f(x) = x[1]^2 * x[2] # E = (1 + 1) * 2
+    @test P.supports_expectation(Sigma(), f, joint) === true
+    @test P.prepare_expectation(Sigma(), joint) isa P.ExpectationNestedProduct
+    @test P.expectation(Sigma(), f, joint) ≈ 4.0
+
+    # a router uses the first backend that supports each component, whatever its preparation
+    router = P.ExpectationFirstOf(Sigma(), ToyGrid())
+    @test P.expectation(router, f, joint) ≈ 4.0
+    mixed = FactorizedJoint((Normal(1.0, 1.0), Categorical([0.5, 0.5])))
+    @test P.expectation(router, x -> x[1]^2 * x[2], mixed) ≈ 2 * 1.5
+    @test allocations(P.expectation, P.prepare_expectation(router, mixed), f) == 0
+
+    # a backend that computes every integrand itself, without a preparation
+    sampler = ToySampler(1, Random.Xoshiro(1))
+    @test P.expectation(sampler, x -> x[1] + x[2], FactorizedJoint((Normal(3.0, 0.0), Normal(4.0, 0.0)))) == 7.0
+end
+
+@testitem "FactorizedJoint: an unsupported product throws UnsupportedExpectationError" tags = [:expectations] setup = [ExpectationToys] begin
+    using Distributions
+
+    # ToyExact has closed forms for two integrands only, not every integrand
+    joint = FactorizedJoint((Normal(0.0, 1.0),))
+    @test P.supports_expectation(ToyExact(), identity, joint) === false
+    @test_throws P.UnsupportedExpectationError P.expectation(ToyExact(), identity, joint)
+    @test_throws P.UnsupportedExpectationError P.expectation(P.ExpectationFirstOf(ToyExact()), identity, joint)
+    @test_throws P.UnsupportedExpectationError P.expectation(P.prepare_expectation(P.ExpectationFirstOf(ToyExact()), joint), identity)
+    @test_throws P.UnsupportedExpectationError P.expectation(P.ExpectationDynamicRouter(P.ExpectationBackendRegistry()), identity, joint)
+
+    # components in a vector are not supported
+    vector = FactorizedJoint([Normal(0.0, 1.0), Normal(1.0, 1.0)])
+    @test P.supports_expectation(ToyGrid(), identity, vector) === false
+    @test_throws P.UnsupportedExpectationError P.expectation(ToyGrid(), identity, vector)
+    @test_throws P.UnsupportedExpectationError P.expectation(P.ExpectationFirstOf(ToyGrid()), identity, vector)
+end
+
+@testitem "FactorizedJoint: an empty product is the integrand at ()" tags = [:expectations] setup = [ExpectationToys] begin
+    empty = FactorizedJoint(())
+    @test P.supports_expectation(ToyGrid(), Any, typeof(empty)) === true
+    @test P.expectation(ToyGrid(), x -> 3.0, empty) == 3.0
+    @test P.is_expectation_exact(ToyGrid(), sin, empty) === true
+    @test P.is_expectation_stochastic(ToySampler(1), sin, empty) === false
 end

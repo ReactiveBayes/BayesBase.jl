@@ -15,6 +15,12 @@
         BayesBase.with_expectation_rng,
         BayesBase.get_expectation_rng,
         BayesBase.register_expectation_backend!,
+        BayesBase.expectation_gradient,
+        BayesBase.supports_expectation_gradient,
+        BayesBase.expectation_score,
+        BayesBase.has_expectation_score,
+        BayesBase.admits,
+        BayesBase.computable,
     )
     callable(method) = Base.unwrap_unionall(method.sig).parameters[1]
     inprotocol(method) =

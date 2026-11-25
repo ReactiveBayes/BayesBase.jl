@@ -91,6 +91,11 @@ every integrand is supported. A numerical method supports every integrand and de
 supports_expectation(backend, ::Type, ::Type) = false
 supports_expectation(backend, f, q) = supports_expectation(backend, typeof(f), typeof(q))
 
+# Whether a router may choose `backend` for the pair: it supports the pair, and it can compute it.
+# The two differ only for gradients, see `gradient.jl`.
+admits(backend, ::Type{F}, ::Type{Q}) where {F, Q} = supports_expectation(backend, F, Q) && computable(backend, F, Q)
+computable(backend, ::Type, ::Type) = true
+
 """
     which_expectation_backend(backend, F::Type, Q::Type)
     which_expectation_backend(backend, f, q)

@@ -107,6 +107,7 @@ include("algebra/matrixwithcahcedinverse.jl")
 @compat public ExpectationPointSet, ExpectationProductPointSet, ExpectationFirstOf
 @compat public ExpectationDynamicRouter, ExpectationBackendRegistry, register_expectation_backend!, expectation_backend_priority
 @compat public expectation_gradient, supports_expectation_gradient, ExpectationScoreProduct, expectation_score
+@compat public has_expectation_score
 @compat public @supports_expectation, @supports_expectation_gradient
 
 include("expectations/protocol.jl")

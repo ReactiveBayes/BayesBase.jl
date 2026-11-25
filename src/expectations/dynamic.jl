@@ -19,11 +19,14 @@ const EXPECTATION_BACKEND_REGISTRY = ExpectationBackendRegistry()
     register_expectation_backend!(backend; priority = 0, registry = the global registry)
 
 Make `backend` available to [`ExpectationDynamicRouter`](@ref)s. Registering a backend again changes
-its priority. Packages call this in `__init__`.
+its priority. Packages call this in `__init__`. A dynamic router cannot be registered, because it
+would choose among the backends that include itself.
 """
 function register_expectation_backend!(
         backend; priority::Integer = 0, registry::ExpectationBackendRegistry = EXPECTATION_BACKEND_REGISTRY
     )
+    backend isa ExpectationDynamicRouter &&
+        throw(ArgumentError("a dynamic router cannot be registered as a backend of a registry"))
     i = findfirst(isequal(backend), registry.backends)
     if isnothing(i)
         push!(registry.backends, backend)
@@ -53,13 +56,15 @@ end
 
 A router that chooses among the registered backends at run time. Among the backends that
 support the pair, it prefers one that is exact for the pair, then one that is not stochastic,
-then one with a higher priority, and finally orders by the name of the backend's type. The order of
-registration is not used, so the choice does not depend on the order in which packages were
-loaded.
+then one with a higher priority, and finally orders by the name of the backend's type. Backends
+with different names therefore do not depend on the order in which packages were loaded. Only
+backends that tie on all of these, such as two backends of the same type, keep the order in which
+they were registered.
 
-The router is type-unstable. It is opt-in: it is never a default, and library code does not use
-it. `ExpectationFirstOf(ExpectationDynamicRouter())` freezes the current choice into a
-type-stable router.
+The router is type-unstable. `ExpectationFirstOf(ExpectationDynamicRouter())` freezes the current
+choice into a type-stable router, which is what an inference engine should use, as RxInfer's
+fallback schemes do by default. `with_expectation_rng` freezes it too, so that the generator
+reaches the backends.
 """
 struct ExpectationDynamicRouter{R}
     registry::R
@@ -72,7 +77,7 @@ backendname(backend) = string(nameof(typeof(backend)))
 function which_expectation_backend(router::ExpectationDynamicRouter, ::Type{F}, ::Type{Q}) where {F, Q}
     candidates = [
         (b, p) for (b, p) in zip(router.registry.backends, router.registry.priorities) if
-            supports_expectation(b, F, Q)
+            admits(b, F, Q)
     ]
     isempty(candidates) && return nothing
     rank((b, p)) =
@@ -98,6 +103,9 @@ function expectation(router::ExpectationDynamicRouter, f::F, q) where {F}
 end
 
 prepare_expectation(router::ExpectationDynamicRouter, q) = prepare_expectation(ExpectationFirstOf(router), q)
+
+# The registered backends are not known until run time, so the generator goes to a frozen router
+with_expectation_rng(router::ExpectationDynamicRouter, rng) = with_expectation_rng(ExpectationFirstOf(router), rng)
 
 """
     ExpectationFirstOf(router::ExpectationDynamicRouter; prefer = ExpectationExact(), exclude = ())
@@ -131,7 +139,8 @@ function which_expectation_backend(
     ) where {T <: Tuple}
     return supports_all(router, T) ? router : nothing
 end
-prepare_expectation(router::ExpectationDynamicRouter, q::FactorizedJoint) = prepare_product(router, q)
-function expectation(router::ExpectationDynamicRouter, f::F, q::FactorizedJoint) where {F}
+prepare_expectation(router::ExpectationDynamicRouter, q::FactorizedJoint{<:Tuple}) = prepare_product(router, q)
+function expectation(router::ExpectationDynamicRouter, f::F, q::FactorizedJoint{T}) where {F, T <: Tuple}
+    supports_all(router, T) || throw(UnsupportedExpectationError(router, f, q))
     return expectation(prepare_expectation(router, q), f)
 end

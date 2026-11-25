@@ -4,7 +4,8 @@
 A prepared expectation that is a weighted sum, `Σᵢ wᵢ f(xᵢ)`. Quadrature and cubature rules,
 sigma points, exact sums over a finite support and samples with equal weights all have this
 form. `points` and `weights` can be any collections indexed from one, including tuples. Product
-rules over a [`FactorizedJoint`](@ref) are built from the point sets of the components.
+rules over a [`FactorizedJoint`](@ref) are built from the point sets of the components, see
+[`BayesBase.ExpectationProductPointSet`](@ref).
 
 The sum starts from its first term, so its type follows the values of the integrand. For
 example, an integrand that returns dual numbers needs no special handling.

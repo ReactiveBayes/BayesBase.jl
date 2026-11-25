@@ -68,6 +68,36 @@ function expectation_score(q::FactorizedJoint, x::Tuple)
 end
 
 """
+    has_expectation_score(Q::Type)
+    has_expectation_score(q)
+
+Whether [`BayesBase.expectation_score`](@ref) has a method for distributions of type `Q`. It is
+`false` by default, `true` for the families with a score in BayesBase, and for a
+[`FactorizedJoint`](@ref) whose components all have one. A package that adds a method of
+`expectation_score` also adds a method of this function, which makes numerical backends
+compute gradients under its type, see [`BayesBase.supports_expectation_gradient`](@ref).
+
+```jldoctest
+julia> using Distributions
+
+julia> BayesBase.has_expectation_score(Normal(0.0, 1.0))
+true
+
+julia> BayesBase.has_expectation_score(Categorical([0.5, 0.5]))
+false
+```
+"""
+has_expectation_score(::Type) = false
+has_expectation_score(q) = has_expectation_score(typeof(q))
+has_expectation_score(::Type{<:Union{Normal, LogNormal, Gamma, Exponential, Beta}}) = true
+has_expectation_score(::Type{FactorizedJoint{T}}) where {T <: Tuple} = all_have_scores(T)
+
+all_have_scores(::Type{Tuple{}}) = true
+function all_have_scores(::Type{T}) where {T <: Tuple}
+    return has_expectation_score(Base.tuple_type_head(T)) && all_have_scores(Base.tuple_type_tail(T))
+end
+
+"""
     ExpectationScoreProduct(f, q)
 
 The integrand `x -> f(x) * expectation_score(q, x)`, whose expectation under `q` is the gradient of
@@ -102,7 +132,8 @@ the gradient when there is one, and otherwise a numerical backend that sums
 [`BayesBase.@supports_expectation_gradient`](@ref).
 
 The identity holds when `f` does not depend on `θ` and the support of `q` does not depend on
-`θ`, so it does not apply to the bounds of a `Uniform`, for example.
+`θ`, so it does not apply to the bounds of a `Uniform`, for example. The integrand `f` must return
+a scalar, which multiplies the score.
 """
 expectation_gradient(backend, f::F, q) where {F} = expectation(backend, ExpectationScoreProduct(f, q), q)
 
@@ -111,16 +142,31 @@ expectation_gradient(backend, f::F, q) where {F} = expectation(backend, Expectat
     supports_expectation_gradient(backend, f, q)
 
 Whether `backend` computes the gradient of the expectation of integrands of type `F` under
-distributions of type `Q`, see [`BayesBase.expectation_gradient`](@ref). It is
-`supports_expectation(backend, ExpectationScoreProduct{F, Q}, Q)`, so backends declare support with
-methods of [`BayesBase.supports_expectation`](@ref), not of this function.
+distributions of type `Q`, see [`BayesBase.expectation_gradient`](@ref). Backends declare support
+with methods of [`BayesBase.supports_expectation`](@ref) for the integrand
+`ExpectationScoreProduct{F, Q}`, not with methods of this function.
 
-A backend that supports every integrand under `Q` also supports every gradient under `Q`. The
-gradient then needs [`BayesBase.expectation_score`](@ref) for `Q`, and without it the computation
-throws an `ArgumentError`.
+A backend that supports every integrand under `Q`, such as a quadrature rule, computes gradients
+by summing `f` times the score, so it supports gradients only where
+[`BayesBase.has_expectation_score`](@ref) holds for `Q`. Routers apply the same rule, so they pass
+over such a backend for a family without a score and choose a backend with a closed form for the
+gradient instead.
 """
 function supports_expectation_gradient(backend, ::Type{F}, ::Type{Q}) where {F, Q}
-    return supports_expectation(backend, ExpectationScoreProduct{F, Q}, Q)
+    return admits(backend, ExpectationScoreProduct{F, Q}, Q)
+end
+
+# A backend that takes every integrand under `Q` computes a gradient with the score of `Q`; one
+# that supports the gradient's integrand but not every integrand has a closed form for it. A router
+# has already applied this rule to its backends, except for a product, which it computes itself.
+function computable(backend, ::Type{<:ExpectationScoreProduct}, ::Type{Q}) where {Q}
+    return has_expectation_score(Q) || !supports_expectation(backend, Any, Q)
+end
+computable(::Union{ExpectationFirstOf, ExpectationDynamicRouter}, ::Type{<:ExpectationScoreProduct}, ::Type) = true
+function computable(
+        ::Union{ExpectationFirstOf, ExpectationDynamicRouter}, ::Type{<:ExpectationScoreProduct}, ::Type{Q}
+    ) where {Q <: FactorizedJoint}
+    return has_expectation_score(Q)
 end
 supports_expectation_gradient(backend, f, q) = supports_expectation_gradient(backend, typeof(f), typeof(q))
 

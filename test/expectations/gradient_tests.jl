@@ -88,8 +88,45 @@ end
     message = sprint(showerror, P.UnsupportedExpectationError(ToyExact(), P.ExpectationScoreProduct(abs2, q), q))
     @test occursin("cannot compute the gradient of the expectation of `abs2`", message)
 
-    # a backend that supports every integrand under a Categorical, which has no score
+    # a backend that supports every integrand under a Categorical, which has no score, does not
+    # support gradients there, and called directly it throws
     categorical = Categorical([0.2, 0.8])
-    @test P.supports_expectation_gradient(ToyGrid(), identity, categorical) === true
+    @test P.has_expectation_score(categorical) === false
+    @test P.supports_expectation_gradient(ToyGrid(), identity, categorical) === false
+    @test P.supports_expectation_gradient(P.ExpectationFirstOf(ToyGrid()), identity, categorical) === false
     @test_throws ArgumentError P.expectation_gradient(ToyGrid(), identity, categorical)
+    @test_throws P.UnsupportedExpectationError P.expectation_gradient(P.ExpectationFirstOf(ToyGrid()), identity, categorical)
+end
+
+@testitem "has_expectation_score: the families with a score, and products of them" tags = [:expectations] setup = [ExpectationToys] begin
+    using Distributions
+
+    for q in (Normal(0.0, 1.0), LogNormal(0.0, 1.0), Gamma(2.0, 1.0), Exponential(1.0), Beta(2.0, 3.0))
+        @test P.has_expectation_score(q) === true
+    end
+    @test P.has_expectation_score(Poisson(1.0)) === false
+    @test P.has_expectation_score(FactorizedJoint((Normal(0.0, 1.0), Gamma(2.0, 1.0)))) === true
+    @test P.has_expectation_score(FactorizedJoint((Normal(0.0, 1.0), Categorical([0.5, 0.5])))) === false
+    @test folds_to(P.has_expectation_score, (Type{FactorizedJoint{Tuple{Normal{Float64}, Gamma{Float64}}}},), true)
+end
+
+@testitem "routers pass over a numerical backend for a family without a score" tags = [:expectations] setup = [ExpectationToys] begin
+    using Distributions
+
+    # a closed-form gradient under a Categorical, which has no score, after a backend that
+    # supports every integrand there
+    struct CategoricalGradient end
+    P.@supports_expectation_gradient P.expectation_gradient(::CategoricalGradient, ::typeof(identity), q::Categorical) = [1.0, 2.0]
+
+    q = Categorical([0.2, 0.8])
+    first = P.ExpectationFirstOf(ToyGrid(), CategoricalGradient())
+    @test P.supports_expectation_gradient(first, identity, q) === true
+    @test P.expectation_gradient(first, identity, q) == [1.0, 2.0]
+
+    registry = P.ExpectationBackendRegistry()
+    P.register_expectation_backend!(ToyGrid(); registry, priority = 10)
+    P.register_expectation_backend!(CategoricalGradient(); registry)
+    @test P.expectation_gradient(P.ExpectationDynamicRouter(registry), identity, q) == [1.0, 2.0]
+    @test P.expectation_gradient(P.ExpectationFirstOf(P.ExpectationDynamicRouter(registry)), identity, q) == [1.0, 2.0]
+    @test folds_to(P.supports_expectation_gradient, (typeof(first), typeof(identity), typeof(q)), true)
 end

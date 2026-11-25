@@ -78,7 +78,8 @@ BayesBase.expectation(::MyClosedForms, f::Base.Fix1{typeof(logpdf), <:Normal}, q
 A backend with many closed forms writes each one together with its declaration through
 [`BayesBase.@supports_expectation`](@ref). The macro defines the method and the method of
 `supports_expectation` for the same argument types, so a closed form cannot be added without
-being declared:
+being declared. The method always extends `BayesBase.expectation`, also when it is written
+`expectation` in a module that has not imported that name:
 
 ```julia
 import BayesBase: @supports_expectation
@@ -122,11 +123,16 @@ Everything above therefore applies to gradients unchanged:
   its support the same way.
 - A numerical backend that supports every integrand under `q` computes the gradient as the sum
   of `f(x) * expectation_score(q, x)` over its points. It needs
-  [`BayesBase.expectation_score`](@ref) for the type of `q`, and the call throws an
-  `ArgumentError` without it. BayesBase has the score of the common univariate families.
+  [`BayesBase.expectation_score`](@ref) for the type of `q`, so it supports gradients only where
+  [`BayesBase.has_expectation_score`](@ref) holds. BayesBase has the score of the common
+  univariate families and of products of them. A package that adds a score adds a method of
+  `has_expectation_score` too.
 - A router chooses a closed form for the gradient when one of its backends has it, and a
-  numerical backend otherwise. Labels, preparations and products work as for expectations, and
-  with a preparation for `q` the gradient is `expectation(prepared, ExpectationScoreProduct(f, q))`.
+  numerical backend otherwise, wherever they are in its list. It passes over a numerical
+  backend for a family without a score. Labels, preparations and products work as for
+  expectations, and with a preparation for `q` the gradient is
+  `expectation(prepared, ExpectationScoreProduct(f, q))`.
+- The integrand `f` must return a scalar, which multiplies the score.
 
 ```julia
 import BayesBase: @supports_expectation_gradient
@@ -146,6 +152,7 @@ BayesBase.expectation_gradient
 BayesBase.supports_expectation_gradient
 BayesBase.ExpectationScoreProduct
 BayesBase.expectation_score
+BayesBase.has_expectation_score
 BayesBase.@supports_expectation_gradient
 ```
 
@@ -189,8 +196,14 @@ BayesBase.get_expectation_rng
 An expectation over several independent variables, which can be of different kinds (for
 example a categorical, a multivariate Gaussian and a point mass), is an expectation under a
 [`FactorizedJoint`](@ref). The integrand receives a tuple with one value per component. A
-backend supports a product when it supports every component for any integrand. The expectation
-is computed with a product rule over the point sets of the components. Labels are combined with
+backend supports a product when it supports every component for any integrand, and a router
+when it supports every component, possibly each with a different backend. The expectation is
+computed as nested expectations over the preparations of the components,
+``\mathbb{E}_{q_1}[x_1 \mapsto \mathbb{E}_{q_2}[x_2 \mapsto f((x_1, x_2))]]``, so any preparation
+works, such as sigma points or a sampler. When every preparation is an
+[`BayesBase.ExpectationPointSet`](@ref), the nesting is the product rule over the point sets,
+an [`BayesBase.ExpectationProductPointSet`](@ref). An unsupported product throws an
+[`BayesBase.UnsupportedExpectationError`](@ref). Labels are combined with
 [`BayesBase.combine_expectation_label`](@ref): the product is exact only if every component is
 exact, and stochastic if any component is stochastic.
 

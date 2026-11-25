@@ -26,6 +26,7 @@
         :supports_expectation_gradient,
         :ExpectationScoreProduct,
         :expectation_score,
+        :has_expectation_score,
         Symbol("@supports_expectation"),
         Symbol("@supports_expectation_gradient"),
     ]

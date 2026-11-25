@@ -68,3 +68,19 @@ end
     end
     @test @inferred(P.expectation(frozen, identity, q)) === 0.0
 end
+
+@testitem "ExpectationDynamicRouter: with_expectation_rng reaches the registered backends" tags = [:expectations] setup = [ExpectationToys] begin
+    using Distributions, StableRNGs
+
+    registry = P.ExpectationBackendRegistry()
+    P.register_expectation_backend!(ToySampler(10); registry)
+    router = P.with_expectation_rng(P.ExpectationDynamicRouter(registry), StableRNG(1))
+    @test router isa P.ExpectationFirstOf
+    @test isfinite(P.expectation(router, identity, Normal(0.0, 1.0)))
+end
+
+@testitem "ExpectationDynamicRouter: a dynamic router cannot be registered" tags = [:expectations] setup = [ExpectationToys] begin
+    registry = P.ExpectationBackendRegistry()
+    @test_throws ArgumentError P.register_expectation_backend!(P.ExpectationDynamicRouter(registry); registry)
+    @test isempty(registry)
+end

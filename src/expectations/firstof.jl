@@ -37,7 +37,7 @@ end
 @inline function find(backends::Tuple, ::Type{F}, ::Type{Q}, need, avoid) where {F, Q}
     backend = first(backends)
     admissible =
-        supports_expectation(backend, F, Q) &&
+        admits(backend, F, Q) &&
         hasall(backend, F, Q, need) &&
         !hasany(backend, F, Q, avoid)
     admissible && return 1
@@ -111,7 +111,8 @@ function expectation(prepared::PreparedExpectationFirstOf, f::F) where {F}
     return expectation(prepared.router.backends[i], f, prepared.q)
 end
 
-expectation_pointset(prepared::PreparedExpectationFirstOf) = expectation_pointset(prepared.general)
+# In a product, a component's integrand is a closure, which goes to the backend chosen for every integrand
+product_part(prepared::PreparedExpectationFirstOf) = product_part(prepared.general)
 
 # Products: each component goes to its own backend
 function supports_expectation(router::ExpectationFirstOf, ::Type, ::Type{FactorizedJoint{T}}) where {T <: Tuple}
@@ -125,7 +126,8 @@ end
 function which_expectation_backend(router::ExpectationFirstOf, ::Type, ::Type{FactorizedJoint{T}}) where {T <: Tuple}
     return supports_all(router, T) ? router : nothing
 end
-prepare_expectation(router::ExpectationFirstOf, q::FactorizedJoint) = prepare_product(router, q)
-function expectation(router::ExpectationFirstOf, f::F, q::FactorizedJoint) where {F}
+prepare_expectation(router::ExpectationFirstOf, q::FactorizedJoint{<:Tuple}) = prepare_product(router, q)
+function expectation(router::ExpectationFirstOf, f::F, q::FactorizedJoint{T}) where {F, T <: Tuple}
+    supports_all(router, T) || throw(UnsupportedExpectationError(router, f, q))
     return expectation(prepare_expectation(router, q), f)
 end
