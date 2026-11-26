@@ -1,96 +1,43 @@
-.PHONY: help docs docs-serve docs-clean test test-reactant format check-format clean deps deps-docs deps-scripts benchmark benchmark-compare
-
-
-DOCSRC = docs
-DOCTARGET = $(DOCSRC)/build
-
-SCRIPTSRC = scripts
-FORMATTER = $(SCRIPTSRC)/formatter.jl
-
+SHELL := /bin/bash
 JULIA ?= julia
-JULIAFLAGS ?= --project=.
-JULIAFLAGSDOCS ?= --project=$(DOCSRC)
-JULIAFLAGSSCRIPTS ?= --project=$(SCRIPTSRC)
-
-# Colors for terminal output
-ifdef NO_COLOR
-GREEN  :=
-YELLOW :=
-WHITE  :=
-RESET  :=
-else
-GREEN  := $(shell tput -Txterm setaf 2)
-YELLOW := $(shell tput -Txterm setaf 3)
-WHITE  := $(shell tput -Txterm setaf 7)
-RESET  := $(shell tput -Txterm sgr0)
-endif
-
-# Default target
 .DEFAULT_GOAL := help
 
-## Show help for each of the Makefile targets
-help:
-	@echo ''
-	@echo 'PLACEHOLDERNAME_CHANGE_MAKEFILE_LINE_22.jl Makefile ${YELLOW}targets${RESET}:'
-	@echo ''
-	@echo '${GREEN}Documentation commands:${RESET}'
-	@echo '  ${YELLOW}docs${RESET}                 Build the documentation'
-	@echo '  ${YELLOW}docs-init${RESET}            Install documentation requirements'
-	@echo '  ${YELLOW}docs-serve${RESET}           Serve documentation locally for preview in browser'
-	@echo '  ${YELLOW}docs-clean${RESET}           Clean the documentation build directory'
-	@echo ''
-	@echo '${GREEN}Development commands:${RESET}'
-	@echo '  ${YELLOW}deps${RESET}                 Install project dependencies'
-	@echo '  ${YELLOW}deps-docs${RESET}            Install documentation dependencies'
-	@echo '  ${YELLOW}deps-scripts${RESET}         Install script dependencies'
-	@echo '  ${YELLOW}test${RESET}                 Run project tests'
-	@echo '  ${YELLOW}test-reactant${RESET}        Run the Reactant extension tests from test/reactant'
-	@echo '  ${YELLOW}format${RESET}               Format Julia code'
-	@echo '  ${YELLOW}check-format${RESET}         Check Julia code formatting (does not modify files)'
-	@echo '  ${YELLOW}clean${RESET}                Clean all generated files'
-	@echo ''
-	@echo '${GREEN}Help:${RESET}'
-	@echo '  ${YELLOW}help${RESET}                 Show this help message'
-	@echo ''
-	@echo '${GREEN}Environment variables:${RESET}'
-	@echo '  ${YELLOW}NO_COLOR${RESET}             Set this variable to any value to disable colored output'
-	@echo ''
+# The variable CI sets: the items tagged `:slow` run too.
+CI_ENV := TEST_ALL=true
 
-## Documentation commands:
-docs: deps-docs ## Build the documentation
-	$(JULIA) $(JULIAFLAGSDOCS) docs/make.jl
+# Optional selection, passed to the suite: `make test test_args="tag:quality"`.
+test_args ?=
+TEST_ARGS := $(if $(test_args),test_args = split("$(test_args)") .|> string,)
 
-docs-init: deps-docs ## Serve documentation locally for preview in browser
-	$(JULIA) $(JULIAFLAGSDOCS) -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+.PHONY: help test test-fast test-reactant format check-format docs docs-serve clean
 
-docs-serve: deps-docs ## Serve documentation locally for preview in browser
-	$(JULIA) $(JULIAFLAGSDOCS) -e 'using LiveServer; LiveServer.servedocs(launch_browser=true, port=5678)'
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
+	  | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 
-docs-clean: ## Clean the documentation build directory
-	rm -rf $(DOCTARGET)
+test: ## Run the suite as CI does; select with test_args="tag:<t> name:<n> <path>"
+	$(CI_ENV) $(JULIA) --project=. -e 'import Pkg; Pkg.test($(TEST_ARGS))'
 
-## Development commands:
-deps: ## Install project dependencies
-	$(JULIA) $(JULIAFLAGS) -e 'using Pkg; Pkg.instantiate()'
+test-fast: ## Run the suite without the items tagged :slow
+	$(JULIA) --project=. -e 'import Pkg; Pkg.test($(TEST_ARGS))'
 
-deps-docs: ## Install documentation dependencies
-	$(JULIA) $(JULIAFLAGSDOCS) -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
-
-deps-scripts: ## Install script dependencies
-	$(JULIA) $(JULIAFLAGSSCRIPTS) -e 'using Pkg; Pkg.instantiate()'
-
-test: deps ## Run project tests
-	$(JULIA) $(JULIAFLAGS) -e 'using Pkg; Pkg.test(test_args = split("$(test_args)") .|> string)'	
-
-test-reactant: ## Run the Reactant extension tests from test/reactant's own environment (not part of `make test`)
-	$(JULIA) --startup-file=no --project=test/reactant -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
+test-reactant: ## Run the Reactant extension tests from test/reactant's own environment
+	$(JULIA) --startup-file=no --project=test/reactant -e 'import Pkg; Pkg.develop(path = "."); Pkg.instantiate()'
 	$(JULIA) --startup-file=no --project=test/reactant test/reactant/runtests.jl
 
-format: deps-scripts ## Format Julia code
-	$(JULIA) $(JULIAFLAGSSCRIPTS) $(FORMATTER) --overwrite
+format: ## Format the tree with Runic
+	$(JULIA) -e 'import Pkg; Pkg.activate(temp = true); Pkg.add("Runic"); using Runic; exit(Runic.main(["--inplace", "."]))'
 
-check-format: deps-scripts ## Check Julia code formatting (does not modify files)
-	$(JULIA) $(JULIAFLAGSSCRIPTS) $(FORMATTER)
+check-format: ## Check the formatting with Runic, without changing files
+	$(JULIA) -e 'import Pkg; Pkg.activate(temp = true); Pkg.add("Runic"); using Runic; exit(Runic.main(["--check", "--diff", "."]))'
 
-clean: docs-clean ## Clean all generated files
-	rm -rf .julia/compiled
+docs: ## Build the documentation into docs/build, running every example and doctest
+	$(JULIA) --project=docs -e 'import Pkg; Pkg.instantiate()'
+	$(JULIA) --project=docs docs/make.jl
+
+docs-serve: ## Build and serve the documentation with live reload
+	$(JULIA) --project=docs -e 'import Pkg; Pkg.instantiate(); using LiveServer; servedocs()'
+
+clean: ## Remove the documentation build and coverage files
+	rm -rf docs/build lcov.info
+	find . \( -name '*.jl.cov' -o -name '*.jl.*.cov' -o -name '*.jl.mem' \) -delete

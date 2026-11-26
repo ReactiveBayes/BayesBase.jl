@@ -1,5 +1,4 @@
-
-@testitem "Mixture Distribution: creation" begin
+@testitem "Mixture Distribution: creation" tags = [:densities] begin
     using Distributions
 
     component1 = Normal(0.1, 0.3)
@@ -22,7 +21,7 @@
     @test_throws AssertionError MixtureDistribution([component1, component2], [-0.5, 1.5])
 end
 
-@testitem "Mixture Distribution: parameters - different distributions" begin
+@testitem "Mixture Distribution: parameters - different distributions" tags = [:densities] begin
     using Distributions
 
     component1 = Beta(0.1, 0.3)
@@ -34,11 +33,11 @@ end
     @test mean(dist) ≈ 0.3 * (0.1 / (0.1 + 0.3)) + 0.7 * 2
     @test var(dist) ≈
         0.3 * ((0.1 * 0.3) / ((0.1 + 0.3)^2 * (0.1 + 0.3 + 1)) + (0.1 / (0.1 + 0.3))^2) +
-          0.7 * (2.6^2 + 2^2) - mean(dist)^2
+        0.7 * (2.6^2 + 2^2) - mean(dist)^2
 end
 
 # resolves issue #253
-@testitem "Mixture Distribution: creation with arbitrary objects" begin
+@testitem "Mixture Distribution: creation with arbitrary objects" tags = [:densities] begin
     component1 = 0.1
     component2 = 2
     w = [0.7, 0.3]
@@ -50,7 +49,7 @@ end
     @test component(dist, 2) == component2
 end
 
-@testitem "Mixture Distribution: moments with 3 components" begin
+@testitem "Mixture Distribution: moments with 3 components" tags = [:densities] begin
     using Distributions
 
     component1 = Normal(0.3, sqrt(inv(2)))
@@ -65,7 +64,7 @@ end
         0.1 * (1 / 2 + 0.3^2) + 0.3 * (1.0 + 0.5^2) + 0.6 * (0.7^2 + 1 / 2) - mean(dist)^2
 end
 
-@testitem "Mixture Distribution: pdf" begin
+@testitem "Mixture Distribution: pdf" tags = [:densities] begin
     using Distributions
 
     component1 = Beta(0.1, 0.3)
@@ -78,7 +77,7 @@ end
     @test pdf(dist, 5) ≈ 0.3 * pdf(component1, 5) + 0.7 * pdf(component2, 5)
 end
 
-@testitem "Mixture Distribution: prod custom normal" begin
+@testitem "Mixture Distribution: prod custom normal" tags = [:densities] begin
     using LinearAlgebra
 
     struct NormalMeanVariance
@@ -87,8 +86,8 @@ end
     end
 
     function BayesBase.default_prod_rule(
-        ::Type{NormalMeanVariance}, ::Type{NormalMeanVariance}
-    )
+            ::Type{NormalMeanVariance}, ::Type{NormalMeanVariance}
+        )
         return PreserveTypeProd(NormalMeanVariance)
     end
 
@@ -100,18 +99,18 @@ end
     end
 
     function Base.prod(
-        ::PreserveTypeProd{NormalMeanVariance},
-        left::NormalMeanVariance,
-        right::NormalMeanVariance,
-    )
+            ::PreserveTypeProd{NormalMeanVariance},
+            left::NormalMeanVariance,
+            right::NormalMeanVariance,
+        )
         μ = (mean(left) * var(right) + mean(right) * var(left)) / (var(right) + var(left))
         v = (var(left) * var(right)) / (var(left) + var(right))
         return NormalMeanVariance(μ, v)
     end
 
     function BayesBase.compute_logscale(
-        ::NormalMeanVariance, left::NormalMeanVariance, right::NormalMeanVariance
-    )
+            ::NormalMeanVariance, left::NormalMeanVariance, right::NormalMeanVariance
+        )
         m_left, v_left = mean_var(left)
         m_right, v_right = mean_var(right)
         v = v_left + v_right
@@ -136,7 +135,7 @@ end
     end
 end
 
-@testitem "Mixture Distribution: Multivariate Normal" begin
+@testitem "Mixture Distribution: Multivariate Normal" tags = [:densities] begin
     using Distributions
 
     component1 = MvNormal([1.0, 1.0], [1.0 0.5; 0.5 1.0])
@@ -150,6 +149,7 @@ end
     @test var(dist) ≈
         0.3 * ([1.0, 1.0] + [1.0, 1.0]) + 0.7 * ([1.0, 1.0] + [4.0, 4.0]) - mean_dist .^ 2
     @test cov(dist) ≈
-        0.3 * ([1.0 0.5; 0.5 1.0] + [1.0, 1.0] * [1.0, 1.0]') +
-          0.7 * ([1.0 0.5; 0.5 1.0] + [2.0, 2.0] * [2.0, 2.0]') - mean_dist * mean_dist'
+        0.3 * ([1.0 0.5; 0.5 1.0] + [1.0, 1.0] * [1.0, 1.0]') + 0.7 * (
+        [1.0 0.5; 0.5 1.0] + [2.0, 2.0] * [2.0, 2.0]'
+    ) - mean_dist * mean_dist'
 end

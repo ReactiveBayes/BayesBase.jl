@@ -1,12 +1,10 @@
-@testitem "MatrixWithCachedInverse: construction copies the input and stays lazy" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "MatrixWithCachedInverse: construction copies the input and stays lazy" tags = [:algebra] setup = [AlgebraSetup] begin
     for T in (Float32, Float64, BigFloat), n in (1, 5)
         S = T[1 / (i + j - 1) for i in 1:n, j in 1:n] + I
         source = copy(S)
         A = MatrixWithCachedInverse(source)
         source[1, 1] += 1
-        @test A isa MatrixWithCachedInverse{T,Matrix{T}}
+        @test A isa MatrixWithCachedInverse{T, Matrix{T}}
         @test Matrix(A) == S
         @test size(A) == (n, n)
         @test A[1, 1] == S[1, 1] && A[n] == S[n]
@@ -15,17 +13,15 @@
         @test BayesBase.cached_factor(A) === nothing && A.inverse === nothing
 
         @test A \ ones(T, n) ≈ S \ ones(T, n)
-        @test BayesBase.cached_factor(A) isa Cholesky{T,Matrix{T}} && A.inverse === nothing
+        @test BayesBase.cached_factor(A) isa Cholesky{T, Matrix{T}} && A.inverse === nothing
 
         B = MatrixWithCachedInverse(S)
         @test logdet(B) ≈ logdet(S)
-        @test BayesBase.cached_factor(B) isa Cholesky{T,Matrix{T}} && B.inverse === nothing
+        @test BayesBase.cached_factor(B) isa Cholesky{T, Matrix{T}} && B.inverse === nothing
     end
 end
 
-@testitem "MatrixWithCachedInverse: cholesky and matrix properties reuse the cache" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "MatrixWithCachedInverse: cholesky and matrix properties reuse the cache" tags = [:algebra] setup = [AlgebraSetup] begin
     for T in (Float32, Float64, BigFloat)
         S = T[2 1; 1 2]
         A = MatrixWithCachedInverse(S)
@@ -52,7 +48,7 @@ end
         # A cold positivity query populates the same cache as cholesky.
         C = MatrixWithCachedInverse(S)
         @test (@inferred isposdef(C))
-        @test BayesBase.cached_factor(C) isa Cholesky{T,Matrix{T}}
+        @test BayesBase.cached_factor(C) isa Cholesky{T, Matrix{T}}
         @test cholesky(C) === BayesBase.cached_factor(C) && C.inverse === nothing
 
         for M in (T[1 2; 2 1], T[1 1; 1 1], T[-2 0; 0 -1])
@@ -67,9 +63,7 @@ end
     end
 end
 
-@testitem "MatrixWithCachedInverse: products use symmetric dense storage" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "MatrixWithCachedInverse: products use symmetric dense storage" tags = [:algebra] setup = [AlgebraSetup] begin
     for T in (Float32, Float64, BigFloat), n in (1, 5)
         S = T[1 / (i + j - 1) for i in 1:n, j in 1:n] + I
         A = MatrixWithCachedInverse(S)
@@ -93,13 +87,13 @@ end
             @test transpose(B) * x ≈ transpose(D) * x
 
             for (left, right, dense_left, dense_right) in (
-                (B, x, D, x),
-                (B, X, D, X),
-                (X', B, X', D),
-                (copy(X'), B, copy(X'), D),
-                (B, B, D, D),
-                (A, B, S, D),
-            )
+                    (B, x, D, x),
+                    (B, X, D, X),
+                    (X', B, X', D),
+                    (copy(X'), B, copy(X'), D),
+                    (B, B, D, D),
+                    (A, B, S, D),
+                )
                 expected = dense_left * dense_right
                 result = fill(T(NaN), size(expected))
                 @test mul!(result, left, right) === result
@@ -117,9 +111,7 @@ end
     end
 end
 
-@testitem "MatrixWithCachedInverse: products avoid scalar indexing" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "MatrixWithCachedInverse: products avoid scalar indexing" tags = [:algebra] setup = [AlgebraSetup] begin
     # A parent with optimized multiplication but no scalar access: falling back to
     # generic multiplication through the wrapper must fail, regardless of timing.
     struct MulOnlyMatrix{T} <: AbstractMatrix{T}
@@ -142,7 +134,7 @@ end
 
     S = [2.0 1.0; 1.0 3.0]
     # Use the internal constructor to wrap the instrumented storage without reading it.
-    A = MatrixWithCachedInverse{Float64,MulOnlyMatrix{Float64}}(
+    A = MatrixWithCachedInverse{Float64, MulOnlyMatrix{Float64}}(
         MulOnlyMatrix(S), ReentrantLock()
     )
     x = [1.0, 2.0]
@@ -160,9 +152,7 @@ end
     end
 end
 
-@testitem "MatrixWithCachedInverse: construction from Symmetric and Hermitian views" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "MatrixWithCachedInverse: construction from Symmetric and Hermitian views" tags = [:algebra] setup = [AlgebraSetup] begin
     for T in (Float32, Float64, BigFloat), uplo in (:U, :L)
         n = 5
         S = T[1 / (i + j - 1) for i in 1:n, j in 1:n] + I
@@ -170,7 +160,7 @@ end
         junk[CartesianIndex(uplo === :U ? (2, 1) : (1, 2))] = T(100) # the ignored triangle holds garbage
         for V in (Symmetric(junk, uplo), Hermitian(junk, uplo))
             A = @inferred MatrixWithCachedInverse(V)
-            @test A isa MatrixWithCachedInverse{T,Matrix{T}}
+            @test A isa MatrixWithCachedInverse{T, Matrix{T}}
             @test Matrix(A) == S
             @test BayesBase.cached_factor(A) === nothing && A.inverse === nothing
             @test inv(A) ≈ inv(S)
@@ -182,9 +172,7 @@ end
     end
 end
 
-@testitem "MatrixWithCachedInverse: inverse, solve and logdet" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "MatrixWithCachedInverse: inverse, solve and logdet" tags = [:algebra] setup = [AlgebraSetup] begin
     for T in (Float32, Float64, BigFloat), n in (2, 10)
         S = T[1 / (i + j - 1) for i in 1:n, j in 1:n] + I
         F = cholesky(Symmetric(S))
@@ -197,20 +185,18 @@ end
         @test inv(A) === B
         @test inv(B) === A
         @test BayesBase.cached_factor(B) === nothing
-        @test BayesBase.cached_factor(A) isa Cholesky{T,Matrix{T}}
+        @test BayesBase.cached_factor(A) isa Cholesky{T, Matrix{T}}
 
         @test A \ b ≈ F \ b
         @test A \ Matrix{T}(I, n, n) ≈ inv(F)
         @test logdet(A) ≈ logdet(F)
         @test logdet(B) ≈ -logdet(F)
-        @test BayesBase.cached_factor(B) isa Cholesky{T,Matrix{T}}
+        @test BayesBase.cached_factor(B) isa Cholesky{T, Matrix{T}}
         @test B \ b ≈ S * b
     end
 end
 
-@testitem "MatrixWithCachedInverse: ownership and errors" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "MatrixWithCachedInverse: ownership and errors" tags = [:algebra] setup = [AlgebraSetup] begin
     S = [2.0 1.0; 1.0 2.0]
     A = MatrixWithCachedInverse(S)
     B = inv(A)
@@ -276,13 +262,11 @@ end
     @test BayesBase.cached_factor(N) === nothing && N.inverse === nothing
 end
 
-@testitem "MatrixWithCachedInverse: inference and conversions" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "MatrixWithCachedInverse: inference and conversions" tags = [:algebra] setup = [AlgebraSetup] begin
     for T in (Float32, Float64, BigFloat)
         S = T[2 1; 1 2]
         A = @inferred MatrixWithCachedInverse(S)
-        @test (@inferred BayesBase.cached_cholesky_or_compute(A)) isa Cholesky{T,Matrix{T}}
+        @test (@inferred BayesBase.cached_cholesky_or_compute(A)) isa Cholesky{T, Matrix{T}}
         @test (@inferred BayesBase.cached_cholesky_or_compute(A)) ===
             BayesBase.cached_factor(A)
         B = @inferred inv(A)
@@ -292,19 +276,18 @@ end
         @test convert(AbstractMatrix{T}, A) === A
         @test convert(AbstractArray{T}, A) === A
         C = AbstractMatrix{T}(A)
-        @test C isa MatrixWithCachedInverse{T,Matrix{T}}
+        @test C isa MatrixWithCachedInverse{T, Matrix{T}}
         @test C !== A &&
             C == A &&
             BayesBase.cached_factor(C) === nothing &&
             C.inverse === nothing
         D = convert(AbstractMatrix{Float64}, A)
-        @test D isa MatrixWithCachedInverse{Float64,Matrix{Float64}} && D == S
+        @test D isa MatrixWithCachedInverse{Float64, Matrix{Float64}} && D == S
         @test Matrix{T}(A) isa Matrix{T}
     end
 end
 
-@testitem "MatrixWithCachedInverse: FastCholesky integration" begin
-    include("algebrasetup_setuptests.jl")
+@testitem "MatrixWithCachedInverse: FastCholesky integration" tags = [:algebra] setup = [AlgebraSetup] begin
     using FastCholesky
 
     S = [1.0 / (i + j - 1) for i in 1:5, j in 1:5] + I
@@ -341,9 +324,7 @@ end
     @test cholinv_logdet(A) == (Ainv, l)
 end
 
-@testitem "MatrixWithCachedInverse: concurrent first inverse requests share one result" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "MatrixWithCachedInverse: concurrent first inverse requests share one result" tags = [:algebra] setup = [AlgebraSetup] begin
     S = [1.0 / (i + j - 1) for i in 1:100, j in 1:100] + I
     reference = inv(cholesky(Symmetric(S)))
     inv(MatrixWithCachedInverse(S)) # compile on a disposable instance, keeping the tested cache fresh
@@ -371,9 +352,7 @@ end
     @test Matrix(cached) == S
 end
 
-@testitem "MatrixWithCachedInverse: warm and reverse inverse requests do not allocate matrices" begin
-    include("algebrasetup_setuptests.jl")
-
+@testitem "MatrixWithCachedInverse: warm and reverse inverse requests do not allocate matrices" tags = [:algebra] setup = [AlgebraSetup] begin
     for n in (20, 100)
         S = [1.0 / (i + j - 1) for i in 1:n, j in 1:n] + I
         cached = MatrixWithCachedInverse(S)

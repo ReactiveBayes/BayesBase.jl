@@ -9,3 +9,7 @@
 .vscode
 .venv
 **/Manifest.toml
+
+# Coverage files CI writes
+lcov.info
+Manifest-v*.toml
